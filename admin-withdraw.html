@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Withdrawals - AfricaBased</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #232526;
+            color: #ffd54f;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+        }
+        .admin-header {
+            background: #2c2c2c;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #ffd54f;
+        }
+
+        .admin-title {
+            color: #ffd54f;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .withdraw-panel {
+            margin: 0 auto;
+            max-width: 1200px;
+            background: #2c2c2c;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+            padding: 2rem;
+            border: 1px solid #ffd54f;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: #232526;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border: 1px solid #ffd54f;
+        }
+
+        .stat-title {
+            color: #ffd54f;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .stat-value {
+            color: #ffd54f;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: #ffffff;
+            color: #666;
+            border: 1px solid #ddd;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .filter-btn.active {
+            background: #1a73e8;
+            color: #ffffff;
+            border-color: #1a73e8;
+        }
+
+        .filter-btn:hover {
+            background: #f5f5f5;
+            border-color: #1a73e8;
+            color: #1a73e8;
+        }
+
+        .filter-btn.active:hover {
+            background: #1557b0;
+            border-color: #1557b0;
+            color: #ffffff;
+        }
+
+        .withdraw-table-scroll {
+            max-height: 600px;
+            overflow-y: auto;
+            margin-bottom: 18px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            background: #232526;
+            border: 1px solid #ffd54f;
+        }
+
+        .withdraw-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: #232526;
+            margin-top: 1rem;
+        }
+
+        .withdraw-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: #232526;
+        }
+
+        .withdraw-table th {
+            background: #232526;
+            color: #ffd54f;
+            font-weight: 700;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 2px solid #ffd54f;
+            font-size: 1.05rem;
+        }
+
+        .withdraw-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #444;
+            color: #ffd54f;
+            font-size: 0.9rem;
+        }
+
+        /* Scrollbar styles */
+        .withdraw-table-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .withdraw-table-scroll::-webkit-scrollbar-track {
+            background: #232526;
+            border-radius: 4px;
+        }
+
+        .withdraw-table-scroll::-webkit-scrollbar-thumb {
+            background: #ffd54f;
+            border-radius: 4px;
+        }
+
+        .withdraw-table-scroll::-webkit-scrollbar-thumb:hover {
+            background: #ffcc00;
+        }
+        .withdraw-table tr:hover {
+            background-color: #2c2c2c;
+        }
+
+        .action-btn {
+            background: #ffd54f;
+            color: #232526;
+            border: none;
+            border-radius: 5px;
+            padding: 6px 14px;
+            margin: 0 2px;
+            font-size: 0.98rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #232526;
+            color: #ffd54f;
+            border: 1px solid #ffd54f;
+        }
+
+        .filter-btn {
+            background: #232526;
+            color: #ffd54f;
+            border: 1px solid #ffd54f;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .filter-btn.active {
+            background: #ffd54f;
+            color: #232526;
+            border-color: #ffd54f;
+        }
+
+        .filter-btn:hover {
+            background: #232526;
+            border-color: #ffcc00;
+            color: #ffcc00;
+        }
+
+        .filter-btn.active:hover {
+            background: #ffcc00;
+            border-color: #ffcc00;
+            color: #232526;
+        }
+
+        .withdraw-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .withdraw-modal-content {
+            background: #232526;
+            color: #ffd54f;
+            border-radius: 12px;
+            padding: 32px 28px;
+            min-width: 340px;
+            max-width: 420px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+            position: relative;
+            border: 1px solid #ffd54f;
+        }
+
+        .withdraw-modal-close {
+            position: absolute;
+            top: 12px;
+            right: 18px;
+            font-size: 2rem;
+            color: #ffd54f;
+            cursor: pointer;
+        }
+
+        .withdraw-modal-actions {
+            display: flex;
+            gap: 18px;
+            margin-top: 18px;
+            justify-content: center;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .status-pending {
+            background: #fff1db;
+            color: #b45309;
+        }
+
+        .status-approved {
+            background: #dcfce7;
+            color: #059669;
+        }
+
+        .status-rejected {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            display: none;
+            z-index: 1000;
+        }
+        .notification.success {
+            background: #4CAF50;
+        }
+        .notification.error {
+            background: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-header">
+        <h1 class="admin-title">Withdrawal Management</h1>
+    </div>
+
+    <!-- Global Admin Notification Bar -->
+    <div id="adminNotificationBar" style="background:#232526;padding:18px 22px;border-radius:10px;margin-bottom:24px;box-shadow:0 2px 8px rgba(255,213,79,0.08);color:#ffd54f;">
+        <h3 style="margin-top:0;margin-bottom:10px;color:#ffd54f;">Notifications</h3>
+        <ul id="adminNotificationList" style="list-style:none;padding:0;margin:0;"></ul>
+    </div>
+    <div class="withdraw-panel">
+        <div style="display:flex; gap:18px; justify-content:flex-start; align-items:center; margin-bottom:24px;">
+            <button class="btn btn-back" id="backToAdminBtn" style="background:#232526; color:#ffd54f; border:1px solid #ffd54f; border-radius:6px; padding:8px 18px; font-weight:600; cursor:pointer;">
+                <i class="fas fa-arrow-left"></i> Back to Admin Panel
+            </button>
+            <button class="system-btn btn-reset" id="resetBtn" style="background:#ff9800;color:#000;padding:8px 18px;border-radius:6px;font-weight:600;">Reset</button>
+            <button class="system-btn btn-sync" id="syncBtn" style="background:#2196f3;color:#fff;padding:8px 18px;border-radius:6px;font-weight:600;">Sync Changes</button>
+        </div>
+    <!-- Reset Confirmation Modal -->
+    <div id="resetConfirmModal" class="withdraw-modal" style="display:none;z-index:10001;">
+        <div class="withdraw-modal-content">
+            <span class="withdraw-modal-close" onclick="closeAdminModal()">&times;</span>
+            <h2 style="margin-bottom: 20px;">Confirm System Reset</h2>
+            <p>This will reset the page and clear all local changes. Enter security key to confirm:</p>
+            <input type="password" id="resetSecurityKey" placeholder="Security Key" style="margin-bottom:16px; width:100%;padding:8px;">
+            <div class="withdraw-modal-actions">
+                <button class="system-btn btn-reset" onclick="executeSystemReset()">Confirm Reset</button>
+                <button class="system-btn" onclick="closeAdminModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <div class="stat-title">Total Pending</div>
+                <div class="stat-value" id="pendingCount">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Today's Requests</div>
+                <div class="stat-value" id="todayCount">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Total Amount Pending</div>
+                <div class="stat-value" id="pendingAmount">-</div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" data-status="all">
+                <i class="fas fa-list"></i> All Requests
+            </button>
+            <button class="filter-btn" data-status="pending">
+                <i class="fas fa-clock"></i> Pending
+            </button>
+            <button class="filter-btn" data-status="approved">
+                <i class="fas fa-check"></i> Approved
+            </button>
+            <button class="filter-btn" data-status="rejected">
+                <i class="fas fa-times"></i> Rejected
+            </button>
+        </div>
+
+        <div class="withdraw-table-scroll">
+            <table class="withdraw-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>User</th>
+                        <th>Amount</th>
+                        <th>Fee</th>
+                        <th>Method</th>
+                        <th>Recipient Details</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="withdrawalsList">
+                    <!-- Withdrawal requests will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Withdrawal Modal -->
+    <div id="withdrawModal" class="withdraw-modal" style="display: none;">
+        <div class="withdraw-modal-content">
+            <span class="withdraw-modal-close">&times;</span>
+            <h2 style="margin-bottom: 20px;">Confirm Action</h2>
+            <p id="modalMessage"></p>
+            <div class="withdraw-modal-actions">
+                <button class="action-btn" id="confirmAction"></button>
+                <button class="action-btn" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script type="module">
+        import { supabase } from './js/supabaseClient.js';
+
+        // Check admin authentication
+        async function checkAdminAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = '/admin-login.html';
+                return;
+            }
+
+            // Verify admin role
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+
+            if (error || !profile || profile.role !== 'admin') {
+                window.location.href = '/admin-login.html';
+                return;
+            }
+        }
+
+        // Load withdrawal requests and update dashboard stats
+        async function loadWithdrawals(status = 'all') {
+            try {
+                let query = supabase
+                    .from('withdrawal_requests')
+                    .select(`
+                        *,
+                        profiles:user_id (email)
+                    `)
+                    .order('created_at', { ascending: false });
+
+                if (status !== 'all') {
+                    query = query.eq('status', status);
+                }
+
+                const { data: withdrawals, error } = await query;
+                
+                if (error) throw error;
+                
+                // Update dashboard stats
+                const pendingRequests = withdrawals.filter(w => w.status === 'pending');
+                const today = new Date().toISOString().split('T')[0];
+                const todayRequests = withdrawals.filter(w => 
+                    w.created_at.split('T')[0] === today
+                );
+                const totalPendingAmount = pendingRequests.reduce((sum, w) => 
+                    sum + parseFloat(w.amount), 0
+                );
+
+                document.getElementById('pendingCount').textContent = pendingRequests.length;
+                document.getElementById('todayCount').textContent = todayRequests.length;
+                document.getElementById('pendingAmount').textContent = 
+                    '$' + totalPendingAmount.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                
+                renderWithdrawals(withdrawals);
+            } catch (error) {
+                showNotification('Error loading withdrawals: ' + error.message, 'error');
+            }
+        }
+
+        // Render withdrawals in the table
+        function renderWithdrawals(withdrawals) {
+            const tbody = document.getElementById('withdrawalsList');
+            tbody.innerHTML = withdrawals.map(w => `
+                <tr>
+                    <td>
+                        <div style="font-weight: 500;">${new Date(w.created_at).toLocaleDateString()}</div>
+                        <div style="color: #666; font-size: 0.8rem;">${new Date(w.created_at).toLocaleTimeString()}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 500;">${w.profiles.email}</div>
+                        <div style="color: #666; font-size: 0.8rem;">ID: ${w.user_id.slice(0,8)}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 500;">$${w.amount.toLocaleString()}</div>
+                        <div style="color: #666; font-size: 0.8rem;">Total with fee: $${(parseFloat(w.amount) + parseFloat(w.fee)).toLocaleString()}</div>
+                    </td>
+                    <td>$${w.fee.toLocaleString()}</td>
+                    <td>
+                        <div style="font-weight: 500;">${w.method}</div>
+                    </td>
+                    <td>
+                        <div style="max-width: 200px; overflow-wrap: break-word;">${w.recipient_details}</div>
+                    </td>
+                    <td>
+                        <span class="status-badge status-${w.status.toLowerCase()}">
+                            ${w.status.charAt(0).toUpperCase() + w.status.slice(1).toLowerCase()}
+                        </span>
+                    </td>
+                    <td>
+                        ${w.status.toLowerCase() === 'pending' ? `
+                            <button class="action-btn approve-btn" onclick="handleWithdrawal('${w.id}', 'approved')">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="action-btn reject-btn" onclick="handleWithdrawal('${w.id}', 'rejected')">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Handle withdrawal approval/rejection
+        async function handleWithdrawal(id, status) {
+            try {
+                const { error } = await supabase
+                    .from('withdrawal_requests')
+                    .update({ status: status })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                showNotification(`Withdrawal ${status} successfully`, 'success');
+                loadWithdrawals(document.querySelector('.filter-btn.active').dataset.status);
+            } catch (error) {
+                showNotification('Error updating withdrawal: ' + error.message, 'error');
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Set up event listeners
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                loadWithdrawals(e.target.dataset.status);
+            });
+        });
+
+        // Initialize
+        window.handleWithdrawal = handleWithdrawal;
+        checkAdminAuth();
+        loadWithdrawals();
+    </script>
+</body>
+        <script>
+        // --- Admin Notification Bar Logic ---
+        function renderAdminNotifications() {
+            let notifications = [];
+            try { notifications = JSON.parse(localStorage.getItem('adminDepositNotifications') || '[]'); } catch {}
+            const list = document.getElementById('adminNotificationList');
+            if (!list) return;
+            if (!notifications.length) {
+                list.innerHTML = '<li style="color:#aaa;">No notifications yet.</li>';
+                return;
+            }
+            list.innerHTML = notifications.map(n => {
+                let info = `<strong>${n.number || 'N/A'}</strong> tried to deposit <strong>KES ${n.amount || 'N/A'}</strong>`;
+                if (n.txid) info += ` (TxID: <span style='color:#ffd54f;'>${n.txid}</span>)`;
+                info += ` <span style='font-size:0.95em;color:#aaa;'>[${new Date(n.time).toLocaleString()}]</span>`;
+                return `<li style='margin-bottom:8px;'>${info}</li>`;
+            }).join('');
+        }
+        renderAdminNotifications();
+        setInterval(renderAdminNotifications, 5000);
+        </script>
+</html>
+
+    </style>
+</head>
+<body>
+    <div class="withdraw-panel">
+        <div class="withdraw-btns" style="display:flex; gap:24px; justify-content:center; margin-bottom:32px;">
+            <button id="showRequestBtn" class="withdraw-action-btn">Show Withdrawal Requests</button>
+            <button id="showHistoryBtn" class="withdraw-action-btn">Show Withdrawal History</button>
+        </div>
+        <div class="payment-channel-control" style="display:flex; align-items:center; gap:18px; justify-content:center; margin-bottom:32px;">
+            <label for="paymentChannel" style="color:#ffd54f; font-weight:600;">Payment Channel:</label>
+            <select id="paymentChannel" style="padding:8px 18px; border-radius:6px; background:#232526; color:#ffd54f; font-size:1rem;">
+                <!-- Dynamically populate payment channels -->
+            </select>
+            <label for="paymentMode" style="color:#ffd54f; font-weight:600;">Mode:</label>
+            <select id="paymentMode" style="padding:8px 18px; border-radius:6px; background:#232526; color:#ffd54f; font-size:1rem;">
+                <option value="manual">Manual Payment</option>
+                <option value="auto">Auto Payment (API)</option>
+            </select>
+            <button id="switchPaymentBtn" class="withdraw-action-btn">Switch Channel/Mode</button>
+        </div>
+        <div class="payment-accounts-control" style="display:flex; gap:24px; justify-content:center; margin-bottom:32px;">
+            <div>
+                <h3 style="color:#ffd54f;">Mpesa Tills</h3>
+                <div id="tillList" style="margin-bottom:16px;"></div>
+                <button id="addTillBtn" style="background:#ffd54f; color:#232526; font-weight:600; border:none; padding:8px 18px; border-radius:6px; cursor:pointer;">Add Mpesa Till</button>
+                <div id="addTillForm" style="display:none; margin-top:12px; background:#232526; padding:18px; border-radius:8px;">
+                    <label>Till Number:</label><input id="tillNum" style="width:100%; margin-bottom:8px;" />
+                    <label>Shortcode:</label><input id="tillShortcode" style="width:100%; margin-bottom:8px;" />
+                    <label>API Key/Token:</label><input id="tillApiKey" style="width:100%; margin-bottom:8px;" />
+                    <label>Client ID:</label><input id="tillClientId" style="width:100%; margin-bottom:8px;" />
+                    <label>Client Secret:</label><input id="tillClientSecret" style="width:100%; margin-bottom:8px;" />
+                    <label>Callback URL:</label><input id="tillCallback" style="width:100%; margin-bottom:8px;" />
+                    <button id="saveTillBtn" style="margin-right:8px;">Save</button>
+                    <button id="cancelTillBtn">Cancel</button>
+                </div>
+            </div>
+            <div>
+                <h3 style="color:#ffd54f;">Bank Accounts</h3>
+                <div id="bankList" style="margin-bottom:16px;"></div>
+                <button id="addBankBtn" style="background:#ffd54f; color:#232526; font-weight:600; border:none; padding:8px 18px; border-radius:6px; cursor:pointer;">Add Bank Account</button>
+                <div id="addBankForm" style="display:none; margin-top:12px; background:#232526; padding:18px; border-radius:8px;">
+                    <label>Bank Name:</label><input id="bankName" style="width:100%; margin-bottom:8px;" />
+                    <label>Account Number:</label><input id="bankAcc" style="width:100%; margin-bottom:8px;" />
+                    <label>API Key/Token:</label><input id="bankApiKey" style="width:100%; margin-bottom:8px;" />
+                    <label>Client ID:</label><input id="bankClientId" style="width:100%; margin-bottom:8px;" />
+                    <label>Client Secret:</label><input id="bankClientSecret" style="width:100%; margin-bottom:8px;" />
+                    <label>Callback URL:</label><input id="bankCallback" style="width:100%; margin-bottom:8px;" />
+                    <button id="saveBankBtn" style="margin-right:8px;">Save</button>
+                    <button id="cancelBankBtn">Cancel</button>
+                </div>
+            </div>
+            <div>
+                <h3 style="color:#ffd54f;">Paybill Accounts</h3>
+                <div id="paybillList" style="margin-bottom:16px;"></div>
+                <button id="addPaybillBtn" style="background:#ffd54f; color:#232526; font-weight:600; border:none; padding:8px 18px; border-radius:6px; cursor:pointer;">Add Paybill</button>
+                <div id="addPaybillForm" style="display:none; margin-top:12px; background:#232526; padding:18px; border-radius:8px;">
+                    <label>Paybill Number:</label><input id="paybillNum" style="width:100%; margin-bottom:8px;" />
+                    <label>Account Name:</label><input id="paybillAccName" style="width:100%; margin-bottom:8px;" />
+                    <label>API Key/Token:</label><input id="paybillApiKey" style="width:100%; margin-bottom:8px;" />
+                    <label>Client ID:</label><input id="paybillClientId" style="width:100%; margin-bottom:8px;" />
+                    <label>Client Secret:</label><input id="paybillClientSecret" style="width:100%; margin-bottom:8px;" />
+                    <label>Callback URL:</label><input id="paybillCallback" style="width:100%; margin-bottom:8px;" />
+                    <button id="savePaybillBtn" style="margin-right:8px;">Save</button>
+                    <button id="cancelPaybillBtn">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <div id="requestTableWrap" style="display:none;">
+            <h2>AfricaBased Withdrawal Requests</h2>
+            <div class="withdraw-table-scroll">
+                <table class="withdraw-table">
+                    <thead>
+                        <tr>
+                            <th>Request ID</th>
+                            <th>User ID</th>
+                            <th>Name</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Date</th>
+                            <th>Transaction ID</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="withdrawTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="historyTableWrap" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h2 style="margin:0;">AfricaBased Withdrawal History</h2>
+                <div>
+                    <button id="exportCsvBtn" class="withdraw-action-btn">Download CSV</button>
+                    <button id="exportExcelBtn" class="withdraw-action-btn">Download Excel</button>
+                    <button id="exportPdfBtn" class="withdraw-action-btn">Download PDF</button>
+                </div>
+            </div>
+            <div class="withdraw-table-scroll">
+                <table class="withdraw-table">
+                    <thead>
+                        <tr>
+                            <th>Request ID</th>
+                            <th>User ID</th>
+                            <th>Name</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Date</th>
+                            <th>Transaction ID</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="withdrawHistoryBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div id="withdrawModal" class="withdraw-modal" style="display:none;">
+        <div class="withdraw-modal-content">
+            <span class="withdraw-modal-close" onclick="closeWithdrawModal()">&times;</span>
+            <h3>Withdrawal Request Details</h3>
+            <div id="withdrawModalDetails"></div>
+            <div class="withdraw-modal-actions">
+                <button id="modalApproveBtn">Approve</button>
+                <button id="modalRejectBtn">Reject</button>
+                <button id="modalUndoBtn">Undo</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    // --- Activate Back, Reset, and Sync Buttons ---
+    document.getElementById('backToAdminBtn').onclick = function() {
+        window.location.href = 'Admin-panel.html';
+    };
+    document.getElementById('resetBtn').onclick = function() {
+        if (typeof confirmSystemReset === 'function') confirmSystemReset();
+    };
+    document.getElementById('syncBtn').onclick = function() {
+        if (typeof syncChanges === 'function') syncChanges();
+    };
+    // Modal helpers for reset
+    function closeAdminModal() {
+        document.getElementById('resetConfirmModal').style.display = 'none';
+    }
+    // If not already defined, define confirmSystemReset and executeSystemReset
+    if (typeof confirmSystemReset !== 'function') {
+        window.confirmSystemReset = function() {
+            document.getElementById('resetConfirmModal').style.display = 'flex';
+        };
+    }
+    if (typeof executeSystemReset !== 'function') {
+        window.executeSystemReset = async function() {
+            const key = document.getElementById('resetSecurityKey').value;
+            if (key === '1540568e') {
+                if (typeof logAdminAction === 'function') await logAdminAction('reset');
+                localStorage.clear();
+                sessionStorage.clear();
+                location.reload();
+            } else {
+                alert('Incorrect security key.');
+            }
+        };
+    }
+    // Demo withdrawals data
+    let withdrawals = JSON.parse(localStorage.getItem('withdrawals') || '[]');
+    if (withdrawals.length === 0) {
+        withdrawals = [
+            { requestId: 'W001', id: 'U001', name: 'john', amount: 1200, method: 'Mpesa', date: new Date().toISOString(), transactionId: 'TX123', status: 'Pending', mpesa: '0712345678' },
+            { requestId: 'W002', id: 'U002', name: 'mary', amount: 2000, method: 'Bank', date: new Date().toISOString(), transactionId: 'TX124', status: 'Approved', bank: 'Equity 123456' },
+            { requestId: 'W003', id: 'U003', name: 'alex', amount: 500, method: 'Mpesa', date: new Date().toISOString(), transactionId: 'TX125', status: 'Rejected', mpesa: '0734567890' }
+        ];
+        // Add more test data for scrolling
+        for (let i = 4; i <= 20; i++) {
+            withdrawals.push({
+                requestId: 'W' + (100 + i),
+                id: 'U' + (100 + i),
+                name: 'user' + i,
+                amount: 1000 + i * 50,
+                method: i % 2 === 0 ? 'Mpesa' : 'Bank',
+                date: new Date(Date.now() - i * 86400000).toISOString(),
+                transactionId: 'TX' + (200 + i),
+                status: i % 3 === 0 ? 'Approved' : (i % 3 === 1 ? 'Pending' : 'Rejected'),
+                mpesa: i % 2 === 0 ? '0712' + (1000 + i) : undefined,
+                bank: i % 2 !== 0 ? 'Bank ' + (1000 + i) : undefined
+            });
+        }
+        localStorage.setItem('withdrawals', JSON.stringify(withdrawals));
+    }
+    function formatWithdrawTime(dt) {
+        if (!dt) return 'N/A';
+        const d = new Date(dt);
+        return d.toLocaleString();
+    }
+    function renderWithdrawTable() {
+        const tbody = document.getElementById('withdrawTableBody');
+        tbody.innerHTML = '';
+        withdrawals.forEach((w, idx) => {
+            if (w.status === 'Pending') {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${w.requestId}</td>
+                    <td>${w.id}</td>
+                    <td>${w.name}</td>
+                    <td>Ksh ${w.amount}</td>
+                    <td>${w.method}</td>
+                    <td>${formatWithdrawTime(w.date)}</td>
+                    <td>${w.transactionId}</td>
+                    <td>${w.status}</td>
+                    <td>
+                        <button onclick="openWithdrawModal(${idx})">View</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+        });
+        renderWithdrawHistory();
+    }
+    function renderWithdrawHistory() {
+        const tbody = document.getElementById('withdrawHistoryBody');
+        tbody.innerHTML = '';
+        withdrawals.forEach((w) => {
+            if (w.status !== 'Pending') {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${w.requestId}</td>
+                    <td>${w.id}</td>
+                    <td>${w.name}</td>
+                    <td>Ksh ${w.amount}</td>
+                    <td>${w.method}</td>
+                    <td>${formatWithdrawTime(w.date)}</td>
+                    <td>${w.transactionId}</td>
+                    <td>${w.status}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+        });
+    }
+    function renderPaymentChannels() {
+        const channelSelect = document.getElementById('paymentChannel');
+        channelSelect.innerHTML = '';
+        // Add tills
+        tills.forEach(tillObj => {
+            const option = document.createElement('option');
+            option.value = 'mpesa-' + tillObj.till;
+            option.textContent = 'Mpesa Till: ' + tillObj.till + (tillObj.shortcode ? ' (Shortcode: ' + tillObj.shortcode + ')' : '');
+            channelSelect.appendChild(option);
+        });
+        // Add banks
+        banks.forEach(bankObj => {
+            const option = document.createElement('option');
+            option.value = 'bank-' + bankObj.bank;
+            option.textContent = 'Bank: ' + bankObj.bank + (bankObj.account ? ' (Acc: ' + bankObj.account + ')' : '');
+            channelSelect.appendChild(option);
+        });
+        // Add paybills
+        paybills.forEach(paybillObj => {
+            const option = document.createElement('option');
+            option.value = 'paybill-' + paybillObj.paybillNum;
+            option.textContent = 'Paybill: ' + paybillObj.paybillNum + (paybillObj.accName ? ' (Acc Name: ' + paybillObj.accName + ')' : '');
+            channelSelect.appendChild(option);
+        });
+    }
+    function renderTillList() {
+        const tillList = document.getElementById('tillList');
+        tillList.innerHTML = '';
+        tills.forEach((tillObj, idx) => {
+            const div = document.createElement('div');
+            div.style = 'background:#232526; color:#ffd54f; padding:8px; margin-bottom:6px; border-radius:6px;';
+            div.innerHTML = `<strong>Till:</strong> ${tillObj.till} ${tillObj.shortcode ? '(Shortcode: ' + tillObj.shortcode + ')' : ''}<br>
+                <strong>API Key:</strong> ${tillObj.apiKey||''}<br>
+                <strong>Client ID:</strong> ${tillObj.clientId||''}<br>
+                <strong>Client Secret:</strong> ${tillObj.clientSecret||''}<br>
+                <strong>Callback URL:</strong> ${tillObj.callbackUrl||''}<br>
+                <button onclick="editTill(${idx})" style="margin-right:8px;">Edit</button>
+                <button onclick="deleteTill(${idx})">Delete</button>`;
+            tillList.appendChild(div);
+        });
+    }
+    function renderBankList() {
+        const bankList = document.getElementById('bankList');
+        bankList.innerHTML = '';
+        banks.forEach((bankObj, idx) => {
+            const div = document.createElement('div');
+            div.style = 'background:#232526; color:#ffd54f; padding:8px; margin-bottom:6px; border-radius:6px;';
+            div.innerHTML = `<strong>Bank:</strong> ${bankObj.bank}<br>
+                <strong>Account Number:</strong> ${bankObj.account||''}<br>
+                <strong>API Key:</strong> ${bankObj.apiKey||''}<br>
+                <strong>Client ID:</strong> ${bankObj.clientId||''}<br>
+                <strong>Client Secret:</strong> ${bankObj.clientSecret||''}<br>
+                <strong>Callback URL:</strong> ${bankObj.callbackUrl||''}<br>
+                <button onclick="editBank(${idx})" style="margin-right:8px;">Edit</button>
+                <button onclick="deleteBank(${idx})">Delete</button>`;
+            bankList.appendChild(div);
+        });
+    }
+    function renderPaybillList() {
+        const paybillList = document.getElementById('paybillList');
+        paybillList.innerHTML = '';
+        paybills.forEach((paybillObj, idx) => {
+            const div = document.createElement('div');
+            div.style = 'background:#232526; color:#ffd54f; padding:8px; margin-bottom:6px; border-radius:6px;';
+            div.innerHTML = `<strong>Paybill:</strong> ${paybillObj.paybillNum}<br>
+                <strong>Account Name:</strong> ${paybillObj.accName||''}<br>
+                <strong>API Key:</strong> ${paybillObj.apiKey||''}<br>
+                <strong>Client ID:</strong> ${paybillObj.clientId||''}<br>
+                <strong>Client Secret:</strong> ${paybillObj.clientSecret||''}<br>
+                <strong>Callback URL:</strong> ${paybillObj.callbackUrl||''}<br>
+                <button onclick="editPaybill(${idx})" style="margin-right:8px;">Edit</button>
+                <button onclick="deletePaybill(${idx})">Delete</button>`;
+            paybillList.appendChild(div);
+        });
+    }
+    function closeWithdrawModal() {
+        document.getElementById('withdrawModal').style.display = 'none';
+        currentWithdrawIdx = null;
+    }
+    function openWithdrawModal(idx) {
+        currentWithdrawIdx = idx;
+        const w = withdrawals[idx];
+        let details = `<strong>Request ID:</strong> ${w.requestId}<br>
+            <strong>User ID:</strong> ${w.id}<br>
+            <strong>Name:</strong> ${w.name}<br>
+            <strong>Amount:</strong> Ksh ${w.amount}<br>
+            <strong>Method:</strong> ${w.method}<br>
+            <strong>Date:</strong> ${formatWithdrawTime(w.date)}<br>
+            <strong>Transaction ID:</strong> ${w.transactionId}<br>
+            <strong>Status:</strong> ${w.status}<br>`;
+        if (w.method === 'Mpesa') {
+            details += `<strong>Mpesa Number:</strong> ${w.mpesa}<br>`;
+        } else if (w.method === 'Bank') {
+            details += `<strong>Bank Details:</strong> ${w.bank}<br>`;
+        }
+        document.getElementById('withdrawModalDetails').innerHTML = details;
+        document.getElementById('withdrawModal').style.display = 'flex';
+    }
+    document.getElementById('modalApproveBtn').addEventListener('click', function() {
+        if (currentWithdrawIdx !== null) {
+            withdrawals[currentWithdrawIdx].status = 'Approved';
+            localStorage.setItem('withdrawals', JSON.stringify(withdrawals));
+            renderWithdrawTable();
+            closeWithdrawModal();
+        }
+    });
+    document.getElementById('modalRejectBtn').addEventListener('click', function() {
+        if (currentWithdrawIdx !== null) {
+            withdrawals[currentWithdrawIdx].status = 'Rejected';
+            localStorage.setItem('withdrawals', JSON.stringify(withdrawals));
+            renderWithdrawTable();
+            closeWithdrawModal();
+        }
+    });
+    document.getElementById('modalUndoBtn').addEventListener('click', function() {
+        if (currentWithdrawIdx !== null) {
+            withdrawals[currentWithdrawIdx].status = 'Pending';
+            localStorage.setItem('withdrawals', JSON.stringify(withdrawals));
+            renderWithdrawTable();
+            closeWithdrawModal();
+        }
+    });
+    document.getElementById('showRequestBtn').addEventListener('click', function() {
+        document.getElementById('requestTableWrap').style.display = 'block';
+        document.getElementById('historyTableWrap').style.display = 'none';
+    });
+    document.getElementById('showHistoryBtn').addEventListener('click', function() {
+        document.getElementById('requestTableWrap').style.display = 'none';
+        document.getElementById('historyTableWrap').style.display = 'block';
+    });
+    function sendOtpAndAutoPay(idx) {
+        const w = withdrawals[idx];
+        // Simulate sending OTP
+        const otp = Math.floor(100000 + Math.random() * 900000);
+        alert(`OTP sent to user for withdrawal request ${w.requestId}: ${otp}`);
+        // Simulate API payment (would use Daraja or bank API in production)
+        setTimeout(() => {
+            withdrawals[idx].status = 'Approved';
+            localStorage.setItem('withdrawals', JSON.stringify(withdrawals));
+            renderWithdrawTable();
+            renderWithdrawHistory();
+            alert(`Payment sent to ${w.method === 'Mpesa' ? w.mpesa : w.bank} for Ksh ${w.amount} (Request ${w.requestId})`);
+        }, 1500);
+    }
+    function autoApproveWithdrawals() {
+        const channel = document.getElementById('paymentChannel').value;
+        const mode = document.getElementById('paymentMode').value;
+        if (mode === 'auto') {
+            withdrawals.forEach((w, idx) => {
+                if (w.status === 'Pending') {
+                    sendOtpAndAutoPay(idx);
+                }
+            });
+        }
+    }
+    document.getElementById('switchPaymentBtn').addEventListener('click', function() {
+        const channel = document.getElementById('paymentChannel').value;
+        const mode = document.getElementById('paymentMode').value;
+        let msg = `Payment channel set to: ${channel === 'mpesa' ? 'Mpesa' : 'PayPal'}\nMode: ${mode === 'manual' ? 'Manual Payment (admin confirms externally)' : 'Auto Payment (API)'}`;
+        alert(msg);
+        if (mode === 'auto') {
+            autoApproveWithdrawals();
+        }
+    });
+    function exportHistoryCsv() {
+        let rows = [
+            ["Request ID","User ID","Name","Amount","Method","Date","Transaction ID","Status"]
+        ];
+        withdrawals.forEach(w => {
+            if (w.status !== 'Pending') {
+                rows.push([
+                    w.requestId, w.id, w.name, w.amount, w.method, formatWithdrawTime(w.date), w.transactionId, w.status
+                ]);
+            }
+        });
+        let csvContent = rows.map(e => e.join(",")).join("\n");
+        let blob = new Blob([csvContent], { type: 'text/csv' });
+        let link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'withdrawal-history.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    function exportHistoryExcel() {
+        let rows = [
+            ["Request ID","User ID","Name","Amount","Method","Date","Transaction ID","Status"]
+        ];
+        withdrawals.forEach(w => {
+            if (w.status !== 'Pending') {
+                rows.push([
+                    w.requestId, w.id, w.name, w.amount, w.method, formatWithdrawTime(w.date), w.transactionId, w.status
+                ]);
+            }
+        });
+        let csvContent = rows.map(e => e.join(",")).join("\n");
+        let blob = new Blob([csvContent], { type: 'application/vnd.ms-excel' });
+        let link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'withdrawal-history.xls';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    function exportHistoryPdf() {
+        let win = window.open('', '', 'height=700,width=900');
+        win.document.write('<html><head><title>Withdrawal History PDF</title></head><body>');
+        win.document.write('<h2>Withdrawal History</h2>');
+        win.document.write('<table border="1" style="width:100%;border-collapse:collapse;">');
+        win.document.write('<tr><th>Request ID</th><th>User ID</th><th>Name</th><th>Amount</th><th>Method</th><th>Date</th><th>Transaction ID</th><th>Status</th></tr>');
+        withdrawals.forEach(w => {
+            if (w.status !== 'Pending') {
+                win.document.write(`<tr><td>${w.requestId}</td><td>${w.id}</td><td>${w.name}</td><td>${w.amount}</td><td>${w.method}</td><td>${formatWithdrawTime(w.date)}</td><td>${w.transactionId}</td><td>${w.status}</td></tr>`);
+            }
+        });
+        win.document.write('</table></body></html>');
+        win.document.close();
+        win.print();
+    }
+    document.getElementById('exportCsvBtn').addEventListener('click', exportHistoryCsv);
+    document.getElementById('exportExcelBtn').addEventListener('click', exportHistoryExcel);
+    document.getElementById('exportPdfBtn').addEventListener('click', exportHistoryPdf);
+    // Show requests by default on load
+    document.getElementById('requestTableWrap').style.display = 'block';
+    document.getElementById('historyTableWrap').style.display = 'none';
+    // Payment accounts logic
+    let tills = JSON.parse(localStorage.getItem('tills') || '[]');
+    let banks = JSON.parse(localStorage.getItem('banks') || '[]');
+    let paybills = JSON.parse(localStorage.getItem('paybills') || '[]');
+    function renderPaymentChannels() {
+        const channelSelect = document.getElementById('paymentChannel');
+        channelSelect.innerHTML = '';
+        // Add tills
+        tills.forEach(tillObj => {
+            const option = document.createElement('option');
+            option.value = 'mpesa-' + tillObj.till;
+            option.textContent = 'Mpesa Till: ' + tillObj.till + (tillObj.shortcode ? ' (Shortcode: ' + tillObj.shortcode + ')' : '');
+            channelSelect.appendChild(option);
+        });
+        // Add banks
+        banks.forEach(bankObj => {
+            const option = document.createElement('option');
+            option.value = 'bank-' + bankObj.bank;
+            option.textContent = 'Bank: ' + bankObj.bank + (bankObj.account ? ' (Acc: ' + bankObj.account + ')' : '');
+            channelSelect.appendChild(option);
+        });
+        // Add paybills
+        paybills.forEach(paybillObj => {
+            const option = document.createElement('option');
+            option.value = 'paybill-' + paybillObj.paybillNum;
+            option.textContent = 'Paybill: ' + paybillObj.paybillNum + (paybillObj.accName ? ' (Acc Name: ' + paybillObj.accName + ')' : '');
+            channelSelect.appendChild(option);
+        });
+    }
+    function renderTillList() {
+        const tillList = document.getElementById('tillList');
+        tillList.innerHTML = '';
+        tills.forEach((tillObj, idx) => {
+            const div = document.createElement('div');
+            div.style = 'background:#232526; color:#ffd54f; padding:8px; margin-bottom:6px; border-radius:6px;';
+            div.innerHTML = `<strong>Till:</strong> ${tillObj.till} ${tillObj.shortcode ? '(Shortcode: ' + tillObj.shortcode + ')' : ''}<br>
+                <strong>API Key:</strong> ${tillObj.apiKey||''}<br>
+                <strong>Client ID:</strong> ${tillObj.clientId||''}<br>
+                <strong>Client Secret:</strong> ${tillObj.clientSecret||''}<br>
+                <strong>Callback URL:</strong> ${tillObj.callbackUrl||''}<br>
+                <button onclick="editTill(${idx})" style="margin-right:8px;">Edit</button>
+                <button onclick="deleteTill(${idx})">Delete</button>`;
+            tillList.appendChild(div);
+        });
+    }
+    function renderBankList() {
+        const bankList = document.getElementById('bankList');
+        bankList.innerHTML = '';
+        banks.forEach((bankObj, idx) => {
+            const div = document.createElement('div');
+            div.style = 'background:#232526; color:#ffd54f; padding:8px; margin-bottom:6px; border-radius:6px;';
+            div.innerHTML = `<strong>Bank:</strong> ${bankObj.bank}<br>
+                <strong>Account Number:</strong> ${bankObj.account||''}<br>
+                <strong>API Key:</strong> ${bankObj.apiKey||''}<br>
+                <strong>Client ID:</strong> ${bankObj.clientId||''}<br>
+                <strong>Client Secret:</strong> ${bankObj.clientSecret||''}<br>
+                <strong>Callback URL:</strong> ${bankObj.callbackUrl||''}<br>
+                <button onclick="editBank(${idx})" style="margin-right:8px;">Edit</button>
+                <button onclick="deleteBank(${idx})">Delete</button>`;
+            bankList.appendChild(div);
+        });
+    }
+    function renderPaybillList() {
+        const paybillList = document.getElementById('paybillList');
+        paybillList.innerHTML = '';
+        paybills.forEach((paybillObj, idx) => {
+            const div = document.createElement('div');
+            div.style = 'background:#232526; color:#ffd54f; padding:8px; margin-bottom:6px; border-radius:6px;';
+            div.innerHTML = `<strong>Paybill:</strong> ${paybillObj.paybillNum}<br>
+                <strong>Account Name:</strong> ${paybillObj.accName||''}<br>
+                <strong>API Key:</strong> ${paybillObj.apiKey||''}<br>
+                <strong>Client ID:</strong> ${paybillObj.clientId||''}<br>
+                <strong>Client Secret:</strong> ${paybillObj.clientSecret||''}<br>
+                <strong>Callback URL:</strong> ${paybillObj.callbackUrl||''}<br>
+                <button onclick="editPaybill(${idx})" style="margin-right:8px;">Edit</button>
+                <button onclick="deletePaybill(${idx})">Delete</button>`;
+            paybillList.appendChild(div);
+        });
+    }
+    function deleteTill(idx) {
+        tills.splice(idx, 1);
+        localStorage.setItem('tills', JSON.stringify(tills));
+        renderTillList();
+    }
+    function deleteBank(idx) {
+        banks.splice(idx, 1);
+        localStorage.setItem('banks', JSON.stringify(banks));
+        renderBankList();
+    }
+    function deletePaybill(idx) {
+        paybills.splice(idx, 1);
+        localStorage.setItem('paybills', JSON.stringify(paybills));
+        renderPaybillList();
+        renderPaymentChannels();
+    }
+    function editTill(idx) {
+        const tillObj = tills[idx];
+        showEditModal('till', idx, tillObj);
+    }
+    function editBank(idx) {
+        const bankObj = banks[idx];
+        showEditModal('bank', idx, bankObj);
+    }
+    function editPaybill(idx) {
+        const paybillObj = paybills[idx];
+        showEditPaybillModal(idx, paybillObj);
+    }
+    function showEditModal(type, idx, obj) {
+        const modal = document.createElement('div');
+        modal.style = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:9999;';
+        let fields = '';
+        if(type === 'till') {
+            fields = `
+                <label>Till Number:</label><input id="editTillNum" value="${obj.till}" style="width:100%; margin-bottom:8px;" />
+                <label>Shortcode:</label><input id="editTillShortcode" value="${obj.shortcode||''}" style="width:100%; margin-bottom:8px;" />
+                <label>API Key/Token:</label><input id="editTillApiKey" value="${obj.apiKey||''}" style="width:100%; margin-bottom:8px;" />
+                <label>Client ID:</label><input id="editTillClientId" value="${obj.clientId||''}" style="width:100%; margin-bottom:8px;" />
+                <label>Client Secret:</label><input id="editTillClientSecret" value="${obj.clientSecret||''}" style="width:100%; margin-bottom:8px;" />
+                <label>Callback URL:</label><input id="editTillCallback" value="${obj.callbackUrl||''}" style="width:100%; margin-bottom:8px;" />
+            `;
+        } else {
+            fields = `
+                <label>Bank Name:</label><input id="editBankName" value="${obj.bank}" style="width:100%; margin-bottom:8px;" />
+                <label>Account Number:</label><input id="editBankAcc" value="${obj.account||''}" style="width:100%; margin-bottom:8px;" />
+                <label>API Key/Token:</label><input id="editBankApiKey" value="${obj.apiKey||''}" style="width:100%; margin-bottom:8px;" />
+                <label>Client ID:</label><input id="editBankClientId" value="${obj.clientId||''}" style="width:100%; margin-bottom:8px;" />
+                <label>Client Secret:</label><input id="editBankClientSecret" value="${obj.clientSecret||''}" style="width:100%; margin-bottom:8px;" />
+                <label>Callback URL:</label><input id="editBankCallback" value="${obj.callbackUrl||''}" style="width:100%; margin-bottom:8px;" />
+            `;
+        }
+        modal.innerHTML = `
+            <div style="background:#232526; padding:32px; border-radius:12px; min-width:320px; color:#ffd54f;">
+                <h3>Edit ${type === 'till' ? 'Mpesa Till' : 'Bank Account'}</h3>
+                ${fields}
+                <div style="margin-top:16px; display:flex; justify-content:flex-end;">
+                    <button id="saveEditBtn" style="margin-right:8px;">Save</button>
+                    <button id="cancelEditBtn">Cancel</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById('cancelEditBtn').onclick = function() {
+            document.body.removeChild(modal);
+        };
+        document.getElementById('saveEditBtn').onclick = function() {
+            if(type === 'till') {
+                tills[idx] = {
+                    till: document.getElementById('editTillNum').value,
+                    shortcode: document.getElementById('editTillShortcode').value,
+                    apiKey: document.getElementById('editTillApiKey').value,
+                    clientId: document.getElementById('editTillClientId').value,
+                    clientSecret: document.getElementById('editTillClientSecret').value,
+                    callbackUrl: document.getElementById('editTillCallback').value
+                };
+                localStorage.setItem('tills', JSON.stringify(tills));
+                renderTillList();
+            } else {
+                banks[idx] = {
+                    bank: document.getElementById('editBankName').value,
+                    account: document.getElementById('editBankAcc').value,
+                    apiKey: document.getElementById('editBankApiKey').value,
+                    clientId: document.getElementById('editBankClientId').value,
+                    clientSecret: document.getElementById('editBankClientSecret').value,
+                    callbackUrl: document.getElementById('editBankCallback').value
+                };
+                localStorage.setItem('banks', JSON.stringify(banks));
+                renderBankList();
+            }
+            document.body.removeChild(modal);
+        };
+    }
+    function showEditPaybillModal(idx, obj) {
+        const modal = document.createElement('div');
+        modal.style = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:9999;';
+        let fields = `
+            <label>Paybill Number:</label><input id="editPaybillNum" value="${obj.paybillNum}" style="width:100%; margin-bottom:8px;" />
+            <label>Account Name:</label><input id="editPaybillAccName" value="${obj.accName||''}" style="width:100%; margin-bottom:8px;" />
+            <label>API Key/Token:</label><input id="editPaybillApiKey" value="${obj.apiKey||''}" style="width:100%; margin-bottom:8px;" />
+            <label>Client ID:</label><input id="editPaybillClientId" value="${obj.clientId||''}" style="width:100%; margin-bottom:8px;" />
+            <label>Client Secret:</label><input id="editPaybillClientSecret" value="${obj.clientSecret||''}" style="width:100%; margin-bottom:8px;" />
+            <label>Callback URL:</label><input id="editPaybillCallback" value="${obj.callbackUrl||''}" style="width:100%; margin-bottom:8px;" />
+        `;
+        modal.innerHTML = `
+            <div style="background:#232526; padding:32px; border-radius:12px; min-width:320px; color:#ffd54f;">
+                <h3>Edit Paybill</h3>
+                ${fields}
+                <div style="margin-top:16px; display:flex; justify-content:flex-end;">
+                    <button id="saveEditPaybillBtn" style="margin-right:8px;">Save</button>
+                    <button id="cancelEditPaybillBtn">Cancel</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById('cancelEditPaybillBtn').onclick = function() {
+            document.body.removeChild(modal);
+        };
+        document.getElementById('saveEditPaybillBtn').onclick = function() {
+            paybills[idx] = {
+                paybillNum: document.getElementById('editPaybillNum').value,
+                accName: document.getElementById('editPaybillAccName').value,
+                apiKey: document.getElementById('editPaybillApiKey').value,
+                clientId: document.getElementById('editPaybillClientId').value,
+                clientSecret: document.getElementById('editPaybillClientSecret').value,
+                callbackUrl: document.getElementById('editPaybillCallback').value
+            };
+            localStorage.setItem('paybills', JSON.stringify(paybills));
+            renderPaybillList();
+            renderPaymentChannels();
+            document.body.removeChild(modal);
+        };
+    }
+    // Initial render
+    renderTillList();
+    renderBankList();
+    renderPaybillList();
+    renderPaymentChannels();
+    document.getElementById('addTillBtn').onclick = function() {
+        document.getElementById('addTillForm').style.display = 'block';
+        document.getElementById('addTillBtn').disabled = true;
+    };
+    document.getElementById('cancelTillBtn').onclick = function() {
+        document.getElementById('addTillForm').style.display = 'none';
+        document.getElementById('addTillBtn').disabled = false;
+    };
+    document.getElementById('saveTillBtn').onclick = function() {
+        const newTill = {
+            till: document.getElementById('tillNum').value,
+            shortcode: document.getElementById('tillShortcode').value,
+            apiKey: document.getElementById('tillApiKey').value,
+            clientId: document.getElementById('tillClientId').value,
+            clientSecret: document.getElementById('tillClientSecret').value,
+            callbackUrl: document.getElementById('tillCallback').value
+        };
+        tills.push(newTill);
+        localStorage.setItem('tills', JSON.stringify(tills));
+        renderTillList();
+        document.getElementById('addTillForm').style.display = 'none';
+        document.getElementById('addTillBtn').disabled = false;
+    };
+    document.getElementById('addBankBtn').onclick = function() {
+        document.getElementById('addBankForm').style.display = 'block';
+        document.getElementById('addBankBtn').disabled = true;
+    };
+    document.getElementById('cancelBankBtn').onclick = function() {
+        document.getElementById('addBankForm').style.display = 'none';
+        document.getElementById('addBankBtn').disabled = false;
+    };
+    document.getElementById('saveBankBtn').onclick = function() {
+        const newBank = {
+            bank: document.getElementById('bankName').value,
+            account: document.getElementById('bankAcc').value,
+            apiKey: document.getElementById('bankApiKey').value,
+            clientId: document.getElementById('bankClientId').value,
+            clientSecret: document.getElementById('bankClientSecret').value,
+            callbackUrl: document.getElementById('bankCallback').value
+        };
+        banks.push(newBank);
+        localStorage.setItem('banks', JSON.stringify(banks));
+        renderBankList();
+        document.getElementById('addBankForm').style.display = 'none';
+        document.getElementById('addBankBtn').disabled = false;
+    };
+    document.getElementById('addPaybillBtn').onclick = function() {
+        document.getElementById('addPaybillForm').style.display = 'block';
+        document.getElementById('addPaybillBtn').disabled = true;
+    };
+    document.getElementById('cancelPaybillBtn').onclick = function() {
+        document.getElementById('addPaybillForm').style.display = 'none';
+        document.getElementById('addPaybillBtn').disabled = false;
+    };
+    document.getElementById('savePaybillBtn').onclick = function() {
+        const newPaybill = {
+            paybillNum: document.getElementById('paybillNum').value,
+            accName: document.getElementById('paybillAccName').value,
+            apiKey: document.getElementById('paybillApiKey').value,
+            clientId: document.getElementById('paybillClientId').value,
+            clientSecret: document.getElementById('paybillClientSecret').value,
+            callbackUrl: document.getElementById('paybillCallback').value
+        };
+        paybills.push(newPaybill);
+        localStorage.setItem('paybills', JSON.stringify(paybills));
+        renderPaybillList();
+        renderPaymentChannels();
+        document.getElementById('addPaybillForm').style.display = 'none';
+        document.getElementById('addPaybillBtn').disabled = false;
+    };
+    </script>
+</body>
+</html>

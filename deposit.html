@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>AfricaBased - Deposit</title>
+	<style>
+	body{margin:0;background:#0f172a;color:#fff;min-height:100vh;padding-top:76px;font-family:'Poppins',sans-serif}
+	.container{max-width:700px;margin:48px auto;padding:24px}
+	.card{background:rgba(26,34,56,0.98);padding:24px 20px 32px 20px;border-radius:16px;box-shadow:0 6px 28px rgba(0,0,0,0.4)}
+	#depositFrame{width:100%;min-height:520px;border:none;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.10);background:transparent;}
+	</style>
+</head>
+<body>
+	<main class="container">
+		<div class="card">
+			<h1>Deposit</h1>
+			<div id="depositContent"></div>
+		</div>
+	</main>
+<script>
+// Controller: Show manual or auto deposit based on admin setting
+function loadDepositMode() {
+  var mode = localStorage.getItem('activeDepositMode') || 'manual';
+  var content = document.getElementById('depositContent');
+  if (!content) return;
+  if (mode === 'auto') {
+    content.innerHTML = '<iframe id="depositFrame" src="auto-deposit.html" allowtransparency="true"></iframe>';
+  } else {
+    content.innerHTML = '<iframe id="depositFrame" src="manual-deposit.html" allowtransparency="true"></iframe>';
+  }
+}
+window.addEventListener('storage', function(e) {
+  if (e.key === 'activeDepositMode') loadDepositMode();
+});
+document.addEventListener('DOMContentLoaded', loadDepositMode);
+</script>
+</body>
+</html>

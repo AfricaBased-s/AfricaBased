@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exchange - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script type="module">
+        import { supabase } from './js/supabaseClient.js';
+        
+        // Check authentication state
+        const user = await supabase.auth.getSession();
+        if (!user.data.session) {
+            window.location.href = '/login.html';
+
+    </script>
+    <style>
+        /* Common styles */
+        :root {
+            --primary: #1a2238;
+            --accent: #4ecdc4;
+            --accent-gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            --secondary: #ff6b6b;
+            --text: #ffffff;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --bg: #0f172a;
+            --border: #e0e0e0;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            --color-dashboard: #4ecdc4;
+            --color-exchange: #ff6b6b;
+            --color-services: #9b59b6;
+            --color-withdraw: #e74c3c;
+            --color-products: #3498db;
+            --color-deposit: #2ecc71;
+            --color-active: #f1c40f;
+            --color-referrals: #1abc9c;
+            --color-statistics: #34495e;
+            --color-profile: #8e44ad;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --nav-bg: rgba(26, 34, 56, 0.98);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --hover-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+            --transition: all 0.3s ease;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 500px;
+            margin: 60px auto;
+            background: rgba(26,34,56,0.98);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            padding: 2rem;
+        }
+        .modal {
+            display: block;
+            position: relative;
+            background: #1a2238;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .modal-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .modal-form {
+            margin: 1.5rem 0;
+        }
+        .input-wrapper {
+            margin-bottom: 1rem;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid transparent;
+            border-radius: 15px;
+            color: #fff;
+            font-size: 1.1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            letter-spacing: 2px;
+        }
+        .modal-input:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            box-shadow: 0 0 0 3px rgba(78,205,196,0.2);
+        }
+        .modal-button {
+            width: 100%;
+            background: var(--accent-color);
+            color: var(--bg-dark);
+            padding: 1rem;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .modal-button:hover {
+            background: #45b7af;
+            transform: translateY(-2px);
+        }
+        .status-message {
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            text-align: center;
+            display: none;
+        }
+        .status-message.success {
+            background: rgba(72, 187, 120, 0.2);
+            color: #48bb78;
+            border: 1px solid #48bb78;
+        }
+        .status-message.error {
+            background: rgba(245, 101, 101, 0.2);
+            color: #f56565;
+            border: 1px solid #f56565;
+        }
+        .exchange-history {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(26,34,56,0.98);
+            border-radius: 15px;
+        }
+        .exchange-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .exchange-table th,
+        .exchange-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .exchange-table th {
+            font-weight: 600;
+            background: rgba(255,255,255,0.05);
+        }
+        .code-type {
+            font-size: 0.8em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+        .type-single .code-type {
+            background: rgba(78,205,196,0.2);
+            color: #4ecdc4;
+        }
+        .type-random .code-type {
+            background: rgba(255,213,79,0.2);
+            color: #ffd54f;
+        }
+        .type-user .code-type {
+            background: rgba(129,140,248,0.2);
+            color: #818cf8;
+        }
+        .status-badge {
+            background: rgba(72,187,120,0.2);
+            color: #48bb78;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        
+        /* Redemption Success Modal Styles */
+        .redemption-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+        
+        .redemption-modal.show {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .redemption-modal-content {
+            background: linear-gradient(145deg, #1a2238, #232845);
+            padding: 2.5rem;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: translateY(20px);
+            transition: transform 0.3s ease-out;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+        
+        .redemption-modal.show .redemption-modal-content {
+            transform: translateY(0);
+        }
+        
+        .success-icon {
+            font-size: 4rem;
+            color: var(--accent-color);
+            margin-bottom: 1.5rem;
+            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            70% { transform: scale(0.9); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .redemption-modal h2 {
+            color: var(--accent-color);
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .success-details {
+            margin: 1.5rem 0;
+        }
+        
+        .success-message {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .amount-display, .wallet-update {
+            background: rgba(255,255,255,0.05);
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 0.75rem 0;
+        }
+        
+        .amount-label, .wallet-label {
+            display: block;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .amount-value, .wallet-value {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 0.25rem;
+        }
+        
+        .close-modal-btn {
+            background: var(--accent-color);
+            color: var(--bg-dark);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .close-modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 213, 79, 0.2);
+        }
+        
+        .close-modal-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* Success Modal Styles */
+        .success-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .success-modal.show {
+            opacity: 1;
+        }
+        
+        .success-modal-content {
+            background: linear-gradient(145deg, #1a2238, #232845);
+            padding: 2.5rem;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+        
+        .success-modal.show .success-modal-content {
+            transform: translateY(0);
+        }
+        
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .success-modal.type-single .success-icon {
+            color: var(--primary-color);
+        }
+        
+        .success-modal.type-random .success-icon {
+            color: var(--accent-color);
+        }
+        
+        .success-modal.type-user .success-icon {
+            color: #818cf8;
+        }
+        
+        .code-type-indicator {
+            margin: 1rem 0;
+        }
+        
+        #successMessage {
+            color: rgba(255,255,255,0.8);
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+        
+        #redeemedAmount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 1.5rem 0;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            70% { transform: scale(0.9); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .modal-button {
+            padding: 1rem;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        }
+        .modal-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+        }
+        .modal-message {
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+        .message-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .modal-message.success .message-icon {
+            color: #4ecdc4;
+        }
+        .modal-message.error .message-icon {
+            color: #ff6b6b;
+        }
+        .modal-message h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .modal-message .amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4ecdc4;
+            margin: 1rem 0;
+        }
+        .modal-message p {
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 1.5rem;
+        }
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+            z-index: 2;
+        }
+        .modal-close:hover {
+            opacity: 1;
+        }
+        .back-btn-container {
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            font-size: 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.3s ease;
+        }
+        .back-btn:hover {
+            color: #45b7af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="back-btn-container">
+            <button class="back-btn" onclick="window.history.back()">&#8592; Back</button>
+        </div>
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Exchange Code</h2>
+                <p>Enter your exchange code below to redeem</p>
+            </div>
+            <div class="modal-form">
+                <div class="input-wrapper">
+                    <input type="text" id="exchangeCode" class="modal-input" placeholder="Enter exchange code" required>
+                </div>
+                <button id="redeemButton" class="modal-button">
+                    <i class="fas fa-exchange-alt"></i>
+                    Redeem Code
+                </button>
+                <div id="statusMessage" class="status-message"></div>
+            </div>
+        </div>
+        <div id="exchangeHistory" class="exchange-history">
+            <h3>Exchange History</h3>
+            <table class="exchange-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Code</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="exchangeHistoryBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Success Redemption Modal -->
+        <div id="redemptionSuccessModal" class="redemption-modal">
+            <div class="redemption-modal-content">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2>Success! 🎉</h2>
+                <div class="success-details">
+                    <p class="success-message">Code Successfully Redeemed</p>
+                    <div class="amount-display">
+                        <span class="amount-label">Amount Received:</span>
+                        <span class="amount-value" id="redeemedAmountValue"></span>
+                    </div>
+                    <div class="wallet-update">
+                        <span class="wallet-label">New Wallet Balance:</span>
+                        <span class="wallet-value" id="newWalletBalance"></span>
+                    </div>
+                </div>
+                <button class="close-modal-btn" onclick="hideRedemptionModal()">
+                    <i class="fas fa-check"></i> Continue
+                </button>
+            </div>
+        </div>
+
+    <script>
+        // Initialize exchange history from localStorage
+        let exchangeHistory = JSON.parse(localStorage.getItem('exchangeHistory') || '[]');
+        const userId = localStorage.getItem('currentUserId') || 'demo-user';
+
+        // Function to update exchange history
+        function updateExchangeHistory() {
+            const historyBody = document.getElementById('exchangeHistoryBody');
+            historyBody.innerHTML = '';
+            
+            exchangeHistory.forEach(exchange => {
+                if (exchange.userId === userId) {
+                    const row = document.createElement('tr');
+                    // Add different styles based on code type
+                    const typeClass = exchange.type ? `type-${exchange.type}` : '';
+                    row.className = typeClass;
+
+                    // Map type and codeType to display label
+                    let codeTypeLabel = '';
+                    if (exchange.type === 'single' || exchange.type === 'bulk') {
+                        // Try to get sub-type from codeType, fallback to 'Reward'
+                        let codeType = exchange.codeType || '';
+                        if (!codeType || codeType === '' || codeType.toLowerCase() === 'normal reward') {
+                            codeTypeLabel = 'Reward';
+                        } else if (codeType.toLowerCase() === 'referral bonus') {
+                            codeTypeLabel = 'Referral Bonus';
+                        } else if (codeType.toLowerCase() === 'weekly salary') {
+                            codeTypeLabel = 'Weekly Salary';
+                        } else if (codeType.toLowerCase() === 'monthly salary') {
+                            codeTypeLabel = 'Monthly Salary';
+                        } else {
+                            codeTypeLabel = codeType;
+                        }
+                    } else if (exchange.type === 'random') {
+                        codeTypeLabel = 'Random Codes';
+                    } else if (exchange.type === 'referral') {
+                        codeTypeLabel = 'Referral Reward';
+                    } else if (exchange.type === 'user') {
+                        codeTypeLabel = 'User Assigned';
+                    } else {
+                        codeTypeLabel = exchange.type;
+                    }
+
+                    const codeType = codeTypeLabel ? 
+                        `<span class="code-type ${typeClass}">${codeTypeLabel}</span>` : '';
+
+                    row.innerHTML = `
+                        <td>${new Date(exchange.date).toLocaleString()}</td>
+                        <td>${exchange.code} ${codeType}</td>
+                        <td>${exchange.amount} KSH</td>
+                        <td><span class="status-badge">${exchange.status}</span></td>
+                    `;
+                    historyBody.appendChild(row);
+                }
+            });
+        }
+
+        // Unified code redemption using adminGeneratedCodes
+        document.getElementById('redeemButton').addEventListener('click', function() {
+            const code = document.getElementById('exchangeCode').value.trim();
+            const statusMessage = document.getElementById('statusMessage');
+
+            if (!code) {
+                showStatus('Please enter an exchange code', 'error');
+                return;
+            }
+
+            (async () => {
+                // Normalize code for comparison (strip RC- prefix if present)
+                const codeNormalized = code.replace(/^RC-/, '');
+                // Check existing exchanges
+                const existingExchange = exchangeHistory.find(ex => (ex.code === code || ex.code === codeNormalized) && ex.userId === userId);
+                if (existingExchange) {
+                    showStatus('This code has already been redeemed', 'error');
+                    return;
+                }
+
+                // Get valid codes from redemptionCodes and adminGeneratedCodes
+                const redemptionCodes = JSON.parse(localStorage.getItem('redemptionCodes') || '[]');
+                const adminCodes = JSON.parse(localStorage.getItem('adminGeneratedCodes') || '[]');
+
+                // Find the code in adminGeneratedCodes (allow both with and without RC- prefix)
+                const adminCodeIndex = adminCodes.findIndex(c => c.code === code || c.code.replace(/^RC-/, '') === code);
+                const adminCode = adminCodes[adminCodeIndex];
+
+                // Find the full code details in redemptionCodes (allow both with and without RC- prefix)
+                const redemptionCodeIndex = redemptionCodes.findIndex(c =>
+                    c.code === code || c.code.replace(/^RC-(?:USER-|RAND-)?/, '') === code
+                );
+                const redemptionCode = redemptionCodes[redemptionCodeIndex];
+
+
+                // If not found locally, check Supabase DB for all code types
+                let dbCode = null;
+                let dbError = null;
+                if (!adminCode && !redemptionCode) {
+                    try {
+                        const module = await import('./js/supabaseClient.js');
+                        const supabase = module.supabase;
+                        const { data, error } = await supabase
+                            .from('reward_codes')
+                            .select('*')
+                            .or(`code.eq.${code},code.eq.RC-${code}`)
+                            .maybeSingle();
+                        if (error) {
+                            dbError = error;
+                        } else if (data) {
+                            dbCode = data;
+                        }
+                    } catch (e) {
+                        dbError = e;
+                    }
+                }
+
+                // If code is not found anywhere
+                if (!adminCode && !redemptionCode && !dbCode) {
+                    showStatus('Invalid code', 'error');
+                    return;
+                }
+
+                // If code is found in DB, check if used
+                if (dbCode) {
+                    if (dbCode.used) {
+                        showStatus('Invalid or already used code', 'error');
+                        return;
+                    }
+                    // Mark as used in DB for single/referral
+                    let updateObj = { used: true };
+                    // For random/user codes, update redemption info if needed
+                    if (dbCode.type === 'random') {
+                        // Add redemption info to redeemed array
+                        let redeemedArr = dbCode.redeemed || [];
+                        let usedAmount = (redeemedArr).reduce((sum, r) => sum + r.amount, 0);
+                        let remainingPool = dbCode.pool - usedAmount;
+                        let remainingUsers = dbCode.users - redeemedArr.length;
+                        let amount = 0;
+                        if (remainingUsers === 1) {
+                            amount = remainingPool;
+                        } else {
+                            let maxAmount = Math.min(dbCode.max, remainingPool - (dbCode.min * (remainingUsers - 1)));
+                            amount = Math.floor(Math.random() * (maxAmount - dbCode.min + 1)) + dbCode.min;
+                        }
+                        redeemedArr.push({ user: userId, amount: amount, time: new Date().toISOString() });
+                        updateObj = { redeemed: redeemedArr };
+                        // If all users have redeemed, mark as used
+                        if (redeemedArr.length >= dbCode.users) {
+                            updateObj.used = true;
+                        }
+                        dbCode.amount = amount; // for wallet update
+                        dbCode.redeemed = redeemedArr;
+                    } else if (dbCode.type === 'user') {
+                        // Add redemption info
+                        updateObj = { used: true, redeemed: [{ user: userId, amount: dbCode.amount, time: new Date().toISOString() }] };
+                        dbCode.redeemed = [{ user: userId, amount: dbCode.amount, time: new Date().toISOString() }];
+                    }
+                    try {
+                        const module = await import('./js/supabaseClient.js');
+                        const supabase = module.supabase;
+                        await supabase.from('reward_codes').update(updateObj).eq('id', dbCode.id);
+                    } catch (e) {
+                        // Optionally handle DB update error
+                    }
+                }
+
+                // If code is found locally, check if used
+                if ((adminCode && adminCode.used) || (redemptionCode && redemptionCode.used)) {
+                    showStatus('Invalid or already used code', 'error');
+                    return;
+                }
+
+                // Mark code as used in adminGeneratedCodes and redemptionCodes
+                if (adminCodeIndex !== -1) {
+                    adminCodes[adminCodeIndex].used = true;
+                    localStorage.setItem('adminGeneratedCodes', JSON.stringify(adminCodes));
+                }
+                if (redemptionCodeIndex !== -1) {
+                    redemptionCodes[redemptionCodeIndex].used = true;
+                    localStorage.setItem('redemptionCodes', JSON.stringify(redemptionCodes));
+                }
+
+                // Use code details from DB if found, else from local
+                const codeDetails = dbCode || redemptionCode;
+
+                // Continue with redemption logic as before, using codeDetails
+                // Check expiry
+                if (codeDetails.expiry && new Date(codeDetails.expiry) < new Date()) {
+                    showStatus('This code has expired', 'error');
+                    return;
+                }
+
+                // Check code type specific restrictions
+                let amount = codeDetails.amount;
+
+                if (codeDetails.type === 'user') {
+                    // Check if code is assigned to this user
+                    if (codeDetails.assignedTo && codeDetails.assignedTo !== userId) {
+                        showStatus('This code is assigned to another user', 'error');
+                        return;
+                    }
+                } else if (codeDetails.type === 'random') {
+                    // For random codes, check if pool is still available
+                    if (codeDetails.redeemed && codeDetails.redeemed.length >= codeDetails.users) {
+                        showStatus('This code has reached its maximum number of uses', 'error');
+                        return;
+                    }
+                    // Calculate random amount from remaining pool
+                    const usedAmount = (codeDetails.redeemed || []).reduce((sum, r) => sum + r.amount, 0);
+                    const remainingPool = codeDetails.pool - usedAmount;
+                    const remainingUsers = codeDetails.users - (codeDetails.redeemed || []).length;
+
+                    if (remainingUsers === 1) {
+                        amount = remainingPool;
+                    } else {
+                        const maxAmount = Math.min(codeDetails.max, remainingPool - (codeDetails.min * (remainingUsers - 1)));
+                        amount = Math.floor(Math.random() * (maxAmount - codeDetails.min + 1)) + codeDetails.min;
+                    }
+                }
+
+                // Add to exchange history
+                const exchange = {
+                    userId: userId,
+                    code: code,
+                    amount: amount,
+                    date: new Date().toISOString(),
+                    status: 'Redeemed',
+                    type: codeDetails.type
+                };
+                exchangeHistory.push(exchange);
+                localStorage.setItem('exchangeHistory', JSON.stringify(exchangeHistory));
+
+                // Update user's wallet
+                let wallet = parseFloat(localStorage.getItem('userWallet_' + userId) || '0');
+                wallet += parseFloat(amount);
+                localStorage.setItem('userWallet_' + userId, wallet);
+
+                // Show success message based on code type
+                let successMessage = '';
+                if (codeDetails.type === 'random') {
+                    successMessage = `Successfully redeemed ${amount} KSH from pool of ${codeDetails.pool} KSH!`;
+                    if (codeDetails.users && codeDetails.redeemed && codeDetails.redeemed.length > 1) {
+                        successMessage += `\n${codeDetails.users - codeDetails.redeemed.length} redemptions remaining.`;
+                    }
+                } else if (codeDetails.type === 'user') {
+                    successMessage = `Successfully redeemed your assigned code for ${amount} KSH!`;
+                } else if (codeDetails.type === 'referral') {
+                    successMessage = `Successfully redeemed referral reward for ${amount} KSH!`;
+                } else {
+                    successMessage = `Successfully redeemed ${amount} KSH!`;
+                }
+
+                document.getElementById('exchangeCode').value = '';
+                showSuccessModal(amount, codeDetails.type, successMessage);
+                updateExchangeHistory();
+            })();
+
+            // Check expiry
+            if (redemptionCode.expiry && new Date(redemptionCode.expiry) < new Date()) {
+                showStatus('This code has expired', 'error');
+                return;
+            }
+
+            // Check code type specific restrictions
+            let amount = redemptionCode.amount;
+
+            if (redemptionCode.type === 'user') {
+                // Check if code is assigned to this user
+                if (redemptionCode.assignedTo && redemptionCode.assignedTo !== userId) {
+                    showStatus('This code is assigned to another user', 'error');
+                    return;
+                }
+            } else if (redemptionCode.type === 'random') {
+                // For random codes, check if pool is still available
+                if (redemptionCode.redeemed && redemptionCode.redeemed.length >= redemptionCode.users) {
+                    showStatus('This code has reached its maximum number of uses', 'error');
+                    return;
+                }
+                // Calculate random amount from remaining pool
+                const usedAmount = (redemptionCode.redeemed || []).reduce((sum, r) => sum + r.amount, 0);
+                const remainingPool = redemptionCode.pool - usedAmount;
+                const remainingUsers = redemptionCode.users - (redemptionCode.redeemed || []).length;
+                
+                if (remainingUsers === 1) {
+                    amount = remainingPool;
+                } else {
+                    const maxAmount = Math.min(redemptionCode.max, remainingPool - (redemptionCode.min * (remainingUsers - 1)));
+                    amount = Math.floor(Math.random() * (maxAmount - redemptionCode.min + 1)) + redemptionCode.min;
+                }
+            }
+
+            // Mark code as used in adminGeneratedCodes
+            adminCode.used = true;
+            localStorage.setItem('adminGeneratedCodes', JSON.stringify(adminCodes));
+
+            // Update redemptionCodes
+            if (!redemptionCode.redeemed) redemptionCode.redeemed = [];
+            redemptionCode.redeemed.push({
+                user: userId,
+                amount: amount,
+                time: new Date().toISOString()
+            });
+            if (redemptionCode.type !== 'random') {
+                redemptionCode.used = true;
+            }
+            localStorage.setItem('redemptionCodes', JSON.stringify(redemptionCodes));
+
+            // Add to exchange history
+            const exchange = {
+                userId: userId,
+                code: code,
+                amount: amount,
+                date: new Date().toISOString(),
+                status: 'Redeemed',
+                type: redemptionCode.type
+            };
+            exchangeHistory.push(exchange);
+            localStorage.setItem('exchangeHistory', JSON.stringify(exchangeHistory));
+
+            // Update user's wallet
+            let wallet = parseFloat(localStorage.getItem('userWallet_' + userId) || '0');
+            wallet += parseFloat(amount);
+            localStorage.setItem('userWallet_' + userId, wallet);
+
+            // Show success message based on code type
+            let successMessage = '';
+            if (redemptionCode.type === 'random') {
+                successMessage = `Successfully redeemed ${amount} KSH from pool of ${redemptionCode.pool} KSH!`;
+                if (remainingUsers > 1) {
+                    successMessage += `\n${remainingUsers - 1} redemptions remaining.`;
+                }
+            } else if (redemptionCode.type === 'user') {
+                successMessage = `Successfully redeemed your assigned code for ${amount} KSH!`;
+            } else {
+                successMessage = `Successfully redeemed ${amount} KSH!`;
+            }
+
+            document.getElementById('exchangeCode').value = '';
+            showSuccessModal(amount, redemptionCode.type, successMessage);
+            updateExchangeHistory();
+        });
+
+        function showStatus(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message ' + type;
+            statusMessage.style.display = 'block';
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        function showRedemptionSuccess(amount, newBalance, codeType) {
+            // Update modal content
+            document.getElementById('redeemedAmountValue').textContent = amount + ' KSH';
+            document.getElementById('newWalletBalance').textContent = newBalance + ' KSH';
+            
+            const modal = document.getElementById('redemptionSuccessModal');
+            const successMsg = document.querySelector('.success-message');
+            
+            // Customize message based on code type
+            switch(codeType) {
+                case 'random':
+                    successMsg.textContent = 'Random Pool Code Successfully Redeemed!';
+                    break;
+                case 'user':
+                    successMsg.textContent = 'Your Personal Code Has Been Redeemed!';
+                    break;
+                default:
+                    successMsg.textContent = 'Code Successfully Redeemed!';
+            }
+            
+            // Show modal with animation
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => {
+                modal.classList.add('show');
+            });
+        }
+
+        function hideRedemptionModal() {
+            const modal = document.getElementById('redemptionSuccessModal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        // Initial history render
+        updateExchangeHistory();
+    </script>
+    <!-- Success Modal -->
+    <div id="successModal" class="success-modal">
+        <div class="success-modal-content">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>Success!</h2>
+            <div class="code-type-indicator"></div>
+            <p id="successMessage"></p>
+            <div id="redeemedAmount" class="amount"></div>
+            <button class="modal-button" onclick="closeSuccessModal()">
+                <i class="fas fa-check"></i>
+                Continue
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function showSuccessModal(amount, codeType, message) {
+            const modal = document.getElementById('successModal');
+            const amountEl = document.getElementById('redeemedAmount');
+            const messageEl = document.getElementById('successMessage');
+            const typeIndicator = document.querySelector('.code-type-indicator');
+
+            // Get user name from localStorage (fallback to userId if not set)
+            let userName = localStorage.getItem('currentUserName') || localStorage.getItem('currentUser') || 'User';
+
+            // Map codeType to display label
+            let codeTypeLabel = '';
+            if (codeType === 'single' || codeType === 'bulk') {
+                // Try to get sub-type from last redeemed code in history
+                let last = exchangeHistory && exchangeHistory.length ? exchangeHistory[exchangeHistory.length-1] : null;
+                let subType = last && (last.codeType || last.subType);
+                if (!subType || subType === '' || subType.toLowerCase() === 'normal reward') {
+                    codeTypeLabel = 'Reward';
+                } else if (subType.toLowerCase() === 'referral bonus') {
+                    codeTypeLabel = 'Referral Bonus';
+                } else if (subType.toLowerCase() === 'weekly salary') {
+                    codeTypeLabel = 'Weekly Salary';
+                } else if (subType.toLowerCase() === 'monthly salary') {
+                    codeTypeLabel = 'Monthly Salary';
+                } else {
+                    codeTypeLabel = subType;
+                }
+            } else if (codeType === 'random') {
+                codeTypeLabel = 'Random Codes';
+            } else if (codeType === 'referral') {
+                codeTypeLabel = 'Referral Reward';
+            } else if (codeType === 'user') {
+                codeTypeLabel = 'User Assigned';
+            } else {
+                codeTypeLabel = codeType;
+            }
+
+            // Update content
+            amountEl.textContent = amount + ' KSH';
+            // Add user name to the message (use HTML line break for display)
+            messageEl.innerHTML = message + '<br><strong>Awarded to:</strong> ' + userName;
+
+            // Set type-specific styles
+            typeIndicator.innerHTML = `<span class="code-type type-${codeType}">${codeTypeLabel}</span>`;
+
+            // Show modal with animation
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => {
+                modal.classList.add('show');
+            });
+        }
+
+        function closeSuccessModal() {
+            const modal = document.getElementById('successModal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+    </script>
+</body>
+</html>

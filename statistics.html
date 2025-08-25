@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="js/supabaseClient.js"></script>
+    <title>Statistics Dashboard - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script type="module" src="js/supabaseClient.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/sessionUtils.js"></script>
+    <style>
+        :root {
+            --primary-color: #00A859;
+            --primary-dark: #007540;
+            --secondary-color: #2C3E50;
+            --accent-color: #4ecdc4;
+            --background-color: #000000;
+            --card-color: #1a1a1a;
+            --success-color: #27AE60;
+            --warning-color: #F39C12;
+            --danger-color: #E74C3C;
+            --text-color: #ffffff;
+            --text-color-secondary: rgba(255, 255, 255, 0.7);
+            --shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            padding: 20px;
+            color: var(--text-color);
+        }
+
+        .statistics-dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: var(--card-color);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            transition: 0.5s;
+        }
+
+        .header:hover::before {
+            left: 100%;
+        }
+
+        .header h1 {
+            color: var(--text-color);
+            font-size: 24px;
+        }
+
+        .back-button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .back-button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: var(--card-color);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.05),
+                transparent
+            );
+            transition: 0.5s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+            box-shadow: 0 8px 32px rgba(0, 168, 89, 0.15);
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover .stat-icon {
+            transform: scale(1.1);
+        }
+
+        .wallet-icon {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 168, 89, 0.2);
+        }
+
+        .balance-icon {
+            background-color: var(--success-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
+        }
+
+        .asset-icon {
+            background-color: var(--warning-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.2);
+        }
+
+        .income-icon {
+            background-color: var(--secondary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(44, 62, 80, 0.2);
+        }
+
+        .today-icon {
+            background-color: var(--accent-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+        }
+
+        .recharge-icon {
+            background-color: var(--danger-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.2);
+        }
+
+        .stat-icon i {
+            font-size: 24px;
+        }
+
+        .stat-title {
+            color: var(--text-color-secondary);
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            color: var(--text-color);
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-change {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 14px;
+            gap: 4px;
+        }
+
+        .positive {
+            color: var(--success-color);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .negative {
+            color: var(--danger-color);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="statistics-dashboard">
+        <div class="header">
+            <h1>Financial Statistics</h1>
+            <a href="home.html" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon wallet-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="stat-title">Wallet Balance</div>
+                </div>
+                <div class="stat-value">KSH 125,000</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> +2.5% from last week
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon balance-icon">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <div class="stat-title">Account Balance</div>
+                </div>
+                <div class="stat-value">KSH 450,000</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> +3.2% from last month
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon asset-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="stat-title">Total Assets</div>
+                </div>
+                <div class="stat-value">KSH 2,750,000</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> +5.8% from last month
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon income-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="stat-title">Total Income</div>
+                </div>
+                <div class="stat-value">KSH 875,000</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> +4.3% from last month
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon today-icon">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="stat-title">Today's Income</div>
+                </div>
+                <div class="stat-value">KSH 15,000</div>
+                <div class="stat-change negative">
+                    <i class="fas fa-arrow-down"></i> -1.2% from yesterday
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon recharge-icon">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <div class="stat-title">Total Recharge</div>
+                </div>
+                <div class="stat-value">KSH 350,000</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> +2.8% from last month
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { supabase } from './js/supabaseClient.js';
+        import { checkAuth } from './js/sessionUtils.js';
+
+        // Format currency
+        function formatCurrency(amount) {
+            return `KSH ${amount.toLocaleString()}`;
+        }
+
+        // Calculate percentage change with period comparison
+        function calculatePercentageChange(current, previous) {
+            if (!previous || previous === 0) return 0;
+            return ((current - previous) / previous) * 100;
+        }
+
+        // Show loading state
+        function showLoading() {
+            document.querySelectorAll('.stat-value').forEach(el => {
+                el.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            });
+        }
+
+        // Show error state
+        function showError(message) {
+            const header = document.querySelector('.header');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.style.color = 'var(--danger-color)';
+            errorDiv.textContent = message;
+            header.appendChild(errorDiv);
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        // Update statistics display with loading and error handling
+        async function updateStatisticsDisplay(data) {
+            try {
+                // Update each statistic with error handling
+                const updateStat = (iconClass, value, change, period) => {
+                    const valueEl = document.querySelector(`${iconClass} + .stat-title + .stat-value`);
+                    const changeEl = valueEl.nextElementSibling;
+
+                    // Default to null, show 0 if null
+                    let displayValue = value == null ? 0 : value;
+                    if (valueEl) {
+                        valueEl.textContent = formatCurrency(displayValue);
+                    }
+
+                    // Only show change if value is not null and income is increasing
+                    let showChange = (change != null && value != null && value > 0);
+                    if (changeEl) {
+                        if (showChange) {
+                            const isPositive = change >= 0;
+                            changeEl.className = `stat-change ${isPositive ? 'positive' : 'negative'}`;
+                            changeEl.innerHTML = `
+                                <i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i>
+                                ${isPositive ? '+' : ''}${change.toFixed(1)}% from ${period}
+                            `;
+                        } else {
+                            changeEl.className = 'stat-change';
+                            changeEl.innerHTML = '';
+                        }
+                    }
+                };
+
+                // Update all statistics, defaulting to null (shows 0) and only increasing with income
+                updateStat('.wallet-icon', data.wallet_balance ?? null, data.wallet_change ?? null, 'last week');
+                updateStat('.balance-icon', data.account_balance ?? null, data.balance_change ?? null, 'last month');
+                updateStat('.asset-icon', data.total_assets ?? null, data.asset_change ?? null, 'last month');
+                updateStat('.income-icon', data.total_income ?? null, data.income_change ?? null, 'last month');
+                updateStat('.today-icon', data.today_income ?? null, data.today_income_change ?? null, 'yesterday');
+                updateStat('.recharge-icon', data.total_recharge ?? null, data.recharge_change ?? null, 'last month');
+
+            } catch (error) {
+                console.error('Error updating display:', error);
+                showError('Error updating statistics display');
+            }
+        }
+
+        // Calculate period comparisons
+        function getPeriodComparisons(transactions) {
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const yesterday = new Date(now.setDate(now.getDate() - 1)).toISOString().split('T')[0];
+            const lastWeek = new Date(now.setDate(now.getDate() - 7)).toISOString().split('T')[0];
+            const lastMonth = new Date(now.setMonth(now.getMonth() - 1)).toISOString().split('T')[0];
+
+            const periodTransactions = {
+                today: transactions.filter(t => t.created_at.startsWith(today)),
+                yesterday: transactions.filter(t => t.created_at.startsWith(yesterday)),
+                thisWeek: transactions.filter(t => t.created_at >= lastWeek),
+                lastWeek: transactions.filter(t => t.created_at < lastWeek && t.created_at >= new Date(now.setDate(now.getDate() - 14)).toISOString().split('T')[0]),
+                thisMonth: transactions.filter(t => t.created_at >= lastMonth),
+                lastMonth: transactions.filter(t => t.created_at < lastMonth && t.created_at >= new Date(now.setMonth(now.getMonth() - 2)).toISOString().split('T')[0])
+            };
+
+            return periodTransactions;
+        }
+
+        // Fetch statistics from Supabase
+        async function fetchStatistics() {
+            try {
+                showLoading();
+
+                const user = await checkAuth();
+                if (!user) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                // Fetch all required data in parallel
+                const [walletResponse, investmentsResponse, transactionsResponse] = await Promise.all([
+                    supabase.from('user_wallet').select('balance').eq('user_id', user.id).single(),
+                    supabase.from('user_products').select('*').eq('user_id', user.id),
+                    supabase.from('transactions').select('*').eq('user_id', user.id)
+                ]);
+
+                // Check for errors
+                if (walletResponse.error) throw new Error('Error fetching wallet data: ' + walletResponse.error.message);
+                if (investmentsResponse.error) throw new Error('Error fetching investments: ' + investmentsResponse.error.message);
+                if (transactionsResponse.error) throw new Error('Error fetching transactions: ' + transactionsResponse.error.message);
+
+                const periods = getPeriodComparisons(transactionsResponse.data || []);
+                
+                // Calculate current values
+                const current = {
+                    wallet_balance: walletResponse.data?.balance || 0,
+                    invested_amount: investmentsResponse.data?.reduce((sum, inv) => sum + (inv.invested_amount || 0), 0) || 0,
+                    today_income: periods.today.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0),
+                    total_income: (transactionsResponse.data || []).filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0),
+                    total_recharge: (transactionsResponse.data || []).filter(t => t.type === 'deposit').reduce((sum, t) => sum + (t.amount || 0), 0)
+                };
+
+                // Calculate previous values for comparison
+                const previous = {
+                    wallet_balance: current.wallet_balance - periods.thisWeek.filter(t => t.type === 'deposit').reduce((sum, t) => sum + (t.amount || 0), 0),
+                    invested_amount: current.invested_amount - periods.thisMonth.filter(t => t.type === 'investment').reduce((sum, t) => sum + (t.amount || 0), 0),
+                    yesterday_income: periods.yesterday.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0),
+                    last_month_income: periods.lastMonth.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0),
+                    last_month_recharge: periods.lastMonth.filter(t => t.type === 'deposit').reduce((sum, t) => sum + (t.amount || 0), 0)
+                };
+
+                // Calculate statistics with changes
+                const stats = {
+                    wallet_balance: current.wallet_balance,
+                    wallet_change: calculatePercentageChange(current.wallet_balance, previous.wallet_balance),
+                    account_balance: current.invested_amount,
+                    balance_change: calculatePercentageChange(current.invested_amount, previous.invested_amount),
+                    total_assets: current.wallet_balance + current.invested_amount,
+                    asset_change: calculatePercentageChange(
+                        current.wallet_balance + current.invested_amount,
+                        previous.wallet_balance + previous.invested_amount
+                    ),
+                    total_income: current.total_income,
+                    income_change: calculatePercentageChange(
+                        periods.thisMonth.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0),
+                        previous.last_month_income
+                    ),
+                    today_income: current.today_income,
+                    today_income_change: calculatePercentageChange(current.today_income, previous.yesterday_income),
+                    total_recharge: current.total_recharge,
+                    recharge_change: calculatePercentageChange(
+                        periods.thisMonth.filter(t => t.type === 'deposit').reduce((sum, t) => sum + (t.amount || 0), 0),
+                        previous.last_month_recharge
+                    )
+                };
+
+                await updateStatisticsDisplay(stats);
+
+            } catch (error) {
+                console.error('Error fetching statistics:', error);
+                showError(error.message);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchStatistics();
+
+            // Set up real-time subscriptions for updates
+            const subscriptions = [
+                supabase.channel('wallet_changes').on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'user_wallet'
+                }, fetchStatistics).subscribe(),
+
+                supabase.channel('transaction_changes').on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'transactions'
+                }, fetchStatistics).subscribe(),
+
+                supabase.channel('investment_changes').on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'user_products'
+                }, fetchStatistics).subscribe()
+            ];
+
+            // Cleanup subscriptions on page unload
+            window.addEventListener('unload', () => {
+                subscriptions.forEach(sub => sub.unsubscribe());
+            });
+        });
+    </script>
+</body>
+</html>

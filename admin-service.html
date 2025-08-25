@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AfricaBased Admin Service Management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { background: #181818; color: #ffd54f; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
+        .service-panel { margin: 32px auto; max-width: 900px; background: #232526; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.12); padding: 32px; }
+        h2 { color: #ffd54f; text-align: center; }
+        .section { margin-bottom: 32px; }
+        .section h3 { color: #ffd54f; margin-bottom: 12px; }
+        .item-list { margin-bottom: 12px; }
+        .item-list div { background:#232526; color:#ffd54f; padding:8px; margin-bottom:6px; border-radius:6px; display:flex; align-items:center; justify-content:space-between; }
+        .service-action-btn { background: #ffd54f; color: #232526; border: none; padding: 8px 18px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-left: 8px; }
+        .service-action-btn:hover { background: #232526; color: #ffd54f; }
+        input, select { width: 100%; margin-bottom: 8px; padding: 6px; border-radius: 4px; border: none; background: #232526; color: #ffd54f; }
+        .admin-modal { display: flex; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; }
+        .admin-modal-content { background: #2c2f33; padding: 24px; border-radius: 8px; width: 400px; }
+        .admin-modal h2 { margin-top: 0; }
+        .system-btn { cursor: pointer; }
+        .sync-status { display: none; background: #232526; padding: 16px; border-radius: 8px; margin: 16px auto; max-width: 600px; }
+        .sync-progress { height: 4px; background: #333; border-radius: 2px; margin: 8px 0; }
+        .progress-bar { height: 100%; width: 0; background: #2196f3; border-radius: 2px; transition: width 0.3s; }
+    </style>
+</head>
+<body>
+    <div style="margin: 24px 0 0 24px;">
+        <a href="Admin-panel.html" class="back-btn" style="background:#ffd54f;color:#232526;padding:8px 18px;border-radius:6px;text-decoration:none;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.10);transition:background 0.2s, color 0.2s;">&larr; Back to Admin Panel</a>
+    </div>
+    <!-- Global Admin Notification Bar -->
+    <div id="adminNotificationBar" style="background:#232526;padding:18px 22px;border-radius:10px;margin-bottom:24px;box-shadow:0 2px 8px rgba(255,213,79,0.08);color:#ffd54f;">
+        <h3 style="margin-top:0;margin-bottom:10px;color:#ffd54f;">Notifications</h3>
+        <ul id="adminNotificationList" style="list-style:none;padding:0;margin:0;"></ul>
+    </div>
+    <div class="service-panel">
+        <h2>AfricaBased Service Management</h2>
+        <div class="section">
+            <h3>WhatsApp Group Links</h3>
+            <div id="groupList" class="item-list"></div>
+            <button id="addGroupBtn" class="service-action-btn">Add WhatsApp Group</button>
+            <div id="addGroupForm" style="display:none; margin-top:12px; background:#232526; padding:18px; border-radius:8px;">
+                <label>WhatsApp Group Link:</label><input id="groupLink" placeholder="https://wa.me/" />
+                <label>Group Name:</label><input id="groupName" />
+                <label>Category:</label>
+                <select id="groupCategory">
+                    <option value="Support Group">Support Group</option>
+                    <option value="Finance Group">Finance Group</option>
+                    <option value="Product Group">Product Group</option>
+                    <option value="Main Community Group">Main Community Group</option>
+                </select>
+                <button id="saveGroupBtn" class="service-action-btn">Save</button>
+                <button id="cancelGroupBtn" class="service-action-btn">Cancel</button>
+            </div>
+        </div>
+        <div class="section">
+            <h3>WhatsApp Managers</h3>
+            <div id="managerList" class="item-list"></div>
+            <button id="addManagerBtn" class="service-action-btn">Add WhatsApp Manager</button>
+            <div id="addManagerForm" style="display:none; margin-top:12px; background:#232526; padding:18px; border-radius:8px;">
+                <label>Manager WhatsApp Link:</label><input id="managerLink" placeholder="https://wa.me/" />
+                <label>Manager Name:</label><input id="managerName" />
+                <label>Category:</label>
+                <select id="managerCategory">
+                    <option value="Support Manager">Support Manager</option>
+                    <option value="Finance Manager">Finance Manager</option>
+                    <option value="Product Manager">Product Manager</option>
+                    <option value="General Manager">General Manager</option>
+                </select>
+                <button id="saveManagerBtn" class="service-action-btn">Save</button>
+                <button id="cancelManagerBtn" class="service-action-btn">Cancel</button>
+            </div>
+        </div>
+        <!-- Reset/Sync Buttons and Modal -->
+        <div style="margin: 24px 0 0 24px; display: flex; align-items: center; gap: 16px;">
+            <a href="Admin-panel.html" class="back-btn" style="background:#ffd54f;color:#232526;padding:8px 18px;border-radius:6px;text-decoration:none;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.10);transition:background 0.2s, color 0.2s;">&larr; Back to Admin Panel</a>
+            <button class="system-btn btn-reset" onclick="confirmSystemReset()" style="background:#ff9800;color:#000;padding:8px 18px;border-radius:6px;font-weight:600;">Reset</button>
+            <button class="system-btn btn-sync" onclick="syncChanges()" style="background:#2196f3;color:#fff;padding:8px 18px;border-radius:6px;font-weight:600;">Sync Changes</button>
+        </div>
+
+        <!-- Reset Confirmation Modal -->
+        <div id="resetConfirmModal" class="admin-modal" style="display:none;">
+            <div class="admin-modal-content">
+                <h2>Confirm System Reset</h2>
+                <p>This will reset the page and clear all local changes. Enter security key to confirm:</p>
+                <input type="password" id="resetSecurityKey" placeholder="Security Key">
+                <div style="margin-top:18px;display:flex;gap:12px;justify-content:flex-end;">
+                    <button class="system-btn btn-reset" onclick="executeSystemReset()">Confirm Reset</button>
+                    <button class="system-btn" onclick="closeAdminModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sync Status -->
+        <div class="sync-status" id="syncStatus" style="display:none;background:#232526;padding:16px;border-radius:8px;margin:16px auto;max-width:600px;">
+            <div class="sync-progress" style="height:4px;background:#333;border-radius:2px;margin:8px 0;">
+                <div class="progress-bar" id="syncProgress" style="height:100%;width:0;background:#2196f3;border-radius:2px;transition:width 0.3s;"></div>
+            </div>
+            <p id="syncMessage"></p>
+        </div>
+    </div>
+    <script>
+    // Demo storage
+    let groups = JSON.parse(localStorage.getItem('serviceGroups') || '[]');
+    let managers = JSON.parse(localStorage.getItem('serviceManagers') || '[]');
+    // Group logic
+    function renderGroupList() {
+        const list = document.getElementById('groupList');
+        list.innerHTML = '';
+        groups.forEach((g, idx) => {
+            const div = document.createElement('div');
+            div.innerHTML = `<span><a href="${g.link}" target="_blank" style="color:#ffd54f;">${g.link}</a> | ${g.name} | ${g.category}</span>
+                <span>
+                    <button onclick="editGroup(${idx})" class="service-action-btn">Edit</button>
+                    <button onclick="deleteGroup(${idx})" class="service-action-btn">Delete</button>
+                </span>`;
+            list.appendChild(div);
+        });
+    }
+    document.getElementById('addGroupBtn').onclick = function() {
+        document.getElementById('addGroupForm').style.display = 'block';
+    };
+    document.getElementById('cancelGroupBtn').onclick = function() {
+        document.getElementById('addGroupForm').style.display = 'none';
+    };
+    document.getElementById('saveGroupBtn').onclick = function() {
+        groups.push({ link: document.getElementById('groupLink').value, name: document.getElementById('groupName').value, category: document.getElementById('groupCategory').value });
+        localStorage.setItem('serviceGroups', JSON.stringify(groups));
+        renderGroupList();
+        document.getElementById('addGroupForm').style.display = 'none';
+        document.getElementById('groupLink').value = '';
+        document.getElementById('groupName').value = '';
+        document.getElementById('groupCategory').value = 'General';
+    };
+    function editGroup(idx) {
+        const g = groups[idx];
+        document.getElementById('groupLink').value = g.link;
+        document.getElementById('groupName').value = g.name;
+        document.getElementById('groupCategory').value = g.category;
+        document.getElementById('addGroupForm').style.display = 'block';
+        document.getElementById('saveGroupBtn').onclick = function() {
+            groups[idx] = { link: document.getElementById('groupLink').value, name: document.getElementById('groupName').value, category: document.getElementById('groupCategory').value };
+            localStorage.setItem('serviceGroups', JSON.stringify(groups));
+            renderGroupList();
+            document.getElementById('addGroupForm').style.display = 'none';
+            document.getElementById('groupLink').value = '';
+            document.getElementById('groupName').value = '';
+            document.getElementById('groupCategory').value = 'General';
+            document.getElementById('saveGroupBtn').onclick = null;
+        };
+    }
+    function deleteGroup(idx) {
+        groups.splice(idx, 1);
+        localStorage.setItem('serviceGroups', JSON.stringify(groups));
+        renderGroupList();
+    }
+    renderGroupList();
+    // Manager logic
+    function renderManagerList() {
+        const list = document.getElementById('managerList');
+        list.innerHTML = '';
+        managers.forEach((m, idx) => {
+            const div = document.createElement('div');
+            div.innerHTML = `<span><a href="${m.link}" target="_blank" style="color:#ffd54f;">${m.link}</a> | ${m.name}</span>
+                <span>
+                    <button onclick="editManager(${idx})" class="service-action-btn">Edit</button>
+                    <button onclick="deleteManager(${idx})" class="service-action-btn">Delete</button>
+                </span>`;
+            list.appendChild(div);
+        });
+    }
+    document.getElementById('addManagerBtn').onclick = function() {
+        document.getElementById('addManagerForm').style.display = 'block';
+    };
+    document.getElementById('cancelManagerBtn').onclick = function() {
+        document.getElementById('addManagerForm').style.display = 'none';
+    };
+    document.getElementById('saveManagerBtn').onclick = function() {
+        managers.push({ link: document.getElementById('managerLink').value, name: document.getElementById('managerName').value });
+        localStorage.setItem('serviceManagers', JSON.stringify(managers));
+        renderManagerList();
+        document.getElementById('addManagerForm').style.display = 'none';
+        document.getElementById('managerLink').value = '';
+        document.getElementById('managerName').value = '';
+    };
+    function editManager(idx) {
+        const m = managers[idx];
+        document.getElementById('managerLink').value = m.link;
+        document.getElementById('managerName').value = m.name;
+        document.getElementById('addManagerForm').style.display = 'block';
+        document.getElementById('saveManagerBtn').onclick = function() {
+            managers[idx] = { link: document.getElementById('managerLink').value, name: document.getElementById('managerName').value };
+            localStorage.setItem('serviceManagers', JSON.stringify(managers));
+            renderManagerList();
+            document.getElementById('addManagerForm').style.display = 'none';
+            document.getElementById('managerLink').value = '';
+            document.getElementById('managerName').value = '';
+            document.getElementById('saveManagerBtn').onclick = null;
+        };
+    }
+    function deleteManager(idx) {
+        managers.splice(idx, 1);
+        localStorage.setItem('serviceManagers', JSON.stringify(managers));
+        renderManagerList();
+    }
+    renderManagerList();
+    // --- Reset and Sync Logic ---
+    function confirmSystemReset() {
+      document.getElementById('resetConfirmModal').style.display = 'flex';
+    }
+    function closeAdminModal() {
+      document.getElementById('resetConfirmModal').style.display = 'none';
+    }
+    function executeSystemReset() {
+      const key = document.getElementById('resetSecurityKey').value;
+      if (key === '1540568e') {
+        // Clear localStorage and reload page
+        localStorage.clear();
+        sessionStorage.clear();
+        location.reload();
+      } else {
+        alert('Incorrect security key.');
+      }
+    }
+    async function syncChanges() {
+      try {
+        const syncStatus = document.getElementById('syncStatus');
+        const syncProgress = document.getElementById('syncProgress');
+        const syncMessage = document.getElementById('syncMessage');
+        syncStatus.style.display = 'block';
+        syncMessage.textContent = 'Synchronizing changes...';
+        // Simulate sync progress
+        const steps = ['services'];
+        for (let i = 0; i < steps.length; i++) {
+          syncProgress.style.width = ((i + 1) / steps.length * 100) + '%';
+          syncMessage.textContent = `Syncing ${steps[i]}...`;
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        syncMessage.textContent = 'All changes synchronized!';
+        setTimeout(() => { syncStatus.style.display = 'none'; }, 2000);
+        // Optionally, reload service data here
+      } catch (error) {
+        alert('Failed to sync changes. Please try again.');
+      }
+    }
+    </script>
+</body>
+        <script>
+        // --- Admin Notification Bar Logic ---
+        function renderAdminNotifications() {
+            let notifications = [];
+            try { notifications = JSON.parse(localStorage.getItem('adminDepositNotifications') || '[]'); } catch {}
+            const list = document.getElementById('adminNotificationList');
+            if (!list) return;
+            if (!notifications.length) {
+                list.innerHTML = '<li style="color:#aaa;">No notifications yet.</li>';
+                return;
+            }
+            list.innerHTML = notifications.map(n => {
+                let info = `<strong>${n.number || 'N/A'}</strong> tried to deposit <strong>KES ${n.amount || 'N/A'}</strong>`;
+                if (n.txid) info += ` (TxID: <span style='color:#ffd54f;'>${n.txid}</span>)`;
+                info += ` <span style='font-size:0.95em;color:#aaa;'>[${new Date(n.time).toLocaleString()}]</span>`;
+                return `<li style='margin-bottom:8px;'>${info}</li>`;
+            }).join('');
+        }
+        renderAdminNotifications();
+        setInterval(renderAdminNotifications, 5000);
+        </script>
+</html>

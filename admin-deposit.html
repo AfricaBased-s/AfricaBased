@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AfricaBased Admin Deposit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+    body { background: #181c24; color: #f5f6fa; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
+    .deposit-panel { margin: 32px auto; max-width: 900px; background: #232526; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.12); padding: 32px; }
+    .deposit-btns { display: flex; gap: 24px; justify-content: center; margin-bottom: 32px; }
+    .deposit-action-btn { background: #2196f3; color: #fff; border: none; padding: 12px 28px; border-radius: 6px; font-size: 1.05rem; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.10); transition: background 0.2s, color 0.2s; }
+    .deposit-action-btn:hover { background: #1976d2; color: #ffd54f; }
+    .deposit-table-scroll { max-height: 320px; overflow-y: auto; margin-bottom: 18px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.10); background: #232526; }
+    .account-list { margin-bottom: 16px; }
+    .account-list div { background:#23272f; color:#ffd54f; padding:8px; margin-bottom:6px; border-radius:6px; }
+    .admin-modal { position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:9999; }
+    .admin-modal-content { background:#232526; padding:32px; border-radius:12px; min-width:320px; color:#ffd54f; }
+    .system-btn { background:#2196f3; color:#fff; padding:8px 18px; border-radius:6px; font-weight:600; border:none; cursor:pointer; }
+    .system-btn:hover { background:#1976d2; }
+    .sync-status { display:none; background:#232526; padding:16px; border-radius:8px; margin:16px auto; max-width:600px; }
+    .sync-progress { height:4px; background:#31343b; border-radius:2px; margin:8px 0; }
+    .progress-bar { height:100%; width:0; background:#2196f3; border-radius:2px; transition:width 0.3s; }
+    h2, h3, label { color: #ffd54f; }
+    </style>
+</head>
+<body>
+    <!-- Reset/Sync Buttons and Modal -->
+    <div style="margin: 24px 0 0 24px; display: flex; align-items: center; gap: 16px;">
+        <a href="Admin-panel.html" class="back-btn" style="background:#ffd54f;color:#232526;padding:8px 18px;border-radius:6px;text-decoration:none;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.10);transition:background 0.2s, color 0.2s;">&larr; Back to Admin Panel</a>
+        <button class="system-btn btn-reset" onclick="confirmSystemReset()" style="background:#ff9800;color:#000;padding:8px 18px;border-radius:6px;font-weight:600;">Reset</button>
+        <button class="system-btn btn-sync" onclick="syncChanges()" style="background:#2196f3;color:#fff;padding:8px 18px;border-radius:6px;font-weight:600;">Sync Changes</button>
+    </div>
+
+    <!-- Reset Confirmation Modal -->
+    <div id="resetConfirmModal" class="admin-modal" style="display:none;">
+        <div class="admin-modal-content">
+            <h2>Confirm System Reset</h2>
+            <p>This will reset the page and clear all local changes. Enter security key to confirm:</p>
+            <input type="password" id="resetSecurityKey" placeholder="Security Key">
+            <div style="margin-top:18px;display:flex;gap:12px;justify-content:flex-end;">
+                <button class="system-btn btn-reset" onclick="executeSystemReset()">Confirm Reset</button>
+                <button class="system-btn" onclick="closeAdminModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sync Status -->
+    <div class="sync-status" id="syncStatus" style="display:none;background:#232526;padding:16px;border-radius:8px;margin:16px auto;max-width:600px;">
+        <div class="sync-progress" style="height:4px;background:#333;border-radius:2px;margin:8px 0;">
+            <div class="progress-bar" id="syncProgress" style="height:100%;width:0;background:#2196f3;border-radius:2px;transition:width 0.3s;"></div>
+        </div>
+        <p id="syncMessage"></p>
+    </div>
+
+    <!-- Global Admin Notification Bar -->
+    <div id="adminNotificationBar" style="background:#232526;padding:18px 22px;border-radius:10px;margin-bottom:24px;box-shadow:0 2px 8px rgba(255,213,79,0.08);color:#ffd54f;">
+        <h3 style="margin-top:0;margin-bottom:10px;color:#ffd54f;">Notifications</h3>
+        <ul id="adminNotificationList" style="list-style:none;padding:0;margin:0;"></ul>
+    </div>
+    <div class="deposit-panel">
+        <h2 style="color:#ffd54f; text-align:center;">AfricaBased Admin Deposit Channels</h2>
+        <div class="deposit-channel-control" style="display:flex; align-items:center; gap:18px; justify-content:center; margin-bottom:32px;">
+            <label for="depositChannel" style="color:#ffd54f; font-weight:600;">Deposit Channel:</label>
+            <select id="depositChannel" style="padding:8px 18px; border-radius:6px; background:#232526; color:#ffd54f; font-size:1rem;"></select>
+            <label for="depositMode" style="color:#ffd54f; font-weight:600;">Mode:</label>
+            <select id="depositMode" style="padding:8px 18px; border-radius:6px; background:#232526; color:#ffd54f; font-size:1rem;">
+                <option value="manual">Manual Deposit</option>
+                <option value="auto">Auto Deposit (API)</option>
+            </select>
+            <button id="switchDepositBtn" class="deposit-action-btn">Switch Channel/Mode</button>
+        </div>
+        <div class="deposit-accounts-control" style="display:flex; gap:24px; justify-content:center; margin-bottom:32px;">
+            <div>
+                <h3 style="color:#ffd54f;">Mpesa Tills</h3>
+                <div id="tillList" class="account-list"></div>
+                <button id="addTillBtn" class="deposit-action-btn">Add Mpesa Till</button>
+                <div id="addTillForm" style="display:none; margin-top:12px; background:#232526; padding:18px; border-radius:8px;">
+                    <label>Till Number:</label><input id="tillNum" style="width:100%; margin-bottom:8px;" />
+                    <label>Business Name:</label><input id="tillBusinessName" style="width:100%; margin-bottom:8px;" />
+                    <label>Shortcode:</label><input id="tillShortcode" style="width:100%; margin-bottom:8px;" />
+                    <label>API Key/Token:</label><input id="tillApiKey" style="width:100%; margin-bottom:8px;" />
+                    <label>Client ID:</label><input id="tillClientId" style="width:100%; margin-bottom:8px;" />
+                    <label>Client Secret:</label><input id="tillClientSecret" style="width:100%; margin-bottom:8px;" />
+                    <label>Callback URL:</label><input id="tillCallback" style="width:100%; margin-bottom:8px;" />
+                    <button id="saveTillBtn" style="margin-right:8px;">Save</button>
+                    <button id="cancelTillBtn">Cancel</button>
+                </div>
+            </div>
+            <div>
+                <h3 style="color:#0f7e05;">Bank Accounts</h3>
+                <div id="bankList" class="account-list"></div>
+                <button id="addBankBtn" class="deposit-action-btn">Add Bank Account</button>
+                <div id="addBankForm" style="display:none; margin-top:12px; background:#232526; padding:18px; border-radius:8px;">
+                    <label>Bank Name:</label><input id="bankName" style="width:100%; margin-bottom:8px;" />
+                    <label>Account Number:</label><input id="bankAcc" style="width:100%; margin-bottom:8px;" />
+                    <label>Account Name:</label><input id="bankAccName" style="width:100%; margin-bottom:8px;" />
+                    <label>API Key/Token:</label><input id="bankApiKey" style="width:100%; margin-bottom:8px;" />
+                    <label>Client ID:</label><input id="bankClientId" style="width:100%; margin-bottom:8px;" />
+                    <label>Client Secret:</label><input id="bankClientSecret" style="width:100%; margin-bottom:8px;" />
+                    <label>Callback URL:</label><input id="bankCallback" style="width:100%; margin-bottom:8px;" />
+                    <button id="saveBankBtn" style="margin-right:8px;">Save</button>
+                    <button id="cancelBankBtn">Cancel</button>
+                </div>
+            </div>
+            <div>
+                <h3 style="color:#4fff4f;">Paybill Accounts</h3>
+                <div id="paybillList" class="account-list"></div>
+                <button id="addPaybillBtn" class="deposit-action-btn">Add Paybill</button>
+                <div id="addPaybillForm" style="display:none; margin-top:12px; background:#232526; padding:18px; border-radius:8px;">
+                    <label>Paybill Number:</label><input id="paybillNum" style="width:100%; margin-bottom:8px;" />
+                    <label>Account Number:</label><input id="paybillAccNum" style="width:100%; margin-bottom:8px;" />
+                    <label>Account Name:</label><input id="paybillAccName" style="width:100%; margin-bottom:8px;" />
+                    <label>API Key/Token:</label><input id="paybillApiKey" style="width:100%; margin-bottom:8px;" />
+                    <label>Client ID:</label><input id="paybillClientId" style="width:100%; margin-bottom:8px;" />
+                    <label>Client Secret:</label><input id="paybillClientSecret" style="width:100%; margin-bottom:8px;" />
+                    <label>Callback URL:</label><input id="paybillCallback" style="width:100%; margin-bottom:8px;" />
+                    <button id="savePaybillBtn" style="margin-right:8px;">Save</button>
+                    <button id="cancelPaybillBtn">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <div class="deposit-btns" style="display:flex; gap:24px; justify-content:center; margin-bottom:32px;">
+            <button id="showDepositRequestBtn" class="deposit-action-btn">Show Deposit Requests</button>
+            <button id="showDepositHistoryBtn" class="deposit-action-btn">Show Deposit History</button>
+        </div>
+        <div id="depositInfo" style="margin-bottom:32px; color:#ffd54f; text-align:center;"></div>
+        <div style="text-align:center; margin-bottom:24px;">
+            <strong>Wallet Balance: Ksh <span id="walletBalance">0.00</span></strong>
+        </div>
+        <div id="depositTableWrap" style="display:block; margin-top:32px;">
+            <h2>Manual Deposit Requests</h2>
+            <div class="deposit-table-scroll" style="max-height:320px; overflow-y:auto; margin-bottom:18px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.10); background:#232526;">
+                <table style="width:100%; border-collapse:collapse; background:#232526;">
+                    <thead>
+                        <tr><th>Request ID</th><th>User ID</th><th>Name</th><th>Amount</th><th>Method</th><th>Date</th><th>Transaction ID</th><th>Status</th><th>Mpesa/Bank</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="depositTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="autoDepositTableWrap" style="display:none; margin-top:32px;">
+            <h2>Automatic Deposit Requests</h2>
+            <div class="deposit-table-scroll" style="max-height:320px; overflow-y:auto; margin-bottom:18px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.10); background:#232526;">
+                <table style="width:100%; border-collapse:collapse; background:#232526;">
+                    <thead>
+                        <tr><th>Request ID</th><th>User ID</th><th>Name</th><th>Amount</th><th>Method</th><th>Date</th><th>Transaction ID</th><th>Status</th><th>Mpesa/Bank</th></tr>
+                    </thead>
+                    <tbody id="autoDepositTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="depositHistoryWrap" style="margin-top:32px;">
+            <h2>Deposit History</h2>
+            <div class="deposit-table-scroll" style="max-height:320px; overflow-y:auto; margin-bottom:18px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.10); background:#232526;">
+                <table style="width:100%; border-collapse:collapse; background:#232526;">
+                    <thead>
+                        <tr><th>Request ID</th><th>User ID</th><th>Name</th><th>Amount</th><th>Method</th><th>Date</th><th>Transaction ID</th><th>Status</th><th>Mpesa/Bank</th></tr>
+                    </thead>
+                    <tbody id="depositHistoryBody"></tbody>
+                </table>
+            </div>
+            <div style="margin-top:12px; text-align:right;">
+                <button onclick="exportHistoryCsv(currentUserId)" class="deposit-action-btn">Download CSV</button>
+                <button onclick="exportHistoryExcel(currentUserId)" class="deposit-action-btn">Download Excel</button>
+                <button onclick="exportHistoryPdf(currentUserId)" class="deposit-action-btn">Download PDF</button>
+            </div>
+        </div>
+        <div style="margin-bottom:32px; text-align:center;">
+            <label for="darajaEnv" style="color:#ffd54f; font-weight:600;">Daraja Environment:</label>
+            <select id="darajaEnv" style="padding:8px 18px; border-radius:6px; background:#232526; color:#ffd54f; font-size:1rem;">
+                <option value="sandbox">Sandbox (Test)</option>
+                <option value="production">Production (Live)</option>
+            </select>
+        </div>
+    </div>
+
+    <script>
+    let tills = JSON.parse(localStorage.getItem('depositTills') || '[]');
+    let banks = JSON.parse(localStorage.getItem('depositBanks') || '[]');
+    let paybills = JSON.parse(localStorage.getItem('depositPaybills') || '[]');
+    let selectedChannel = null;
+    let selectedMode = null;
+    // Demo wallet balance
+    let walletBalance = parseFloat(localStorage.getItem('walletBalance') || '0');
+    function updateWalletDisplay() {
+        document.getElementById('walletBalance').textContent = walletBalance.toFixed(2);
+    }
+    // Demo deposit requests
+    let depositRequests = JSON.parse(localStorage.getItem('depositRequests') || '[]');
+    function renderDepositTable(userId) {
+        const mode = localStorage.getItem('activeDepositMode') || 'manual';
+        const tableWrap = document.getElementById('depositTableWrap');
+        const tableBody = document.getElementById('depositTableBody');
+        tableBody.innerHTML = '';
+        if(mode === 'manual') {
+            tableWrap.style.display = 'block';
+            depositRequests.forEach((req, idx) => {
+                if(req.userId === userId) {
+                    let channelInfo = req.method === 'Mpesa' ? (req.mpesaNumber || '-') : (req.bankAccount || '-');
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${req.requestId}</td><td>${req.userId}</td><td>${req.name}</td><td>${req.amount}</td><td>${req.method}</td><td>${req.date}</td><td>${req.transactionId}</td><td>${req.status}</td><td>
+                        <button onclick="approveDeposit(${idx}, '${userId}')">Approve</button>
+                        <button onclick="rejectDeposit(${idx})">Reject</button>
+                        <button onclick="undoDeposit(${idx}, '${userId}')">Undo</button>
+                    </td>`;
+                    tableBody.appendChild(tr);
+                }
+            });
+        } else {
+            tableWrap.style.display = 'none';
+        }
+    }
+    function renderAutoDepositTable(userId) {
+        const mode = localStorage.getItem('activeDepositMode') || 'manual';
+        const tableWrap = document.getElementById('autoDepositTableWrap');
+        const tableBody = document.getElementById('autoDepositTableBody');
+        tableBody.innerHTML = '';
+        if(mode === 'auto') {
+            tableWrap.style.display = 'block';
+            depositRequests.forEach(req => {
+                if(req.userId === userId) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${req.requestId}</td><td>${req.userId}</td><td>${req.name}</td><td>${req.amount}</td><td>${req.method}</td><td>${req.date}</td><td>${req.transactionId}</td><td>${req.status}</td>`;
+                    tableBody.appendChild(tr);
+                }
+            });
+        } else {
+            tableWrap.style.display = 'none';
+        }
+    }
+    function renderDepositHistory(userId) {
+        const historyBody = document.getElementById('depositHistoryBody');
+        historyBody.innerHTML = '';
+        depositRequests.forEach(req => {
+            if(req.userId === userId) {
+                let channelInfo = req.method === 'Mpesa' ? (req.mpesaNumber || '-') : (req.bankAccount || '-');
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${req.requestId}</td><td>${req.userId}</td><td>${req.name}</td><td>${req.amount}</td><td>${req.method}</td><td>${req.date}</td><td>${req.transactionId}</td><td>${req.status}</td><td>${channelInfo}</td>`;
+                historyBody.appendChild(tr);
+            }
+        });
+    }
+    function sendOtp(userId, amount) {
+        // Simulate sending OTP (in production, integrate with SMS/email API)
+        const otp = Math.floor(100000 + Math.random() * 900000);
+        localStorage.setItem('otp_' + userId, otp);
+        alert('OTP for deposit of Ksh ' + amount + ' sent to user ' + userId + ': ' + otp);
+        return otp;
+    }
+    function verifyOtp(userId, enteredOtp) {
+        const storedOtp = localStorage.getItem('otp_' + userId);
+        return storedOtp && enteredOtp == storedOtp;
+    }
+    // Require OTP for deposits above threshold
+    const OTP_THRESHOLD = 5000;
+    // Simulated transaction verification with Mpesa/Bank API logs
+    function verifyTransactionWithApi(transactionId, method) {
+        // Simulate API log lookup (replace with real API integration)
+        // For demo, assume transaction IDs ending with even numbers are valid
+        if (!transactionId) return false;
+        const lastDigit = transactionId.slice(-1);
+        if (parseInt(lastDigit) % 2 === 0) {
+            return true; // Found in API logs
+        }
+        return false; // Not found
+    }
+    function approveDeposit(idx, userId) {
+        const amount = parseFloat(depositRequests[idx].amount);
+        const transactionId = depositRequests[idx].transactionId;
+        const method = depositRequests[idx].method;
+        // Transaction verification
+        if (!verifyTransactionWithApi(transactionId, method)) {
+            alert('Transaction ID not found in ' + method + ' API logs. Deposit not approved.');
+            return;
+        }
+        // OTP verification for large deposits
+        if(amount > OTP_THRESHOLD) {
+            const enteredOtp = prompt('Enter OTP for large deposit:');
+            if(!verifyOtp(userId, enteredOtp)) {
+                alert('Invalid OTP. Deposit not approved.');
+                return;
+            }
+        }
+        depositRequests[idx].status = 'Approved';
+        userWallets[userId] = (userWallets[userId] || 0) + amount;
+        localStorage.setItem('depositRequests', JSON.stringify(depositRequests));
+        localStorage.setItem('userWallets', JSON.stringify(userWallets));
+        renderDepositTable(userId);
+        updateWalletDisplay(userId);
+    }
+    function rejectDeposit(idx) {
+        depositRequests[idx].status = 'Rejected';
+        localStorage.setItem('depositRequests', JSON.stringify(depositRequests));
+        renderDepositTable();
+        renderAutoDepositTable();
+    }
+    function undoDeposit(idx) {
+        if(depositRequests[idx].status === 'Approved') {
+            walletBalance -= parseFloat(depositRequests[idx].amount);
+            depositRequests[idx].status = 'Pending';
+        } else if(depositRequests[idx].status === 'Rejected') {
+            depositRequests[idx].status = 'Pending';
+        }
+        localStorage.setItem('depositRequests', JSON.stringify(depositRequests));
+        localStorage.setItem('walletBalance', walletBalance);
+        renderDepositTable();
+        renderAutoDepositTable();
+        updateWalletDisplay();
+    }
+    // Automatic mode: auto-approve if amount and transactionId are verified
+    function autoApproveDeposits() {
+        depositRequests.forEach((req, idx) => {
+            if(req.status === 'Pending' && req.amount && req.transactionId) {
+                req.status = 'Approved';
+                walletBalance += parseFloat(req.amount);
+            }
+        });
+        localStorage.setItem('depositRequests', JSON.stringify(depositRequests));
+        localStorage.setItem('walletBalance', walletBalance);
+        renderDepositTable();
+        renderAutoDepositTable();
+        updateWalletDisplay();
+    }
+    function renderTillList() {
+        const tillList = document.getElementById('tillList');
+        tillList.innerHTML = '';
+        tills.forEach((tillObj, idx) => {
+            const div = document.createElement('div');
+            div.innerHTML = `<strong>Till:</strong> ${tillObj.till}${tillObj.businessName ? ' (Business: ' + tillObj.businessName + ')' : ''} ${tillObj.shortcode ? '(Shortcode: ' + tillObj.shortcode + ')' : ''}<br>
+                <strong>API Key:</strong> ${tillObj.apiKey||''}<br>
+                <strong>Client ID:</strong> ${tillObj.clientId||''}<br>
+                <strong>Client Secret:</strong> ${tillObj.clientSecret||''}<br>
+                <strong>Callback URL:</strong> ${tillObj.callbackUrl||''}<br>
+                <button onclick="editTill(${idx})" style="margin-right:8px;">Edit</button>
+                <button onclick="deleteTill(${idx})">Delete</button>`;
+            tillList.appendChild(div);
+        });
+    }
+    function renderBankList() {
+        const bankList = document.getElementById('bankList');
+        bankList.innerHTML = '';
+        banks.forEach((bankObj, idx) => {
+            const div = document.createElement('div');
+            div.innerHTML = `<strong>Bank:</strong> ${bankObj.bank}<br>
+                <strong>Account Number:</strong> ${bankObj.account||''}<br>
+                <strong>API Key:</strong> ${bankObj.apiKey||''}<br>
+                <strong>Client ID:</strong> ${bankObj.clientId||''}<br>
+                <strong>Client Secret:</strong> ${bankObj.clientSecret||''}<br>
+                <strong>Callback URL:</strong> ${bankObj.callbackUrl||''}<br>
+                <button onclick="editBank(${idx})" style="margin-right:8px;">Edit</button>
+                <button onclick="deleteBank(${idx})">Delete</button>`;
+            bankList.appendChild(div);
+        });
+    }
+    function renderPaybillList() {
+        const paybillList = document.getElementById('paybillList');
+            paybillList.innerHTML = ''; 
+            paybills.forEach((paybillObj, idx) => { 
+                const div = document.createElement('div'); 
+                div.innerHTML = `<strong>Paybill:</strong> ${paybillObj.paybillNum}<br> 
+                    <strong>Account Number:</strong> ${paybillObj.accNum||''}<br> 
+                    <strong>Account Name:</strong> ${paybillObj.accName||''}<br> 
+                    <strong>API Key:</strong> ${paybillObj.apiKey||''}<br> 
+                    <strong>Client ID:</strong> ${paybillObj.clientId||''}<br> 
+                    <strong>Client Secret:</strong> ${paybillObj.clientSecret||''}<br> 
+                    <strong>Callback URL:</strong> ${paybillObj.callbackUrl||''}<br> 
+                    <button onclick="editPaybill(${idx})" style="margin-right:8px;">Edit</button> 
+                    <button onclick="deletePaybill(${idx})">Delete</button>`; 
+            paybillList.appendChild(div);
+        });
+    }
+    function renderDepositChannels() {
+        const channelSelect = document.getElementById('depositChannel');
+        channelSelect.innerHTML = '';
+        const mode = document.getElementById('depositMode').value;
+        // Only allow Mpesa Tills in auto mode
+        if (mode === 'auto') {
+            tills.forEach(tillObj => {
+                const option = document.createElement('option');
+                option.value = 'mpesa-' + tillObj.till;
+                option.textContent = 'Mpesa Till: ' + tillObj.till + (tillObj.shortcode ? ' (Shortcode: ' + tillObj.shortcode + ')' : '');
+                channelSelect.appendChild(option);
+            });
+            paybills.forEach(paybillObj => {
+                const option = document.createElement('option');
+                option.value = 'paybill-' + paybillObj.paybillNum;
+                option.textContent = 'Paybill: ' + paybillObj.paybillNum + (paybillObj.accName ? ' (Acc Name: ' + paybillObj.accName + ')' : '');
+                channelSelect.appendChild(option);
+            });
+        } else {
+            tills.forEach(tillObj => {
+                const option = document.createElement('option');
+                option.value = 'mpesa-' + tillObj.till;
+                option.textContent = 'Mpesa Till: ' + tillObj.till + (tillObj.shortcode ? ' (Shortcode: ' + tillObj.shortcode + ')' : '');
+                channelSelect.appendChild(option);
+            });
+            banks.forEach(bankObj => {
+                const option = document.createElement('option');
+                option.value = 'bank-' + bankObj.bank;
+                option.textContent = 'Bank: ' + bankObj.bank + (bankObj.account ? ' (Acc: ' + bankObj.account + ')' : '');
+                channelSelect.appendChild(option);
+            });
+            paybills.forEach(paybillObj => {
+                const option = document.createElement('option');
+                option.value = 'paybill-' + paybillObj.paybillNum;
+                option.textContent = 'Paybill: ' + paybillObj.paybillNum + (paybillObj.accName ? ' (Acc Name: ' + paybillObj.accName + ')' : '');
+                channelSelect.appendChild(option);
+            });
+        }
+    }
+    document.getElementById('addTillBtn').onclick = function() {
+        document.getElementById('addTillForm').style.display = 'block';
+        document.getElementById('addTillBtn').disabled = true;
+    };
+    document.getElementById('cancelTillBtn').onclick = function() {
+        document.getElementById('addTillForm').style.display = 'none';
+        document.getElementById('addTillBtn').disabled = false;
+    };
+    document.getElementById('saveTillBtn').onclick = function() {
+        const tillObj = {
+            till: document.getElementById('tillNum').value,
+            businessName: document.getElementById('tillBusinessName').value,
+            shortcode: document.getElementById('tillShortcode').value,
+            apiKey: document.getElementById('tillApiKey').value,
+            clientId: document.getElementById('tillClientId').value,
+            clientSecret: document.getElementById('tillClientSecret').value,
+            callbackUrl: document.getElementById('tillCallback').value
+        };
+        tills.push(tillObj);
+        localStorage.setItem('depositTills', JSON.stringify(tills));
+        renderTillList();
+        renderDepositChannels();
+        document.getElementById('addTillForm').style.display = 'none';
+        document.getElementById('addTillBtn').disabled = false;
+        document.getElementById('tillNum').value = '';
+        document.getElementById('tillBusinessName').value = '';
+        document.getElementById('tillShortcode').value = '';
+        document.getElementById('tillApiKey').value = '';
+        document.getElementById('tillClientId').value = '';
+        document.getElementById('tillClientSecret').value = '';
+        document.getElementById('tillCallback').value = '';
+    };
+    document.getElementById('addBankBtn').onclick = function() {
+        document.getElementById('addBankForm').style.display = 'block';
+        document.getElementById('addBankBtn').disabled = true;
+    };
+    document.getElementById('cancelBankBtn').onclick = function() {
+        document.getElementById('addBankForm').style.display = 'none';
+        document.getElementById('addBankBtn').disabled = false;
+    };
+    document.getElementById('saveBankBtn').onclick = function() {
+        const bankObj = {
+            bank: document.getElementById('bankName').value,
+            account: document.getElementById('bankAcc').value,
+            apiKey: document.getElementById('bankApiKey').value,
+            clientId: document.getElementById('bankClientId').value,
+            clientSecret: document.getElementById('bankClientSecret').value,
+            callbackUrl: document.getElementById('bankCallback').value
+        };
+        banks.push(bankObj);
+        localStorage.setItem('depositBanks', JSON.stringify(banks));
+        renderBankList();
+        renderDepositChannels();
+        document.getElementById('addBankForm').style.display = 'none';
+        document.getElementById('addBankBtn').disabled = false;
+        document.getElementById('bankName').value = '';
+        document.getElementById('bankAcc').value = '';
+        document.getElementById('bankApiKey').value = '';
+        document.getElementById('bankClientId').value = '';
+        document.getElementById('bankClientSecret').value = '';
+        document.getElementById('bankCallback').value = '';
+    };
+    document.getElementById('addPaybillBtn').onclick = function() {
+        document.getElementById('addPaybillForm').style.display = 'block';
+        document.getElementById('addPaybillBtn').disabled = true;
+    };
+    document.getElementById('cancelPaybillBtn').onclick = function() {
+        document.getElementById('addPaybillForm').style.display = 'none';
+        document.getElementById('addPaybillBtn').disabled = false;
+    };
+    document.getElementById('savePaybillBtn').onclick = function() {
+        const newPaybill = {
+            paybillNum: document.getElementById('paybillNum').value,
+            accName: document.getElementById('paybillAccName').value,
+            apiKey: document.getElementById('paybillApiKey').value,
+            clientId: document.getElementById('paybillClientId').value,
+            clientSecret: document.getElementById('paybillClientSecret').value,
+            callbackUrl: document.getElementById('paybillCallback').value
+        };
+        paybills.push(newPaybill);
+        localStorage.setItem('depositPaybills', JSON.stringify(paybills));
+        renderPaybillList();
+        renderDepositChannels();
+        document.getElementById('addPaybillForm').style.display = 'none';
+        document.getElementById('addPaybillBtn').disabled = false;
+    };
+    function deleteTill(idx) {
+        tills.splice(idx, 1);
+        localStorage.setItem('depositTills', JSON.stringify(tills));
+        renderTillList();
+        renderDepositChannels();
+    }
+    function deleteBank(idx) {
+        banks.splice(idx, 1);
+        localStorage.setItem('depositBanks', JSON.stringify(banks));
+        renderBankList();
+        renderDepositChannels();
+    }
+    function deletePaybill(idx) {
+        paybills.splice(idx, 1);
+        localStorage.setItem('depositPaybills', JSON.stringify(paybills));
+        renderPaybillList();
+        renderDepositChannels();
+    }
+    function editTill(idx) {
+        const tillObj = tills[idx];
+        showEditModal('till', idx, tillObj);
+    }
+    function editBank(idx) {
+        const bankObj = banks[idx];
+        showEditModal('bank', idx, bankObj);
+    }
+    function editPaybill(idx) {
+        const paybillObj = paybills[idx];
+        showEditPaybillModal(idx, paybillObj);
+    }
+    function showEditModal(type, idx, obj) {
+        const modal = document.createElement('div');
+        modal.style = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:9999;';
+        let fields = '';
+        if(type === 'till') {
+            fields = `
+                <label>Till Number:</label><input id="editTillNum" value="${obj.till}" style="width:100%; margin-bottom:8px;" />
+                <label>Business Name:</label><input id="editTillBusinessName" value="${obj.businessName||''}" style="width:100%; margin-bottom:8px;" />
+                <label>Shortcode:</label><input id="editTillShortcode" value="${obj.shortcode||''}" style="width:100%; margin-bottom:8px;" />
+                <label>API Key/Token:</label><input id="editTillApiKey" value="${obj.apiKey||''}" style="width:100%; margin-bottom:8px;" />
+                <label>Client ID:</label><input id="editTillClientId" value="${obj.clientId||''}" style="width:100%; margin-bottom:8px;" />
+                <label>Client Secret:</label><input id="editTillClientSecret" value="${obj.clientSecret||''}" style="width:100%; margin-bottom:8px;" />
+                <label>Callback URL:</label><input id="editTillCallback" value="${obj.callbackUrl||''}" style="width:100%; margin-bottom:8px;" />
+            `;
+        } else if(type === 'bank') {
+            fields = `
+                <label>Bank Name:</label><input id="editBankName" value="${obj.bank}" style="width:100%; margin-bottom:8px;" />
+                <label>Account Number:</label><input id="editBankAcc" value="${obj.account||''}" style="width:100%; margin-bottom:8px;" />
+                <label>API Key/Token:</label><input id="editBankApiKey" value="${obj.apiKey||''}" style="width:100%; margin-bottom:8px;" />
+                <label>Client ID:</label><input id="editBankClientId" value="${obj.clientId||''}" style="width:100%; margin-bottom:8px;" />
+                <label>Client Secret:</label><input id="editBankClientSecret" value="${obj.clientSecret||''}" style="width:100%; margin-bottom:8px;" />
+                <label>Callback URL:</label><input id="editBankCallback" value="${obj.callbackUrl||''}" style="width:100%; margin-bottom:8px;" />
+            `;
+        }
+        modal.innerHTML = `
+            <div style="background:#232526; padding:32px; border-radius:12px; min-width:320px; color:#ffd54f;">
+                <h3>Edit ${type === 'till' ? 'Mpesa Till' : 'Bank Account'}</h3>
+                ${fields}
+                <div style="margin-top:16px; display:flex; justify-content:flex-end;">
+                    <button id="saveEditBtn" style="margin-right:8px;">Save</button>
+                    <button id="cancelEditBtn">Cancel</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById('cancelEditBtn').onclick = function() {
+            document.body.removeChild(modal);
+        };
+        document.getElementById('saveEditBtn').onclick = function() {
+            if(type === 'till') {
+                tills[idx] = {
+                    till: document.getElementById('editTillNum').value,
+                    businessName: document.getElementById('editTillBusinessName').value,
+                    shortcode: document.getElementById('editTillShortcode').value,
+                    apiKey: document.getElementById('editTillApiKey').value,
+                    clientId: document.getElementById('editTillClientId').value,
+                    clientSecret: document.getElementById('editTillClientSecret').value,
+                    callbackUrl: document.getElementById('editTillCallback').value
+                };
+                localStorage.setItem('depositTills', JSON.stringify(tills));
+                renderTillList();
+                renderDepositChannels();
+            } else {
+                banks[idx] = {
+                    bank: document.getElementById('editBankName').value,
+                    account: document.getElementById('editBankAcc').value,
+                    apiKey: document.getElementById('editBankApiKey').value,
+                    clientId: document.getElementById('editBankClientId').value,
+                    clientSecret: document.getElementById('editBankClientSecret').value,
+                    callbackUrl: document.getElementById('editBankCallback').value
+                };
+                localStorage.setItem('depositBanks', JSON.stringify(banks));
+                renderBankList();
+                renderDepositChannels();
+            }
+            document.body.removeChild(modal);
+        };
+    }
+    function showEditPaybillModal(idx, obj) {
+        const modal = document.createElement('div');
+            modal.style = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:9999;'; 
+        let fields = `
+            <label>Paybill Number:</label><input id="editPaybillNum" value="${obj.paybillNum}" style="width:100%; margin-bottom:8px;" />
+                <label>Account Number:</label><input id="editPaybillAccNum" value="${obj.accNum||''}" style="width:100%; margin-bottom:8px;" />
+                <label>Account Name:</label><input id="editPaybillAccName" value="${obj.accName||''}" style="width:100%; margin-bottom:8px;" /> 
+            <label>API Key/Token:</label><input id="editPaybillApiKey" value="${obj.apiKey||''}" style="width:100%; margin-bottom:8px;" />
+            <label>Client ID:</label><input id="editPaybillClientId" value="${obj.clientId||''}" style="width:100%; margin-bottom:8px;" />
+            <label>Client Secret:</label><input id="editPaybillClientSecret" value="${obj.clientSecret||''}" style="width:100%; margin-bottom:8px;" />
+            <label>Callback URL:</label><input id="editPaybillCallback" value="${obj.callbackUrl||''}" style="width:100%; margin-bottom:8px;" />
+        `;
+        modal.innerHTML = `
+            <div style="background:#232526; padding:32px; border-radius:12px; min-width:320px; color:#ffd54f;">
+                <h3>Edit Paybill</h3>
+                ${fields}
+                <div style="margin-top:16px; display:flex; justify-content:flex-end;">
+                    <button id="saveEditPaybillBtn" style="margin-right:8px;">Save</button>
+                    <button id="cancelEditPaybillBtn">Cancel</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById('saveEditPaybillBtn').onclick = function() {
+            paybills[idx] = {
+                paybillNum: document.getElementById('editPaybillNum').value,
+                accNum: document.getElementById('editPaybillAccNum').value,
+                accName: document.getElementById('editPaybillAccName').value,
+                apiKey: document.getElementById('editPaybillApiKey').value,
+                clientId: document.getElementById('editPaybillClientId').value,
+                clientSecret: document.getElementById('editPaybillClientSecret').value,
+                callbackUrl: document.getElementById('editPaybillCallback').value
+            };
+            localStorage.setItem('depositPaybills', JSON.stringify(paybills));
+            renderPaybillList();
+            renderDepositChannels();
+            document.body.removeChild(modal);
+        };
+        document.getElementById('cancelEditPaybillBtn').onclick = function() {
+            document.body.removeChild(modal);
+        };
+        let csvContent = rows.map(e => e.join(",")).join("\n");
+        let blob = new Blob([csvContent], { type: 'text/csv' });
+        let link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'deposit-history.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    function exportHistoryExcel(userId) {
+        let rows = [["Request ID","User ID","Name","Amount","Method","Date","Transaction ID","Status"]];
+        depositRequests.forEach(req => {
+            if(req.userId === userId) {
+                rows.push([req.requestId, req.userId, req.name, req.amount, req.method, req.date, req.transactionId, req.status]);
+            }
+        });
+        let csvContent = rows.map(e => e.join(",")).join("\n");
+        let blob = new Blob([csvContent], { type: 'application/vnd.ms-excel' });
+        let link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'deposit-history.xls';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    function exportHistoryPdf(userId) {
+        let win = window.open('', '', 'height=700,width=900');
+        win.document.write('<html><head><title>Deposit History PDF</title></head><body>');
+        win.document.write('<h2>Deposit History</h2>');
+        win.document.write('<table border="1" style="width:100%;border-collapse:collapse;">');
+        win.document.write('<tr><th>Request ID</th><th>User ID</th><th>Name</th><th>Amount</th><th>Method</th><th>Date</th><th>Transaction ID</th><th>Status</th></tr>');
+        depositRequests.forEach(req => {
+            if(req.userId === userId) {
+                win.document.write(`<tr><td>${req.requestId}</td><td>${req.userId}</td><td>${req.name}</td><td>${req.amount}</td><td>${req.method}</td><td>${req.date}</td><td>${req.transactionId}</td><td>${req.status}</td></tr>`);
+            }
+        });
+        win.document.write('</table></body></html>');
+        win.document.close();
+        win.print();
+    }
+    // Initial render
+    document.body.insertAdjacentHTML('beforeend', `
+        <div style="text-align:center; margin-bottom:24px;">
+            <strong>Wallet Balance: Ksh <span id="walletBalance">0.00</span></strong>
+        </div>
+        <div id="depositTableWrap" style="display:none;">
+            <h2>Manual Deposit Requests</h2>
+            <div class="deposit-table-scroll">
+                <table style="width:100%; border-collapse:collapse; background:#232526;">
+                    <thead>
+                        <tr><th>Request ID</th><th>User ID</th><th>Name</th><th>Amount</th><th>Method</th><th>Date</th><th>Transaction ID</th><th>Status</th><th>Mpesa/Bank</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="depositTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    `);
+    updateWalletDisplay();
+    renderDepositTable();
+    renderTillList();
+    renderBankList();
+    renderPaybillList();
+    renderDepositChannels();
+    document.getElementById('depositMode').onchange = function() {
+        const mode = document.getElementById('depositMode').value;
+        const info = document.getElementById('depositInfo');
+        if(mode === 'manual') {
+            info.innerHTML = '<strong>Manual Mode:</strong> Users will see the account number for depositing funds and send money manually.';
+        } else {
+            info.innerHTML = '<strong>Automatic Mode:</strong> Users will request deposit, system will use API (Daraja) to send OTP and deduct funds.';
+        }
+        renderDepositChannels(); // update channel options when mode changes
+    };
+    document.getElementById('depositMode').onchange();
+    document.getElementById('switchDepositBtn').onclick = function() {
+        selectedChannel = document.getElementById('depositChannel').value;
+        selectedMode = document.getElementById('depositMode').value;
+        // Save mode and channel for user side
+        localStorage.setItem('activeDepositChannel', selectedChannel);
+        localStorage.setItem('activeDepositMode', selectedMode);
+        // Set manualDepositType, manualDepositNumber, manualDepositAccount, manualDepositBusinessName for user page
+        let type = '';
+        let number = '';
+        let account = '';
+        let businessName = '';
+        if(selectedChannel && selectedChannel.startsWith('paybill-')) {
+            const paybillId = selectedChannel.replace('paybill-', '');
+            const paybillObj = paybills.find(p => p.paybillNum === paybillId);
+            type = 'paybill';
+            number = paybillObj ? paybillObj.paybillNum : paybillId;
+            account = paybillObj ? (paybillObj.accName || '') : '';
+            businessName = paybillObj ? (paybillObj.businessName || '') : '';
+        } else if(selectedChannel && selectedChannel.startsWith('mpesa-')) {
+            const tillId = selectedChannel.replace('mpesa-', '');
+            const tillObj = tills.find(t => t.till === tillId);
+            type = 'till';
+            number = tillObj ? tillObj.till : tillId;
+            businessName = tillObj ? (tillObj.businessName || '') : '';
+        }
+        if(type) localStorage.setItem('manualDepositType', type);
+        if(number) localStorage.setItem('manualDepositNumber', number);
+        if(account) localStorage.setItem('manualDepositAccount', account);
+        if(businessName) localStorage.setItem('manualDepositBusinessName', businessName);
+        // Show info
+        const info = document.getElementById('depositInfo');
+        let channelText = '';
+        if(selectedChannel && selectedChannel.startsWith('mpesa-')) {
+            const tillObj = tills.find(t => t.till === selectedChannel.replace('mpesa-', ''));
+            channelText = tillObj ? `Mpesa Till: ${tillObj.till} (Business: ${tillObj.businessName||''})` : 'Mpesa Till: ' + selectedChannel.replace('mpesa-', '');
+        } else if(selectedChannel && selectedChannel.startsWith('bank-')) {
+            const bankId = selectedChannel.replace('bank-', '');
+            const bankObj = banks.find(b => b.bank === bankId);
+            if(bankObj) {
+                channelText = `Bank Name: ${bankObj.bank}<br>Account Number: ${bankObj.account||''}<br>Bank Code: ${bankObj.clientId||''}`;
+            } else {
+                channelText = 'Bank Account: ' + bankId;
+            }
+        } else if(selectedChannel && selectedChannel.startsWith('paybill-')) {
+            const paybillId = selectedChannel.replace('paybill-', '');
+            const paybillObj = paybills.find(p => p.paybillNum === paybillId);
+            channelText = paybillObj ? `Paybill: ${paybillObj.paybillNum} (Business: ${paybillObj.businessName||''})<br>Account Name: ${paybillObj.accName||''}` : 'Paybill: ' + paybillId;
+        }
+        if(selectedMode === 'manual') {
+            info.innerHTML = `<strong>Manual Mode:</strong> Users will see <span style='color:#ffd54f;'>${channelText}</span> for depositing funds and send money manually.`;
+        } else {
+            info.innerHTML = `<strong>Automatic Mode:</strong> Users will request deposit, system will use API (Daraja) to send OTP and deduct funds from <span style='color:#ffd54f;'>${channelText}</span>.`;
+        }
+    };
+    document.getElementById('showDepositRequestBtn').onclick = function() {
+        document.getElementById('depositTableWrap').style.display = 'block';
+        document.getElementById('depositHistoryWrap').style.display = 'none';
+    };
+    document.getElementById('showDepositHistoryBtn').onclick = function() {
+        document.getElementById('depositTableWrap').style.display = 'none';
+        document.getElementById('depositHistoryWrap').style.display = 'block';
+    };
+    // Hide both tables by default
+    window.onload = function() {
+        document.getElementById('depositTableWrap').style.display = 'none';
+        document.getElementById('depositHistoryWrap').style.display = 'none';
+        const savedChannel = localStorage.getItem('activeDepositChannel');
+        const savedMode = localStorage.getItem('activeDepositMode');
+        if(savedChannel) document.getElementById('depositChannel').value = savedChannel;
+        if(savedMode) document.getElementById('depositMode').value = savedMode;
+        document.getElementById('switchDepositBtn').click();
+    };
+    // Auto-approve deposits in automatic mode
+    if(localStorage.getItem('activeDepositMode') === 'auto') {
+        autoApproveDeposits();
+    }
+    // Add test data for manual deposit requests
+    if (!localStorage.getItem('depositRequests')) {
+        depositRequests = [
+            { requestId: 'D001', userId: 'U001', name: 'Alice', amount: 1500, method: 'Bank', date: '2025-08-19', transactionId: 'TX1001', status: 'Pending', bankAccount: 'EQ123456' },
+            { requestId: 'D002', userId: 'U002', name: 'Bob', amount: 2000, method: 'Mpesa', date: '2025-08-19', transactionId: 'TX1002', status: 'Pending', mpesaNumber: '0712345678' },
+            { requestId: 'D003', userId: 'U001', name: 'Alice', amount: 500, method: 'Bank', date: '2025-08-18', transactionId: 'TX1003', status: 'Approved', bankAccount: 'EQ123456' },
+            { requestId: 'D004', userId: 'U003', name: 'Carol', amount: 3000, method: 'Mpesa', date: '2025-08-17', transactionId: 'TX1004', status: 'Rejected', mpesaNumber: '0798765432' }
+        ];
+        localStorage.setItem('depositRequests', JSON.stringify(depositRequests));
+    } else {
+        depositRequests = JSON.parse(localStorage.getItem('depositRequests'));
+    }
+    // Daraja environment selection logic
+    let darajaEnv = localStorage.getItem('darajaEnv') || 'sandbox';
+    document.getElementById('darajaEnv').value = darajaEnv;
+    document.getElementById('darajaEnv').onchange = function() {
+        darajaEnv = document.getElementById('darajaEnv').value;
+        localStorage.setItem('darajaEnv', darajaEnv);
+        // You can use darajaEnv to switch API endpoints in your integration logic
+        alert('Daraja environment set to: ' + (darajaEnv === 'sandbox' ? 'Sandbox (Test)' : 'Production (Live)'));
+    };
+    // Initial render for a demo user
+    const currentUserId = 'user-123'; // Demo user ID
+    renderDepositHistory(currentUserId);
+
+    // --- Reset and Sync Logic ---
+    function confirmSystemReset() {
+      document.getElementById('resetConfirmModal').style.display = 'flex';
+    }
+    function closeAdminModal() {
+      document.getElementById('resetConfirmModal').style.display = 'none';
+    }
+    function executeSystemReset() {
+      const key = document.getElementById('resetSecurityKey').value;
+      if (key === '1540568e') {
+        // Clear localStorage and reload page
+        localStorage.clear();
+        sessionStorage.clear();
+        location.reload();
+      } else {
+        alert('Incorrect security key.');
+      }
+    }
+    async function syncChanges() {
+      try {
+        const syncStatus = document.getElementById('syncStatus');
+        const syncProgress = document.getElementById('syncProgress');
+        const syncMessage = document.getElementById('syncMessage');
+        syncStatus.style.display = 'block';
+        syncMessage.textContent = 'Synchronizing changes...';
+        // Simulate sync progress
+        const steps = ['deposits'];
+        for (let i = 0; i < steps.length; i++) {
+          syncProgress.style.width = ((i + 1) / steps.length * 100) + '%';
+          syncMessage.textContent = `Syncing ${steps[i]}...`;
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        syncMessage.textContent = 'All changes synchronized!';
+        setTimeout(() => { syncStatus.style.display = 'none'; }, 2000);
+        // Optionally, reload deposit data here
+      } catch (error) {
+        alert('Failed to sync changes. Please try again.');
+      }
+    }
+    </script>
+</body>
+        <script>
+        // --- Admin Notification Bar Logic ---
+        function renderAdminNotifications() {
+            let notifications = [];
+            try { notifications = JSON.parse(localStorage.getItem('adminDepositNotifications') || '[]'); } catch {}
+            const list = document.getElementById('adminNotificationList');
+            if (!list) return;
+            if (!notifications.length) {
+                list.innerHTML = '<li style="color:#aaa;">No notifications yet.</li>';
+                return;
+            }
+            list.innerHTML = notifications.map(n => {
+                let info = `<strong>${n.number || 'N/A'}</strong> tried to deposit <strong>KES ${n.amount || 'N/A'}</strong>`;
+                if (n.txid) info += ` (TxID: <span style='color:#ffd54f;'>${n.txid}</span>)`;
+                info += ` <span style='font-size:0.95em;color:#aaa;'>[${new Date(n.time).toLocaleString()}]</span>`;
+                return `<li style='margin-bottom:8px;'>${info}</li>`;
+            }).join('');
+        }
+        renderAdminNotifications();
+        setInterval(renderAdminNotifications, 5000);
+        </script>
+</html>

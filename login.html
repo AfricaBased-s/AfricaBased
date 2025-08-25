@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="js/supabaseClient.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1a2238;
+            --secondary-color: #ff6b6b;
+            --accent-color: #4ecdc4;
+            --background-color: #0f172a;
+            --card-color: rgba(255, 255, 255, 0.05);
+            --success-color: #2ecc71;
+            --warning-color: #f1c40f;
+            --danger-color: #e74c3c;
+            --text-color: #ffffff;
+            --text-color-secondary: rgba(255, 255, 255, 0.7);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            --hover-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+            --transition: all 0.3s ease;
+            --blur-bg: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            background-image: url('invest.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.85);
+            z-index: 0;
+        }
+
+        .login-container {
+            background: var(--card-color);
+            backdrop-filter: blur(10px);
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            z-index: 1;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header i {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .login-header h1 {
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .login-header p {
+            color: var(--text-color-secondary);
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: relative;
+        }
+
+        .form-group label {
+            color: var(--text-color);
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: var(--transition);
+            padding-right: 2.5rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .form-group i {
+            position: absolute;
+            right: 1rem;
+            top: 2.7rem;
+            color: var(--text-color-secondary);
+        }
+
+        .login-btn {
+            background: var(--accent-color);
+            color: var(--text-color);
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .login-btn:hover {
+            background: #3db1a8;
+            transform: translateY(-2px);
+        }
+
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            color: var(--text-color-secondary);
+            font-size: 0.9rem;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .remember-me input[type="checkbox"] {
+            accent-color: var(--accent-color);
+        }
+
+        .forgot-password {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .forgot-password:hover {
+            color: var(--text-color);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--text-color-secondary);
+        }
+
+        .register-link a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .register-link a:hover {
+            color: var(--text-color);
+        }
+
+        .social-login {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .social-login p {
+            color: var(--text-color-secondary);
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .social-login p::before,
+        .social-login p::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 30%;
+            height: 1px;
+            background: var(--text-color-secondary);
+        }
+
+        .social-login p::before {
+            left: 0;
+        }
+
+        .social-login p::after {
+            right: 0;
+        }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .social-icons a {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .social-icons a:hover {
+            background: var(--accent-color);
+            transform: translateY(-3px);
+        }
+
+        .fingerprint-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 0.5rem;
+            border-radius: 50%;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .fingerprint-btn:hover {
+            background: rgba(78, 205, 196, 0.1);
+            transform: scale(1.1);
+        }
+
+        .fingerprint-btn i {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .fingerprint-section {
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .fingerprint-section p {
+            color: var(--text-color-secondary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .error-message {
+            color: var(--danger-color);
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <i class="fas fa-globe"></i>
+            <h1>AfricaBased</h1>
+            <p>Welcome back! Please login to continue</p>
+        </div>
+
+        <form class="login-form" id="loginForm">
+            <div class="form-group">
+                <label for="username">Username or Email</label>
+                <input type="text" id="username" required>
+                <i class="fas fa-user"></i>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+                <i class="fas fa-lock"></i>
+            </div>
+
+            <div class="remember-forgot">
+                <div class="remember-me">
+                    <input type="checkbox" id="remember" name="remember">
+                    <label for="remember">Remember me</label>
+                </div>
+            </div>
+
+            <button type="submit" class="login-btn">Login</button>
+        </form>
+
+        <div class="fingerprint-section">
+            <p id="fingerprintPromptText">Or use biometric login</p>
+            <button type="button" id="fingerprintBtn" class="fingerprint-btn" title="Login with fingerprint" style="display:none;">
+                <i class="fas fa-fingerprint"></i>
+            </button>
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            Invalid username or password
+        </div>
+
+        <div class="register-link">
+            Don't have an account? <a href="register.html">Register here</a>
+        </div>
+
+        <div class="social-login">
+            <p>Or continue with</p>
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-google"></i></a>
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        // Show fingerprint as first option if enabled for user
+        const usernameInput = document.getElementById('username');
+        const fingerprintBtn = document.getElementById('fingerprintBtn');
+        const fingerprintPromptText = document.getElementById('fingerprintPromptText');
+        let fingerprintEmail = null;
+
+        usernameInput.addEventListener('blur', function() {
+            const entered = usernameInput.value.trim();
+            if (!entered) return;
+            // Fetch fingerprint credential from Supabase
+            (async () => {
+                try {
+                    const module = await import('./src/js/services/user-service.js');
+                    // Try to get user by email or username
+                    let userResp = await module.UserService.getUserProfileByEmailOrUsername(entered);
+                    if (userResp.success && userResp.data && userResp.data.fingerprint_credential_id) {
+                        fingerprintBtn.style.display = 'inline-block';
+                        fingerprintPromptText.textContent = 'Login with fingerprint';
+                        fingerprintEmail = entered;
+                        fingerprintBtn.dataset.credential = userResp.data.fingerprint_credential_id;
+                    } else {
+                        fingerprintBtn.style.display = 'none';
+                        fingerprintPromptText.textContent = 'Or use biometric login';
+                        fingerprintEmail = null;
+                        fingerprintBtn.dataset.credential = '';
+                    }
+                } catch (e) {
+                    fingerprintBtn.style.display = 'none';
+                    fingerprintPromptText.textContent = 'Or use biometric login';
+                    fingerprintEmail = null;
+                    fingerprintBtn.dataset.credential = '';
+                }
+            })();
+        });
+
+        async function authenticateWithBiometrics() {
+            try {
+                if (!window.PublicKeyCredential || !fingerprintEmail) {
+                    throw new Error('WebAuthn not supported or user not selected');
+                }
+                const credIdBase64 = fingerprintBtn.dataset.credential;
+                if (!credIdBase64) throw new Error('No fingerprint credential registered for this user');
+                // Convert base64 to Uint8Array
+                const credId = Uint8Array.from(atob(credIdBase64), c => c.charCodeAt(0));
+                const credential = await navigator.credentials.get({
+                    publicKey: {
+                        challenge: new Uint8Array([1,2,3,4]),
+                        rpId: window.location.hostname,
+                        allowCredentials: [{ id: credId, type: 'public-key', transports: ['internal'] }],
+                        userVerification: 'required',
+                        timeout: 60000
+                    }
+                });
+                if (credential) {
+                    // Only allow login for the correct user
+                    localStorage.setItem('loggedIn', 'true');
+                    localStorage.setItem('currentUser', fingerprintEmail);
+                    window.location.href = 'home.html';
+                }
+            } catch (error) {
+                console.error('Biometric authentication failed:', error);
+                document.getElementById('errorMessage').textContent = 'Biometric authentication failed. Please try again or use password.';
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        }
+        fingerprintBtn.addEventListener('click', authenticateWithBiometrics);
+
+        // For development/testing - remove this in production
+        function setTestUser() {
+            localStorage.setItem('loggedIn', 'true');
+            localStorage.setItem('currentUser', 'TestUser');
+        }
+        // Automatically set test user - remove in production
+        setTestUser();
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // For testing - any non-empty username/password works
+            if (username && password) {
+                localStorage.setItem('loggedIn', 'true');
+                localStorage.setItem('currentUser', username);
+                window.location.href = 'home.html';
+            } else {
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

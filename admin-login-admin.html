@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AfricaBased - Admin Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="robots" content="noindex, nofollow">
+    <style>
+        :root {
+            --primary-color: #1a2238;
+            --secondary-color: #4ecdc4;
+            --accent-color: #ff6b6b;
+            --bg-color: #0f172a;
+            --text-color: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            --gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: var(--bg-color); color: var(--text-color); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-container { background: var(--primary-color); padding: 2rem; border-radius: 1rem; width: 100%; max-width: 400px; box-shadow: var(--shadow); }
+        .login-header { text-align: center; margin-bottom: 2rem; }
+        .login-header h1 { font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--secondary-color); }
+        .login-header p { color: var(--text-secondary); font-size: 0.9rem; }
+        .form-group { margin-bottom: 1.5rem; position: relative; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem; }
+        .form-group input { width: 100%; padding: 0.75rem 1rem; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0.5rem; background: var(--card-bg); color: var(--text-color); font-size: 1rem; transition: all 0.3s ease; }
+        .form-group input:focus { outline: none; border-color: var(--secondary-color); box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.1); }
+        .security-code { background: var(--card-bg); padding: 1rem; border-radius: 0.5rem; text-align: center; margin-bottom: 1.5rem; font-family: monospace; font-size: 1.2rem; letter-spacing: 3px; color: var(--secondary-color); border: 1px solid rgba(78, 205, 196, 0.2); }
+        .btn { width: 100%; padding: 1rem; background: var(--gradient); color: white; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2); }
+        .btn:active { transform: scale(0.98); }
+        .password-toggle { position: absolute; right: 1rem; top: 2.5rem; color: var(--text-secondary); cursor: pointer; }
+        .error-message { color: var(--accent-color); background: rgba(255, 107, 107, 0.1); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem; display: none; text-align: center; }
+        .attempts-remaining { color: var(--text-secondary); font-size: 0.9rem; text-align: center; margin-top: 1rem; }
+        .loading { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(26, 34, 56, 0.9); justify-content: center; align-items: center; border-radius: 1rem; }
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(78, 205, 196, 0.1); border-top: 4px solid var(--secondary-color); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .mfa-note { background: rgba(78, 205, 196, 0.1); padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; }
+        .mfa-note i { color: var(--secondary-color); }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Admin Login</h1>
+            <p>Three-factor authentication required</p>
+        </div>
+        <form id="adminLoginForm" onsubmit="return validateForm(event)">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+                <i class="password-toggle fas fa-eye"></i>
+            </div>
+            <div class="form-group">
+                <label for="securityKey">Security Key / API Key</label>
+                <input type="password" id="securityKey" name="securityKey" required placeholder="Enter Security Key or API Key">
+                <i class="password-toggle fas fa-eye"></i>
+            </div>
+            <div class="security-code" id="securityCode"></div>
+            <div class="form-group">
+                <label for="verificationCode">Security Code Verification</label>
+                <input type="text" id="verificationCode" name="verificationCode" required autocomplete="off">
+            </div>
+            <button type="submit" class="btn">Login</button>
+            <div class="error-message" id="errorMessage"></div>
+            <div class="attempts-remaining" id="attemptsMessage"></div>
+            <div class="mfa-note">
+                <i class="fas fa-shield-alt"></i>
+                <span>Three-factor authentication helps ensure only authorized personnel can access the admin panel.</span>
+            </div>
+        </form>
+        <div class="loading">
+            <div class="spinner"></div>
+        </div>
+    </div>
+    <script>
+        import("./src/js/services/admin-service.js").then(({ AdminService }) => {
+            window.AdminService = AdminService;
+        });
+        // Security settings
+        const MAX_ATTEMPTS = 3;
+        let attempts = MAX_ATTEMPTS;
+        let isLocked = false;
+        let lockoutEndTime = 0;
+        const LOCKOUT_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+        // --- Admin Link Handling ---
+        // If the page is opened with a ?token=...&expiry=... link, store the token in localStorage for login validation
+        function getQueryParams() {
+            const params = {};
+            window.location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(str,key,value) {
+                params[key] = decodeURIComponent(value);
+            });
+            return params;
+        }
+
+        // On page load, check for token and expiry in URL
+        (function handleAdminInviteLink() {
+            const params = getQueryParams();
+            if (params.token && params.expiry) {
+                // For demo: store the token and expiry in localStorage (in production, validate server-side)
+                localStorage.setItem('adminInviteToken', params.token);
+                localStorage.setItem('adminInviteExpiry', params.expiry);
+                // Optionally, redirect to clean URL (remove token/expiry from address bar)
+                // window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        })();
+
+        // Retrieve admin credentials from localStorage (set by admin-management.html when generating the link)
+        async function getAdminInviteCredentials() {
+            const token = localStorage.getItem('adminInviteToken');
+            if (!token) return null;
+            try {
+                if (!window.AdminService) {
+                    const mod = await import('./src/js/services/admin-service.js');
+                    window.AdminService = mod.AdminService;
+                }
+                const data = await window.AdminService.getAdminInviteByToken(token);
+                return data;
+            } catch {
+                return null;
+            }
+        }
+        // Generate random security code
+        function generateSecurityCode() {
+            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+            document.getElementById('securityCode').textContent = code;
+            return code;
+        }
+        let currentSecurityCode = generateSecurityCode();
+        // Toggle password visibility
+        document.querySelectorAll('.password-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const input = this.previousElementSibling;
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                }
+            });
+        });
+        // Form validation
+        function validateForm(event) {
+            event.preventDefault();
+            if (isLocked) {
+                const remainingTime = Math.ceil((lockoutEndTime - Date.now()) / 1000 / 60);
+                showError(`Account is locked. Please try again in ${remainingTime} minutes.`);
+                return false;
+            }
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const securityKey = document.getElementById('securityKey').value;
+            const verificationCode = document.getElementById('verificationCode').value;
+            document.querySelector('.loading').style.display = 'flex';
+            setTimeout(() => {
+                localStorage.clear();
+                if (username === VALID_CREDENTIALS.username && 
+                    password === VALID_CREDENTIALS.password && 
+                    (securityKey === VALID_CREDENTIALS.securityKey || securityKey === VALID_CREDENTIALS.apiKey) && 
+                    verificationCode.toUpperCase() === currentSecurityCode) {
+                    try {
+                        const loginTime = new Date().getTime();
+                        localStorage.setItem('admin', 'true');
+                        localStorage.setItem('adminEmail', username);
+                        localStorage.setItem('lastLogin', loginTime.toString());
+                        localStorage.setItem('securityKey', securityKey);
+                        const stored = {
+                            admin: localStorage.getItem('admin'),
+                            adminEmail: localStorage.getItem('adminEmail'),
+                            lastLogin: localStorage.getItem('lastLogin'),
+                            securityKey: localStorage.getItem('securityKey')
+                        };
+                        if (stored.admin === 'true' && 
+                            stored.adminEmail && 
+                            stored.lastLogin && 
+                            stored.securityKey) {
+                                const adminData = {
+                                    isLoggedIn: true,
+                                    email: username,
+                                    lastLogin: loginTime,
+                                    securityKey: securityKey
+                                };
+                                localStorage.setItem('adminData', JSON.stringify(adminData));
+                                window.location.href = 'admin-panel.html';
+                                return;
+                        } else {
+                            throw new Error('Storage verification failed');
+                        }
+                    } catch (error) {
+                        showError('Login failed. Please try again.');
+                        return;
+                    }
+                    window.location.href = 'admin-panel.html';
+                } else {
+                    attempts--;
+                    if (attempts <= 0) {
+                        isLocked = true;
+                        lockoutEndTime = Date.now() + LOCKOUT_DURATION;
+                        showError('Maximum attempts reached. Account locked for 30 minutes.');
+                        document.querySelector('form').reset();
+                        setTimeout(() => {
+                            isLocked = false;
+                            attempts = MAX_ATTEMPTS;
+                            updateAttemptsMessage();
+                        }, LOCKOUT_DURATION);
+                    } else {
+                        showError('Invalid credentials. Please try again.');
+                        currentSecurityCode = generateSecurityCode();
+                    }
+                    updateAttemptsMessage();
+                }
+                document.querySelector('.loading').style.display = 'none';
+            }, 1500);
+            return false;
+        }
+        function showError(message) {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const securityKey = document.getElementById('securityKey').value;
+            const verificationCode = document.getElementById('verificationCode').value;
+
+            document.querySelector('.loading').style.display = 'flex';
+
+            setTimeout(() => {
+                (async () => {
+                    const token = localStorage.getItem('adminInviteToken');
+                    const expiry = localStorage.getItem('adminInviteExpiry');
+                    if (expiry && Date.now() > parseInt(expiry)) {
+                        showError('This admin invite link has expired.');
+                        document.querySelector('.loading').style.display = 'none';
+                        return false;
+                    }
+                    const creds = await getAdminInviteCredentials();
+                    if (!creds) {
+                        showError('No valid admin invite found. Please use a valid link.');
+                        document.querySelector('.loading').style.display = 'none';
+                        return false;
+                    }
+                    // Validate credentials against database
+                    try {
+                        if (!window.AdminService) {
+                            const mod = await import('./src/js/services/admin-service.js');
+                            window.AdminService = mod.AdminService;
+                        }
+                        const dbAdmin = await window.AdminService.validateAdminLogin({
+                            token,
+                            email: username,
+                            password,
+                            apiKey: securityKey
+                        });
+                        if (dbAdmin && verificationCode.toUpperCase() === currentSecurityCode) {
+                            const loginTime = new Date().getTime();
+                            localStorage.setItem('admin', 'true');
+                            localStorage.setItem('adminEmail', username);
+                            localStorage.setItem('lastLogin', loginTime.toString());
+                            localStorage.setItem('securityKey', securityKey);
+                            if (dbAdmin.privileges) {
+                                localStorage.setItem('adminPrivileges', JSON.stringify(dbAdmin.privileges));
+                            }
+                            const adminData = {
+                                isLoggedIn: true,
+                                email: username,
+                                lastLogin: loginTime,
+                                securityKey: securityKey,
+                                privileges: dbAdmin.privileges || []
+                            };
+                            localStorage.setItem('adminData', JSON.stringify(adminData));
+                            window.location.href = 'admin-panel.html';
+                            return;
+                        } else {
+                            throw new Error('Invalid credentials or security code');
+                        }
+                    } catch (error) {
+                        attempts--;
+                        if (attempts <= 0) {
+                            isLocked = true;
+                            lockoutEndTime = Date.now() + LOCKOUT_DURATION;
+                            showError('Maximum attempts reached. Account locked for 30 minutes.');
+                            document.querySelector('form').reset();
+                            setTimeout(() => {
+                                isLocked = false;
+                                attempts = MAX_ATTEMPTS;
+                                updateAttemptsMessage();
+                            }, LOCKOUT_DURATION);
+                        } else {
+                            showError('Invalid credentials. Please try again.');
+                            currentSecurityCode = generateSecurityCode();
+                        }
+                        updateAttemptsMessage();
+                    }
+                    document.querySelector('.loading').style.display = 'none';
+                })();
+            }, 1500);
+
+            return false;

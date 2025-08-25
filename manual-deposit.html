@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>AfricaBased - Manual Deposit</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+	<link rel="stylesheet" href="css/modals.css">
+	<style>
+		body{margin:0;background:#0f172a;color:#fff;min-height:100vh;padding-top:76px;font-family:'Poppins',sans-serif}
+		.container{max-width:600px;margin:48px auto;padding:24px}
+		.card{background:rgba(26,34,56,0.98);padding:24px 20px 32px 20px;border-radius:16px;box-shadow:0 6px 28px rgba(0,0,0,0.4)}
+		label{display:block;font-size:.95rem;margin-bottom:6px;color:rgba(255,255,255,0.9)}
+		input[type=text],input[type=number]{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#fff;margin-bottom:12px}
+		.btn{display:inline-block;padding:10px 16px;border-radius:12px;border:none;background:linear-gradient(90deg,#4ecdc4,#ff6b6b);color:#111;font-weight:700;cursor:pointer;margin-top:10px}
+	</style>
+</head>
+<body>
+	<main class="container">
+				<button onclick="window.top.location.href='home.html'" style="background:linear-gradient(90deg,#232c43,#4ecdc4);color:#fff;padding:10px 22px;border-radius:10px;font-weight:600;border:1px solid #4ecdc4;box-shadow:0 2px 8px rgba(78,205,196,0.10);margin-bottom:18px;cursor:pointer;transition:background 0.2s, color 0.2s;">&larr; Back to Dashboard</button>
+			<div id="successModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+				<div style="background:#232c43;padding:32px 28px 28px 28px;border-radius:16px;box-shadow:0 6px 28px rgba(0,0,0,0.25);max-width:340px;text-align:center;">
+					<i class="fas fa-check-circle" style="font-size:3rem;color:#4ecdc4;"></i>
+					<h2 style="color:#4ecdc4;margin:18px 0 8px 0;">Submission Successful!</h2>
+					<div style="color:#fff;font-size:1.08rem;margin-bottom:18px;">Your deposit request has been submitted and is being processed.</div>
+					<button onclick="document.getElementById('successModal').style.display='none'" style="background:linear-gradient(90deg,#232c43,#4ecdc4);color:#fff;padding:10px 22px;border-radius:10px;font-weight:600;border:1px solid #4ecdc4;box-shadow:0 2px 8px rgba(78,205,196,0.10);cursor:pointer;transition:background 0.2s, color 0.2s;">OK</button>
+				</div>
+			</div>
+			<div class="card">
+			<div id="depositInstructions" style="background:rgba(78,205,196,0.08);border-radius:10px;padding:16px 18px 14px 18px;margin-bottom:18px;color:#fff;font-size:1.04rem;"></div>
+			<h1>Manual Deposit</h1>
+			<form id="manualDepositForm" style="margin-top:18px;">
+				<div class="form-row" style="display:flex;gap:12px;flex-wrap:wrap;">
+					<div style="flex:1;min-width:180px;">
+						<label for="manualDepositNumber">Account/Number</label>
+						<input type="text" id="manualDepositNumber" name="manualDepositNumber" placeholder="e.g. 07XXXXXXXX or Bank Acc" maxlength="20" required>
+					</div>
+					<div style="flex:1;min-width:120px;">
+						<label for="manualDepositAmount">Amount</label>
+						<input type="number" id="manualDepositAmount" name="manualDepositAmount" min="150" step="1" placeholder="Amount" required>
+					</div>
+				</div>
+				<div style="margin-top:12px;">
+					<label for="manualDepositTxid">Transaction ID / Reference</label>
+					<input type="text" id="manualDepositTxid" name="manualDepositTxid" placeholder="e.g. MPESA123ABC" maxlength="32" required>
+				</div>
+				<button type="submit" class="btn">Submit Manual Deposit</button>
+			</form>
+			<div id="manualDepositInfo" style="margin-top:18px;color:#4ecdc4;"></div>
+		</div>
+	</main>
+<script>
+// Render deposit instructions based on admin settings
+function renderDepositInstructions() {
+		var type = localStorage.getItem('manualDepositType');
+		var number = localStorage.getItem('manualDepositNumber');
+			var account = '';
+			var businessName = '';
+			if (type === 'paybill') {
+				// Find correct account number and business name from admin depositPaybills
+				try {
+					var paybills = JSON.parse(localStorage.getItem('depositPaybills') || '[]');
+					var paybillObj = paybills.find(p => p.paybillNum === number);
+					account = paybillObj && paybillObj.accNum ? paybillObj.accNum : '';
+					businessName = paybillObj && paybillObj.accName ? paybillObj.accName : '';
+				} catch {}
+			} else if (type === 'till') {
+				// Find correct business name from admin depositTills
+				try {
+					var tills = JSON.parse(localStorage.getItem('depositTills') || '[]');
+					var tillObj = tills.find(t => t.till === number);
+					businessName = tillObj && tillObj.businessName ? tillObj.businessName : '';
+				} catch {}
+			}
+			var html = '';
+			if (type === 'paybill') {
+				html = `<b>How to Deposit via Paybill</b><br>
+					<ol style='margin:10px 0 0 18px;'>
+						<li>Go to M-PESA on your phone.</li>
+						<li>Select <b>Lipa na M-PESA</b> &rarr; <b>Paybill</b>.</li>
+						<li><b>Enter Paybill Number:</b> <span style='color:#4ecdc4;'>${number||'-'}</span> <span style='color:#aaa;'>(you will enter this)</span></li>
+						<li><b>Enter Account Number:</b> <span style='color:#4ecdc4;'>${account||'-'}</span> <span style='color:#aaa;'>(you will enter this)</span></li>
+						<li>Enter Amount you wish to deposit.</li>
+						<li>Enter your M-PESA PIN and confirm.</li>
+						<li><b>Business Name:</b> <span style='color:#4ecdc4;'>${businessName||'-'}</span> <span style='color:#aaa;'>(for confirmation only)</span></li>
+						<li>After payment, enter the M-PESA transaction code below.</li>
+					</ol>`;
+		} else if (type === 'till') {
+			html = `<b>How to Deposit via Mpesa Till</b><br>
+				<ol style='margin:10px 0 0 18px;'>
+					<li>Go to M-PESA on your phone.</li>
+					<li>Select <b>Lipa na M-PESA</b> &rarr; <b>Buy Goods and Services</b>.</li>
+					<li><b>Enter Till Number:</b> <span style='color:#4ecdc4;'>${number||'-'}</span> <span style='color:#aaa;'>(you will enter this)</span></li>
+					<li>Enter Amount you wish to deposit.</li>
+					<li>Enter your M-PESA PIN and confirm.</li>
+					<li><b>Business Name:</b> <span style='color:#4ecdc4;'>${businessName||'-'}</span> <span style='color:#aaa;'>(for confirmation only)</span></li>
+					<li>After payment, enter the M-PESA transaction code below.</li>
+				</ol>`;
+		} else {
+			html = `<b>How to Deposit</b><br>
+				<ol style='margin:10px 0 0 18px;'>
+					<li>Follow the instructions provided by the admin for your deposit method.</li>
+					<li>Enter the account/number and amount above.</li>
+					<li>After payment, enter the transaction/reference code below.</li>
+				</ol>`;
+		}
+		document.getElementById('depositInstructions').innerHTML = html;
+}
+
+// Save manual deposit to localStorage
+function saveManualDeposit(deposit) {
+		let deposits = [];
+		try { deposits = JSON.parse(localStorage.getItem('userDeposits') || '[]'); } catch {}
+		deposits.push(deposit);
+		localStorage.setItem('userDeposits', JSON.stringify(deposits));
+
+		// Also add to admin depositRequests table
+		let adminRequests = [];
+		try { adminRequests = JSON.parse(localStorage.getItem('depositRequests') || '[]'); } catch {}
+		// Generate a unique requestId (timestamp + random)
+		const requestId = 'REQ-' + Date.now() + '-' + Math.floor(Math.random()*10000);
+		adminRequests.push({
+			requestId,
+			userId: localStorage.getItem('currentUserId') || 'user',
+			name: localStorage.getItem('currentUserName') || '',
+			amount: deposit.amount,
+			method: deposit.type === 'manual' ? (localStorage.getItem('manualDepositType') || '') : deposit.type,
+			date: new Date().toLocaleString(),
+			transactionId: deposit.txid,
+			status: 'Pending',
+			mpesaNumber: deposit.number || '',
+			bankAccount: '',
+		});
+		localStorage.setItem('depositRequests', JSON.stringify(adminRequests));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+	const form = document.getElementById('manualDepositForm');
+	const info = document.getElementById('manualDepositInfo');
+	renderDepositInstructions();
+	window.addEventListener('storage', function(e) {
+		if (e.key && e.key.startsWith('manualDeposit')) renderDepositInstructions();
+	});
+	if (form) {
+			form.addEventListener('submit', function(e) {
+				e.preventDefault();
+				const number = document.getElementById('manualDepositNumber').value;
+				const amount = document.getElementById('manualDepositAmount').value;
+				const txid = document.getElementById('manualDepositTxid').value.trim();
+					// Check for duplicate transaction code
+					let deposits = [];
+					try { deposits = JSON.parse(localStorage.getItem('userDeposits') || '[]'); } catch {}
+					const duplicate = deposits.some(d => d.txid && d.txid.toLowerCase() === txid.toLowerCase());
+					if (duplicate) {
+						info.textContent = 'This transaction code has already been used. Please check and enter a unique code.';
+						info.style.color = '#ff6b6b';
+						setTimeout(()=>{info.textContent='';info.style.color='#4ecdc4';}, 5000);
+						return;
+					}
+					// Limit: max 5 submissions per user per day
+					const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+					const userDepositsToday = deposits.filter(d => d.timestamp && d.timestamp.slice(0, 10) === today);
+					if (userDepositsToday.length >= 5) {
+						info.textContent = 'You have reached the maximum of 5 deposit submissions for today. Please try again tomorrow.';
+						info.style.color = '#ff6b6b';
+						setTimeout(()=>{info.textContent='';info.style.color='#4ecdc4';}, 6000);
+						return;
+					}
+					saveManualDeposit({
+						type: 'manual',
+						number,
+						amount,
+						txid,
+						timestamp: new Date().toISOString()
+					});
+					form.reset();
+					info.textContent = '';
+					// Show success modal
+					document.getElementById('successModal').style.display = 'flex';
+			});
+	}
+});
+</script>
+</body>
+</html>

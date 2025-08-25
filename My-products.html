@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Products Dashboard</title>
+    <style>
+        :root {
+            --modal-transition: 0.3s ease;
+            --modal-bg: rgba(0, 0, 0, 0.5);
+            --primary: #1a2238;
+            --accent: #4ecdc4;
+            --accent-gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            --secondary: #ff6b6b;
+            --text: #ffffff;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --bg: #0f172a;
+            --border: #e0e0e0;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            --color-dashboard: #4ecdc4;
+            --color-exchange: #ff6b6b;
+            --color-services: #9b59b6;
+            --color-withdraw: #e74c3c;
+            --color-products: #3498db;
+            --color-deposit: #2ecc71;
+            --color-active: #f1c40f;
+            --color-referrals: #1abc9c;
+            --color-statistics: #34495e;
+            --color-profile: #8e44ad;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --bg: #0f172a;
+            --nav-bg: rgba(26, 34, 56, 0.98);
+        }
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: rgba(255,255,255,0.07);
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(78,205,196,0.08);
+        }
+        h1 {
+            color: #4ecdc4;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .products {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+        .product-card {
+            width: 340px;
+            min-height: 420px;
+            max-height: 520px;
+            margin: 24px auto;
+            background: #232526;
+            border-radius: 16px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+            padding: 24px 18px 18px 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: box-shadow 0.2s;
+            position: relative;
+        }
+        @media (max-width: 600px) {
+            .product-card {
+                width: 98vw;
+                min-height: 340px;
+                padding: 16px 6px;
+            }
+        }
+        .product-image {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 18px;
+        }
+        .product-title {
+            font-size: 1.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .product-sector {
+            font-size: 1rem;
+            color: #b39ddb;
+            margin-bottom: 8px;
+        }
+        .product-details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+        .product-detail-box {
+            background: rgba(255,255,255,0.04);
+            border-radius: 6px;
+            padding: 12px 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .product-detail-label {
+            font-weight: 600;
+            color: #ffd54f;
+            margin-bottom: 4px;
+        }
+        .product-detail-value {
+            color: #80cbc4;
+            font-weight: 500;
+            font-size: 1.08rem;
+        }
+        .empty-message {
+            color: #b39ddb;
+            text-align: center;
+            margin-top: 40px;
+            font-size: 1.2rem;
+        }
+        .collect-btn {
+            background: #ffd54f;
+            color: #232526;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .collect-btn:disabled {
+            background: #bdbdbd;
+            color: #232526;
+            cursor: not-allowed;
+        }
+        .back-btn-container {
+            position: absolute;
+            top: 24px;
+            left: 32px;
+            z-index: 10;
+        }
+        .back-btn {
+            background: #232526;
+            color: #ffd54f;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            transition: background 0.2s, color 0.2s;
+        }
+        .back-btn:hover {
+            background: #ffd54f;
+            color: #232526;
+        }
+        .product-date-time {
+            margin-top: 8px;
+            font-size: 0.98rem;
+            color: #ffd54f;
+            background: #232526;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .sector-filter-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 32px;
+            margin-bottom: 8px;
+        }
+        .sector-label {
+            color: #ffd54f;
+            font-weight: 600;
+            margin-right: 12px;
+            font-size: 1.08rem;
+        }
+        .sector-filter {
+            padding: 8px 18px;
+            border-radius: 6px;
+            border: none;
+            background: #232526;
+            color: #ffd54f;
+            font-size: 1rem;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+        }
+        .sector-filter:focus {
+            outline: 2px solid #ffd54f;
+        }
+    </style>
+</head>
+<body>
+    <div class="back-btn-container">
+        <button class="back-btn" onclick="goBack()">&#8592; Back</button>
+    </div>
+    <div class="container">
+        <h1>My Products Dashboard</h1>
+        <div class="sector-filter-container">
+            <label for="sectorFilter" class="sector-label">Filter by Sector:</label>
+            <select id="sectorFilter" class="sector-filter">
+                <option value="all">All</option>
+            </select>
+        </div>
+        <div class="products" id="my-products-list">
+            <!-- Products will be dynamically loaded here -->
+        </div>
+        <div class="empty-message" id="empty-message" style="display:none;">
+            You have not invested in any products yet.
+        </div>
+    </div>
+    <script>
+        // Populate sector dropdown from all sectors in localStorage
+        function populateSectorDropdown() {
+            const sectors = JSON.parse(localStorage.getItem('sectors') || '[]');
+            const filter = document.getElementById('sectorFilter');
+            filter.innerHTML = '<option value="all">All</option>';
+            sectors.forEach(sector => {
+                if (sector.status === 'active') {
+                    const option = document.createElement('option');
+                    option.value = sector.id;
+                    option.textContent = sector.name;
+                    filter.appendChild(option);
+                }
+            });
+        }
+        populateSectorDropdown();
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'sectors') populateSectorDropdown();
+        });
+
+        // Load products from localStorage (demo)
+        function loadMyProducts() {
+            // Only show products that were invested from the product page (i.e., match an admin product id)
+            const adminProducts = JSON.parse(localStorage.getItem('products') || '[]');
+            const adminProductIds = new Set(adminProducts.map(p => p.id));
+            const products = (JSON.parse(localStorage.getItem('myProducts') || '[]')).filter(p => p.id && adminProductIds.has(p.id));
+            const productsList = document.getElementById('my-products-list');
+            const emptyMessage = document.getElementById('empty-message');
+            productsList.innerHTML = '';
+            if (products.length === 0) {
+                emptyMessage.style.display = 'block';
+                return;
+            }
+            emptyMessage.style.display = 'none';
+            // Count invested times for each product by product id
+            const allProducts = JSON.parse(localStorage.getItem('myProducts') || '[]');
+            const investCounts = {};
+            allProducts.forEach(p => {
+                const pid = p.id || p.productId || p.name;
+                investCounts[pid] = (investCounts[pid] || 0) + 1;
+            });
+
+            // Separate products: collecting vs fully collected
+            const collecting = [];
+            const fullyCollected = [];
+            products.forEach((product, idx) => {
+                const returns = product.returns || product.dailyIncome || 0;
+                const duration = product.duration || product.holdPeriod || 0;
+                let holdPeriod = parseInt(duration) || 0;
+                let dailyIncome = typeof returns === 'number' ? returns : parseInt((returns + '').replace(/[^\d]/g, '')) || 0;
+                let collected = product.collected || 0;
+                const totalToBeCollected = dailyIncome * holdPeriod;
+                if (collected >= totalToBeCollected) {
+                    fullyCollected.push({ product, idx });
+                } else {
+                    collecting.push({ product, idx });
+                }
+            });
+
+            // Render collecting products
+            collecting.forEach(({ product, idx }) => {
+                // ...existing code for rendering a product card...
+                // Map product fields to match products.html card structure
+                const name = product.name || product.title || '';
+                const image = product.media?.[0]?.url || product.image || 'https://via.placeholder.com/320x260';
+                const sector = product.sector || '';
+                // Get sector name from localStorage
+                let sectorName = sector;
+                try {
+                    const sectors = JSON.parse(localStorage.getItem('sectors') || '[]');
+                    const found = sectors.find(s => s.id === sector);
+                    if (found) sectorName = found.name;
+                } catch {}
+                const description = product.description || '';
+                const price = product.price || product.investment || 0;
+                const returns = product.returns || product.dailyIncome || 0;
+                const duration = product.duration || product.holdPeriod || 0;
+                const invest_limit = product.invest_limit || product.limit || 1;
+
+                let collected = product.collected || 0;
+                let holdPeriod = parseInt(duration) || 0;
+                let investedOn = product.investedOn ? new Date(product.investedOn) : new Date();
+                let now = new Date();
+                let msPerDay = 24 * 60 * 60 * 1000;
+                let lastCollected = product.lastCollected ? new Date(product.lastCollected) : investedOn;
+                let daysPassed = Math.floor((now - investedOn) / msPerDay);
+                let remaining = Math.max(holdPeriod - daysPassed, 0);
+                let dailyIncome = typeof returns === 'number' ? returns : parseInt((returns + '').replace(/[^\d]/g, '')) || 0;
+
+                let canCollect = remaining > 0 && (now - lastCollected >= msPerDay);
+
+                const pid = product.id || product.productId || name;
+                const investedTimes = investCounts[pid] || 1;
+                const maxInvest = parseInt(invest_limit) || 1;
+                const canInvest = investedTimes < maxInvest;
+
+                const totalToBeCollected = dailyIncome * holdPeriod;
+
+                // Format investment text: Ksh [amount], only in cash
+                const investmentText = `Ksh ${price.toLocaleString()}, only in cash`;
+                // Format hold period: just the number of days
+                const holdPeriodText = `${holdPeriod}`;
+
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.setAttribute('data-sector', sector);
+                card.innerHTML = `
+                    <div class="card-info-scroll" style="overflow-y:auto;max-height:300px;width:100%;">
+                        <img src="${image}" alt="${name}" class="product-image">
+                        <div class="product-title">${name}</div>
+                        <div class="product-sector">Sector: ${sectorName || sector}</div>
+                        <div class="product-desc product-desc-top">${description}</div>
+                        <div class="product-details product-details-grid">
+                            <div class="product-detail-box">
+                                <span class="product-detail-label">Investment</span>
+                                <span class="product-detail-value">${investmentText}</span>
+                            </div>
+                            <div class="product-detail-box">
+                                <span class="product-detail-label">Hold Period</span>
+                                <span class="product-detail-value">${holdPeriodText}</span>
+                            </div>
+                            <div class="product-detail-box">
+                                <span class="product-detail-label">Investment Limit</span>
+                                <span class="product-detail-value">${maxInvest} times</span>
+                            </div>
+                            <div class="product-detail-box">
+                                <span class="product-detail-label">Invested Times</span>
+                                <span class="product-detail-value">${investedTimes} / ${maxInvest}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="collect-area" style="width:95%;margin:12px auto 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                        <button class="collect-btn" style="width:100%;font-size:1.1rem;font-weight:600;">Collect Ksh ${dailyIncome.toLocaleString()}</button>
+                        <div style="color:#ffd54f;font-size:0.98rem;">Collected: Ksh <span class="collected-amount">${collected.toLocaleString()}</span></div>
+                        <div style="color:#80cbc4;font-size:0.98rem;">Period Remaining: <span class="period-remaining">${remaining}</span> days</div>
+                        <div style="color:#bdbdbd;font-size:0.95rem;${canCollect ? 'display:none;' : ''}" class="collect-wait-msg">${canCollect ? '' : 'Next collection available after 24 hours from last collection.'}</div>
+                        <div style="color:#e67e22;font-size:1rem;font-weight:600;">Total to be Collected: Ksh ${totalToBeCollected.toLocaleString()}</div>
+                    </div>
+                `;
+                const collectBtn = card.querySelector('.collect-btn');
+                collectBtn.disabled = !canCollect;
+                collectBtn.onclick = function() {
+                    if (!canCollect) return;
+                    let accountBalance = parseInt(localStorage.getItem('accountBalance') || '0');
+                    accountBalance += dailyIncome;
+                    localStorage.setItem('accountBalance', accountBalance.toString());
+                    collected += dailyIncome;
+                    product.collected = collected;
+                    product.lastCollected = new Date().toISOString();
+                    product.duration = Math.max(holdPeriod - (daysPassed + 1), 0);
+                    localStorage.setItem('myProducts', JSON.stringify(products));
+                    card.querySelector('.collected-amount').textContent = collected.toLocaleString();
+                    let newRemaining = Math.max(remaining - 1, 0);
+                    card.querySelector('.period-remaining').textContent = newRemaining;
+                    collectBtn.disabled = true;
+                    card.querySelector('.collect-wait-msg').style.display = '';
+                    if (typeof window.updateAccountDisplay === 'function') window.updateAccountDisplay();
+                };
+                productsList.appendChild(card);
+            });
+
+            // Add separator if there are fully collected products
+            if (fullyCollected.length > 0 && collecting.length > 0) {
+                const sep = document.createElement('hr');
+                sep.style.margin = '32px 0';
+                sep.style.border = '2px solid #ffd54f';
+                productsList.appendChild(sep);
+            }
+
+            // Render fully collected products
+            fullyCollected.forEach(({ product, idx }) => {
+                // ...existing code for rendering a product card...
+                const name = product.name || product.title || '';
+                const image = product.media?.[0]?.url || product.image || 'https://via.placeholder.com/320x260';
+                const sector = product.sector || '';
+                const description = product.description || '';
+                const price = product.price || product.investment || 0;
+                const returns = product.returns || product.dailyIncome || 0;
+                const duration = product.duration || product.holdPeriod || 0;
+                const invest_limit = product.invest_limit || product.limit || 1;
+
+                let collected = product.collected || 0;
+                let holdPeriod = parseInt(duration) || 0;
+                let investedOn = product.investedOn ? new Date(product.investedOn) : new Date();
+                let now = new Date();
+                let msPerDay = 24 * 60 * 60 * 1000;
+                let lastCollected = product.lastCollected ? new Date(product.lastCollected) : investedOn;
+                let daysPassed = Math.floor((now - investedOn) / msPerDay);
+                let remaining = Math.max(holdPeriod - daysPassed, 0);
+                let dailyIncome = typeof returns === 'number' ? returns : parseInt((returns + '').replace(/[^\d]/g, '')) || 0;
+
+                const pid = product.id || product.productId || name;
+                const investedTimes = investCounts[pid] || 1;
+                const maxInvest = parseInt(invest_limit) || 1;
+                const canInvest = investedTimes < maxInvest;
+
+                const totalToBeCollected = dailyIncome * holdPeriod;
+
+                // Format investment text: Ksh [amount], only in cash
+                const investmentText = `Ksh ${price.toLocaleString()}, only in cash`;
+                // Format hold period: just the number of days
+                const holdPeriodText = `${holdPeriod}`;
+
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.setAttribute('data-sector', sector);
+                card.innerHTML = `
+                    <div class="card-info-scroll" style="overflow-y:auto;max-height:300px;width:100%;">
+                        <img src="${image}" alt="${name}" class="product-image">
+                        <div class="product-title">${name}</div>
+                        <div class="product-sector">Sector: ${sector}</div>
+                        <div class="product-desc product-desc-top">${description}</div>
+                        <div class="product-details product-details-grid">
+                            <div class="product-detail-box">
+                                <span class="product-detail-label">Investment</span>
+                                <span class="product-detail-value">${investmentText}</span>
+                            </div>
+                            <div class="product-detail-box">
+                                <span class="product-detail-label">Hold Period</span>
+                                <span class="product-detail-value">${holdPeriodText}</span>
+                            </div>
+                            <div class="product-detail-box">
+                                <span class="product-detail-label">Invested Times</span>
+                                <span class="product-detail-value">${investedTimes} / ${maxInvest}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="collect-area" style="width:95%;margin:12px auto 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                        <button class="collect-btn" style="width:100%;font-size:1.1rem;font-weight:600;" disabled>Fully Collected</button>
+                        <div style="color:#ffd54f;font-size:0.98rem;">Collected: Ksh <span class="collected-amount">${collected.toLocaleString()}</span></div>
+                        <div style="color:#80cbc4;font-size:0.98rem;">Period Remaining: <span class="period-remaining">0</span> days</div>
+                        <div style="color:#e67e22;font-size:1rem;font-weight:600;">Total to be Collected: Ksh ${totalToBeCollected.toLocaleString()}</div>
+                    </div>
+                `;
+                productsList.appendChild(card);
+            });
+            populateSectorFilter(products);
+        }
+        window.onload = loadMyProducts;
+
+        // Populate sector filter options from sectors available in admin product page
+        function populateSectorFilter(products) {
+            // Get all products from admin (localStorage 'products')
+            const adminProducts = JSON.parse(localStorage.getItem('products') || '[]');
+            const sectorSet = new Set();
+            adminProducts.forEach(p => {
+                if (p.sector && isNaN(Number(p.sector))) sectorSet.add(p.sector);
+            });
+            const filter = document.getElementById('sectorFilter');
+            filter.innerHTML = '<option value="all">All</option>';
+            sectorSet.forEach(sector => {
+                const option = document.createElement('option');
+                option.value = sector;
+                option.textContent = sector;
+                filter.appendChild(option);
+            });
+        }
+
+        // Filter products by sector
+        document.getElementById('sectorFilter').addEventListener('change', function() {
+            const selected = this.value;
+            const cards = document.querySelectorAll('.product-card');
+            cards.forEach(card => {
+                if (selected === 'all' || card.getAttribute('data-sector') === selected) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        function goBack() {
+            // Try to go back, but if no history, redirect to products.html
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'products.html';
+            }
+        }
+
+        // Listen for invest events from main page
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'myProducts') {
+                loadMyProducts();
+                updateWalletDisplay();
+            }
+            if (e.key === 'walletBalance') {
+                walletBalance = parseInt(localStorage.getItem('walletBalance') || '0');
+                updateWalletDisplay();
+            }
+        });
+    </script>
+</body>
+</html>

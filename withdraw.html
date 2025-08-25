@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw Funds - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a2238;
+            --accent: #4ecdc4;
+            --accent-gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            --secondary: #ff6b6b;
+            --text: #2c3e50;
+            --text-light: #7f8c8d;
+            --bg: #f4f6f8;
+            --card-bg: #ffffff;
+            --border: #e0e0e0;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text);
+        }
+
+        .mpesa-info {
+            background-color: #3498db;
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .mpesa-info .label {
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .mpesa-number {
+            font-size: 1.5rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .mpesa-number i {
+            font-size: 1.25rem;
+        }
+
+        .withdraw-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .header {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+        }
+
+        .back-button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .back-button:hover {
+            background-color: #218838;
+        }
+
+        .withdraw-box {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .balance-info {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .balance-label {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .balance-amount {
+            color: #28a745;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .withdraw-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .currency-label {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-weight: bold;
+        }
+
+        .amount-input {
+            width: 100%;
+            padding: 15px 15px 15px 50px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 18px;
+            transition: border-color 0.3s;
+        }
+
+        .amount-input:focus {
+            border-color: #28a745;
+            outline: none;
+        }
+
+        .limits-info {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .withdraw-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .withdraw-button:hover {
+            background-color: #218838;
+        }
+
+        .withdraw-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .notification {
+            display: none;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .notification.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .notification.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .recent-withdrawals {
+            margin-top: 30px;
+        }
+
+        .recent-withdrawals h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .withdrawal-list {
+            list-style: none;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.3s;
+        }
+
+        /* Payment Method Selection styles */
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .payment-method-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .payment-method-item:hover {
+            border-color: #28a745;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .payment-method-item i {
+            font-size: 1.75rem;
+            color: #28a745;
+            width: 40px;
+            text-align: center;
+        }
+
+        .payment-method-info {
+            flex-grow: 1;
+        }
+
+        .payment-method-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .payment-method-detail {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+
+        .payment-method-hint {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .payment-method-arrow {
+            color: #28a745;
+            font-size: 1.2rem;
+            opacity: 0.7;
+            transition: transform 0.3s ease;
+        }
+
+        .payment-method-item:hover .payment-method-arrow {
+            transform: translateX(5px);
+            opacity: 1;
+        }
+
+        /* Status Styles */
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-success {
+            background-color: #28a745;
+            color: #ffffff;
+        }
+
+        .withdrawal-status small {
+            display: block;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            opacity: 0.8;
+        }
+
+        .modal-subtitle {
+            text-align: center;
+            color: #666;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+        }
+
+        .confirmation-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .confirmation-details {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .detail-item:nth-child(3) {  /* Total Amount row */
+            margin: 0.5rem 0;
+            padding: 1rem 0;
+            border-top: 1px solid #dee2e6;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #28a745;
+        }
+
+        .detail-item:last-child {
+            margin-top: 0.5rem;
+            font-weight: bold;
+        }
+
+        #processingFee {
+            color: #dc3545;  /* Red color for the fee */
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .confirm-btn {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .confirm-btn:hover {
+            background-color: #218838;
+        }
+
+        .cancel-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background-color: #c82333;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .withdrawal-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .withdrawal-main-info {
+            flex-grow: 1;
+        }
+
+        .withdrawal-primary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .withdrawal-amount {
+            font-weight: bold;
+            color: #28a745;
+            font-size: 1.1rem;
+        }
+
+        .withdrawal-method {
+            background-color: #e9ecef;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            color: #495057;
+        }
+
+        .withdrawal-datetime {
+            color: #666;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .withdrawal-datetime i {
+            margin-right: 5px;
+            color: #888;
+        }
+
+        .withdrawal-status-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .withdrawal-total {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .withdrawal-status {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button onclick="window.location.href='../home.html'" class="back-button">
+        <i class="fas fa-arrow-left"></i>
+        Back to Home
+    </button>
+    <div class="withdraw-container">
+        <div class="header">
+            <h1>Withdraw Funds</h1>
+            <a href="home.html" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="withdraw-box">
+            <div class="balance-info">
+                <div class="balance-label">Available Balance</div>
+                <div class="balance-amount">KSH <span id="userBalance">25,000</span></div>
+            </div>
+
+            <div id="notification" class="notification"></div>
+
+            <form class="withdraw-form" onsubmit="handleWithdraw(event)">
+                <div class="input-group">
+                    <span class="currency-label">KSH</span>
+                    <input type="number" 
+                           id="withdrawAmount" 
+                           class="amount-input" 
+                           placeholder="Enter amount"
+                           min="150"
+                           max="200000"
+                           step="1"
+                           required>
+                </div>
+
+                <div class="limits-info">
+                    Minimum withdrawal: KSH 150<br>
+                    Maximum withdrawal: KSH 200,000
+                </div>
+
+                <button type="submit" class="withdraw-button">
+                    Withdraw Funds
+                </button>
+            </form>
+
+            <div class="recent-withdrawals">
+                <h3>Recent Withdrawals</h3>
+                <ul class="withdrawal-list">
+                    <li class="withdrawal-item">
+                        <span class="withdrawal-amount">KSH 5,000</span>
+                        <span class="withdrawal-date">2025-08-13</span>
+                        <span class="withdrawal-status status-completed">Completed</span>
+                    </li>
+                    <li class="withdrawal-item">
+                        <span class="withdrawal-amount">KSH 3,000</span>
+                        <span class="withdrawal-date">2025-08-12</span>
+                        <span class="withdrawal-status status-pending">Pending</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleWithdraw(event) {
+            event.preventDefault();
+            
+            const amountInput = document.getElementById('withdrawAmount');
+            const amount = parseFloat(amountInput.value);
+            
+            // Validation
+            if (amount < 150) {
+                showNotification('Minimum withdrawal amount is KSH 150', 'error');
+                return;
+            }
+            
+            if (amount > 200000) {
+                showNotification('Maximum withdrawal amount is KSH 200,000', 'error');
+                return;
+            }
+
+            // Check if amount + fee is greater than balance
+            const currentBalance = parseFloat(document.getElementById('userBalance').textContent.replace(/,/g, ''));
+            const processingFee = amount * 0.07;
+            const totalWithdrawal = amount + processingFee;
+            if (totalWithdrawal > currentBalance) {
+                showNotification('Insufficient balance', 'error');
+                return;
+            }
+
+            // Check payment methods and show selection modal
+            const userData = JSON.parse(localStorage.getItem('userData')) || {};
+            const hasMpesa = userData.mpesa && userData.mpesa !== 'Not Set';
+            const hasBank = userData.bankType && 
+                          userData.bankType !== 'Not Set' && 
+                          userData.accountNumber && 
+                          userData.accountNumber !== 'Not Set';
+
+            if (!hasMpesa && !hasBank) {
+                showNotification('Please set up your payment details in your profile first', 'error');
+                setTimeout(() => {
+                    window.location.href = 'profile.html';
+                }, 2000);
+                return;
+            }
+
+            // Show payment method selection
+            window.withdrawalAmount = amount;
+            showPaymentMethodModal(amount);
+        }
+
+            function processWithdrawal() {
+                const amountInput = document.getElementById('withdrawAmount');
+                const originalAmount = parseFloat(amountInput.value);
+                const totalAmount = window.totalWithdrawalAmount;
+
+                // Update user's balance
+                const userData = JSON.parse(localStorage.getItem('userData')) || {};
+                const currentBalance = parseFloat(document.getElementById('userBalance').textContent.replace(/,/g, ''));
+                const newBalance = currentBalance - totalAmount;
+                document.getElementById('userBalance').textContent = newBalance.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                // Update localStorage balance
+                userData.balance = newBalance;
+                localStorage.setItem('userData', JSON.stringify(userData));
+
+                // Create withdrawal request for admin approval
+                // Determine withdrawal mode (manual or automatic)
+                // For now, default to 'manual'. You can set this dynamically based on user or admin settings.
+                const withdrawalMode = 'manual'; // or 'automatic' if automated
+                const withdrawalRequest = {
+                    id: Date.now().toString(),
+                    amount: originalAmount,
+                    totalAmount: totalAmount,
+                    fee: totalAmount - originalAmount,
+                    method: document.getElementById('confirmMethod').textContent,
+                    recipientDetails: document.getElementById('confirmRecipient').textContent,
+                    status: 'Pending',
+                    date: new Date().toLocaleDateString(),
+                    time: new Date().toLocaleTimeString(),
+                    mode: withdrawalMode
+                };
+
+                // Save withdrawal request
+                const withdrawalRequests = JSON.parse(localStorage.getItem('withdrawalRequests')) || [];
+                withdrawalRequests.push(withdrawalRequest);
+                localStorage.setItem('withdrawalRequests', JSON.stringify(withdrawalRequests));
+
+                showNotification('Withdrawal request submitted successfully!', 'success');
+                amountInput.value = '';
+
+                // Add to recent withdrawals with processing fee info
+                addToWithdrawalHistory(originalAmount, totalAmount);
+            }        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        function addToWithdrawalHistory(originalAmount, totalAmount) {
+            const withdrawalList = document.querySelector('.withdrawal-list');
+            const now = new Date();
+            const date = now.toLocaleDateString('en-GB'); // Format: DD/MM/YYYY
+            const time = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            }); // Format: HH:MM AM/PM
+            
+            // Get the selected payment method
+            const method = document.getElementById('confirmMethod').textContent;
+            const withdrawalItem = document.createElement('li');
+            withdrawalItem.className = 'withdrawal-item';
+            withdrawalItem.innerHTML = `
+                <div class="withdrawal-main-info">
+                    <div class="withdrawal-primary">
+                        <span class="withdrawal-amount">KSH ${originalAmount.toLocaleString()}</span>
+                        <span class="withdrawal-method">${method}</span>
+                    </div>
+                    <div class="withdrawal-secondary">
+                        <span class="withdrawal-datetime">
+                            <i class="fas fa-calendar"></i> ${date}
+                            <i class="fas fa-clock"></i> ${time}
+                        </span>
+                    </div>
+                </div>
+                <div class="withdrawal-status-container">
+                    <span class="withdrawal-total">Total: KSH ${totalAmount.toLocaleString()}</span>
+                    <span class="withdrawal-status status-pending">
+                        <i class="fas fa-circle-notch fa-spin"></i> Pending
+                    </span>
+                </div>
+            `;
+
+            withdrawalList.insertBefore(withdrawalItem, withdrawalList.firstChild);
+        }
+
+        // Add input validation for amount
+        document.getElementById('withdrawAmount').addEventListener('input', function(e) {
+            const amount = parseFloat(this.value);
+            const withdrawButton = document.querySelector('.withdraw-button');
+            
+            if (amount < 150 || amount > 200000 || isNaN(amount)) {
+                withdrawButton.disabled = true;
+            } else {
+                withdrawButton.disabled = false;
+            }
+        });
+
+        // Function to load withdrawal history
+        function loadWithdrawalHistory() {
+            const withdrawalList = document.querySelector('.withdrawal-list');
+            const withdrawalRequests = JSON.parse(localStorage.getItem('withdrawalRequests')) || [];
+            
+            // Clear existing list
+            withdrawalList.innerHTML = '';
+            
+            // Add each withdrawal to the list
+            withdrawalRequests.forEach(withdrawal => {
+                const statusClass = withdrawal.status.toLowerCase();
+                const statusIcon = {
+                    'pending': 'fa-circle-notch fa-spin',
+                    'approved': 'fa-check',
+                    'success': 'fa-check-circle'
+                }[statusClass] || 'fa-circle-notch fa-spin';
+
+                const withdrawalItem = document.createElement('li');
+                withdrawalItem.className = 'withdrawal-item';
+                withdrawalItem.innerHTML = `
+                    <div class="withdrawal-main-info">
+                        <div class="withdrawal-primary">
+                            <span class="withdrawal-amount">KSH ${withdrawal.amount.toLocaleString()}</span>
+                            <span class="withdrawal-method">${withdrawal.method}</span>
+                        </div>
+                        <div class="withdrawal-secondary">
+                            <span class="withdrawal-datetime">
+                                <i class="fas fa-calendar"></i> ${withdrawal.date}
+                                <i class="fas fa-clock"></i> ${withdrawal.time}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="withdrawal-status-container">
+                        <span class="withdrawal-total">Total: KSH ${withdrawal.totalAmount.toLocaleString()}</span>
+                        <span class="withdrawal-status status-${statusClass}">
+                            <i class="fas ${statusIcon}"></i> ${withdrawal.status}
+                            ${withdrawal.transactionId ? `<br><small>Transaction ID: ${withdrawal.transactionId}</small>` : ''}
+                        </span>
+                    </div>
+                `;
+                withdrawalList.appendChild(withdrawalItem);
+            });
+
+            // Show message if no withdrawals
+            if (withdrawalRequests.length === 0) {
+                withdrawalList.innerHTML = `
+                    <li class="no-withdrawals">
+                        <p>No withdrawal history available</p>
+                    </li>
+                `;
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load user data with test balance
+            let userData = JSON.parse(localStorage.getItem('userData')) || {};
+            
+            // Set test balance of KSH 50,000 if no balance exists
+            if (!userData.balance) {
+                userData.balance = 50000;
+                localStorage.setItem('userData', JSON.stringify(userData));
+            }
+            
+            // Display the balance
+            document.getElementById('userBalance').textContent = userData.balance.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            
+            // Load withdrawal history
+            loadWithdrawalHistory();
+        });
+            function showPaymentMethodModal(amount) {
+                const userData = JSON.parse(localStorage.getItem('userData')) || {};
+                const modal = document.getElementById('paymentMethodModal');
+                const hasMpesa = userData.mpesa && userData.mpesa !== 'Not Set';
+                const hasBank = userData.bankType && 
+                              userData.bankType !== 'Not Set' && 
+                              userData.accountNumber && 
+                              userData.accountNumber !== 'Not Set';
+
+                console.log('User Data:', userData); // For debugging
+                console.log('Has Bank:', hasBank); // For debugging
+                console.log('Bank Type:', userData.bankType); // For debugging
+                console.log('Account Number:', userData.accountNumber); // For debugging
+
+                // Update payment details
+                if (hasMpesa) {
+                    document.getElementById('mpesaNumber').textContent = userData.mpesa;
+                    document.querySelector('[onclick="selectPaymentMethod(\'mpesa\')"]').style.display = 'flex';
+                } else {
+                    document.querySelector('[onclick="selectPaymentMethod(\'mpesa\')"]').style.display = 'none';
+                }
+
+                if (hasBank) {
+                    document.getElementById('bankDetails').textContent = `${userData.bankType} - ${userData.accountNumber}`;
+                    document.querySelector('[onclick="selectPaymentMethod(\'bank\')"]').style.display = 'flex';
+                } else {
+                    document.querySelector('[onclick="selectPaymentMethod(\'bank\')"]').style.display = 'none';
+                }
+
+                modal.style.display = 'block';
+            }
+
+            function closePaymentMethodModal() {
+                document.getElementById('paymentMethodModal').style.display = 'none';
+            }
+
+            function calculateProcessingFee(amount) {
+                const feePercentage = 0.07; // 7%
+                return amount * feePercentage;
+            }
+
+            function formatCurrency(amount) {
+                return `KSh ${amount.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                })}`;
+            }
+
+            function selectPaymentMethod(method) {
+                const userData = JSON.parse(localStorage.getItem('userData')) || {};
+                const amount = window.withdrawalAmount;
+                const processingFee = calculateProcessingFee(amount);
+                const totalAmount = amount + processingFee;
+
+                // Update confirmation modal details
+                document.getElementById('confirmAmount').textContent = formatCurrency(amount);
+                document.getElementById('processingFee').textContent = formatCurrency(processingFee);
+                document.getElementById('totalAmount').textContent = formatCurrency(totalAmount);
+                document.getElementById('confirmMethod').textContent = method === 'mpesa' ? 'M-Pesa' : 'Bank Transfer';
+                document.getElementById('confirmRecipient').textContent = method === 'mpesa' ? 
+                    userData.mpesa : 
+                    `${userData.bankType} - ${userData.accountNumber}`;
+
+                // Store the total amount for processing
+                window.totalWithdrawalAmount = totalAmount;
+
+                // Hide payment method modal and show confirmation
+                closePaymentMethodModal();
+                document.getElementById('confirmationModal').style.display = 'block';
+            }
+
+            // Initialize modal events
+            document.addEventListener('DOMContentLoaded', () => {
+                // Handle confirmation
+                document.getElementById('confirmWithdraw').addEventListener('click', () => {
+                    const amount = window.withdrawalAmount;
+                    const method = document.getElementById('confirmMethod').textContent;
+                    document.getElementById('confirmationModal').style.display = 'none';
+                    
+                    // Store the withdrawal method preference
+                    localStorage.setItem('lastUsedPaymentMethod', method.toLowerCase() === 'm-pesa' ? 'mpesa' : 'bank');
+                    
+                    // Process the withdrawal
+                    processWithdrawal(amount, method);
+                });
+
+                // Handle cancellation
+                document.getElementById('cancelWithdraw').addEventListener('click', () => {
+                    document.getElementById('confirmationModal').style.display = 'none';
+                });
+
+                // Close modals when clicking outside
+                window.addEventListener('click', (event) => {
+                    const confirmationModal = document.getElementById('confirmationModal');
+                    const paymentMethodModal = document.getElementById('paymentMethodModal');
+                    
+                    if (event.target === confirmationModal) {
+                        confirmationModal.style.display = 'none';
+                    }
+                    if (event.target === paymentMethodModal) {
+                        paymentMethodModal.style.display = 'none';
+                    }
+                });
+            });
+        </script>
+
+        <!-- Payment Method Selection Modal -->
+        <div class="modal" id="paymentMethodModal">
+            <div class="modal-content">
+                <h2 class="confirmation-title">Select Payment Method</h2>
+                <div class="payment-methods">
+                    <div class="payment-method" onclick="selectPaymentMethod('mpesa')">
+                        <div class="method-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <div class="method-details">
+                            <h3>M-Pesa</h3>
+                            <p id="mpesaNumber">Loading...</p>
+                            <span class="method-description">Instant mobile money transfer</span>
+                        </div>
+                        <i class="fas fa-chevron-right method-arrow"></i>
+                    </div>
+                    <div class="payment-method" onclick="selectPaymentMethod('bank')">
+                        <div class="method-icon">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <div class="method-details">
+                            <h3>Bank Transfer</h3>
+                            <p id="bankDetails">Loading...</p>
+                            <span class="method-description">Direct bank account transfer</span>
+                        </div>
+                        <i class="fas fa-chevron-right method-arrow"></i>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn cancel-btn" onclick="closePaymentMethodModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Modal -->
+        <div class="modal" id="confirmationModal">
+            <div class="modal-content">
+                <h2 class="confirmation-title">Confirm Withdrawal</h2>
+                <div class="confirmation-details">
+                    <div class="detail-item">
+                        <span>Withdrawal Amount:</span>
+                        <span id="confirmAmount">KSh 0.00</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>Processing Fee (7%):</span>
+                        <span id="processingFee">KSh 0.00</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>Total Amount:</span>
+                        <span id="totalAmount" class="total-amount">KSh 0.00</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>Payment Method:</span>
+                        <span id="confirmMethod">Loading...</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>Recipient Details:</span>
+                        <span id="confirmRecipient">Loading...</span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn confirm-btn" id="confirmWithdraw">
+                        <i class="fas fa-check"></i> Confirm
+                    </button>
+                    <button class="modal-btn cancel-btn" id="cancelWithdraw">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

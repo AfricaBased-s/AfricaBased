@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AfricaBased Admin Settings</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+    body { background: transparent; color: #ffd54f; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
+    .settings-panel { margin: 32px auto; max-width: 900px; background: transparent; border-radius: 12px; box-shadow: none; padding: 32px; }
+        h2 { color: #ffd54f; text-align: center; }
+        .section { margin-bottom: 32px; }
+        .section h3 { color: #ffd54f; margin-bottom: 12px; }
+        .item-list { margin-bottom: 12px; }
+    .item-list div { background:transparent; color:#ffd54f; padding:8px; margin-bottom:6px; border-radius:6px; display:flex; align-items:center; justify-content:space-between; }
+        .settings-action-btn { background: #ffd54f; color: #232526; border: none; padding: 8px 18px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-left: 8px; }
+        .settings-action-btn:hover { background: #232526; color: #ffd54f; }
+        input, textarea { width: 100%; margin-bottom: 8px; padding: 6px; border-radius: 4px; border: none; background: #232526; color: #ffd54f; }
+        .homepage-promo {
+            animation: promoScroll 12s linear infinite;
+            background: linear-gradient(90deg, #4ecdc4 0%, #ff6b6b 100%);
+            color: #fff;
+            font-weight: bold;
+            padding: 10px 18px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 12px rgba(78,205,196,0.15);
+            letter-spacing: 1px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        @keyframes promoScroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .homepage-notice {
+            animation: noticeScroll 14s linear infinite;
+            background: linear-gradient(90deg, #ff6b6b 0%, #4ecdc4 100%);
+            color: #fff;
+            font-weight: bold;
+            padding: 10px 18px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 12px rgba(255,107,107,0.15);
+            letter-spacing: 1px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        @keyframes noticeScroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Reset/Sync Buttons and Modal -->
+    <div style="margin: 24px 0 0 24px; display: flex; align-items: center; gap: 16px;">
+      <a href="Admin-panel.html" class="back-btn" style="background:#ffd54f;color:#232526;padding:8px 18px;border-radius:6px;text-decoration:none;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.10);transition:background 0.2s, color 0.2s;">&larr; Back to Admin Panel</a>
+      <button class="system-btn btn-reset" onclick="confirmSystemReset()" style="background:#ff9800;color:#000;padding:8px 18px;border-radius:6px;font-weight:600;">Reset</button>
+      <button class="system-btn btn-sync" onclick="syncChanges()" style="background:#2196f3;color:#fff;padding:8px 18px;border-radius:6px;font-weight:600;">Sync Changes</button>
+    </div>
+  
+    <!-- Reset Confirmation Modal -->
+    <div id="resetConfirmModal" class="admin-modal" style="display:none;">
+      <div class="admin-modal-content">
+        <h2>Confirm System Reset</h2>
+        <p>This will reset the page and clear all local changes. Enter security key to confirm:</p>
+        <input type="password" id="resetSecurityKey" placeholder="Security Key">
+        <div style="margin-top:18px;display:flex;gap:12px;justify-content:flex-end;">
+          <button class="system-btn btn-reset" onclick="executeSystemReset()">Confirm Reset</button>
+          <button class="system-btn" onclick="closeAdminModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Sync Status -->
+    <div class="sync-status" id="syncStatus" style="display:none;background:#232526;padding:16px;border-radius:8px;margin:16px auto;max-width:600px;">
+      <div class="sync-progress" style="height:4px;background:#333;border-radius:2px;margin:8px 0;">
+        <div class="progress-bar" id="syncProgress" style="height:100%;width:0;background:#2196f3;border-radius:2px;transition:width 0.3s;"></div>
+      </div>
+      <p id="syncMessage"></p>
+    </div>
+  
+    <!-- Global Admin Notification Bar -->
+    <div id="adminNotificationBar" style="background:#232526;padding:18px 22px;border-radius:10px;margin-bottom:24px;box-shadow:0 2px 8px rgba(255,213,79,0.08);color:#ffd54f;">
+        <h3 style="margin-top:0;margin-bottom:10px;color:#ffd54f;">Notifications</h3>
+        <ul id="adminNotificationList" style="list-style:none;padding:0;margin:0;"></ul>
+    </div>
+    <div class="settings-panel">
+        <h2>AfricaBased Homepage Management</h2>
+        <div class="section">
+            <h3>Running Message (Homepage)</h3>
+            <div style="margin-bottom:10px;">
+                <label>Message:</label>
+                <input id="runningMessageInput" placeholder="Enter message to display on homepage..." />
+            </div>
+            <div style="margin-bottom:10px;">
+                <label>Text Color:</label>
+                <input id="runningMessageColor" type="color" value="#ffd54f" style="width:50px;height:32px;vertical-align:middle;" />
+            </div>
+            <button id="saveRunningMessageBtn" class="settings-action-btn">Save Message</button>
+            <div id="runningMessagePreview" style="margin-top:12px;"></div>
+        </div>
+        <div class="section">
+            <h3>Sectors Management</h3>
+            <div id="sectorList" class="item-list"></div>
+            <button id="addSectorBtn" class="settings-action-btn">Add Sector</button>
+            <div id="addSectorForm" style="display:none; margin-top:12px; background:#232526; padding:18px; border-radius:8px;">
+                <label>Sector Name:</label><input id="sectorName" placeholder="e.g. Real Estate" />
+                <label>Sector Image URL:</label><input id="sectorImg" placeholder="https://..." />
+                <label>Sector Video URL (optional):</label><input id="sectorVideo" placeholder="https://..." />
+                <label>Sector Description:</label><textarea id="sectorDesc" rows="2" placeholder="Describe this sector..."></textarea>
+                <button id="saveSectorBtn" class="settings-action-btn">Save</button>
+                <button id="cancelSectorBtn" class="settings-action-btn">Cancel</button>
+            </div>
+        </div>
+        <div class="section">
+            <h3>Opportunities Management</h3>
+            <div id="opportunityList" class="item-list"></div>
+            <button id="addOpportunityBtn" class="settings-action-btn">Add Opportunity</button>
+            <div id="addOpportunityForm" style="display:none; margin-top:12px; background:#232526; padding:18px; border-radius:8px;">
+                <label>Image URL:</label><input id="opportunityImg" />
+                <label>Title:</label><input id="opportunityTitle" />
+                <label>Description:</label><textarea id="opportunityDesc" rows="2"></textarea>
+                <label>Sector:</label>
+                <select id="opportunityCategory"></select>
+                <label>Button Label:</label><input id="opportunityBtnLabel" placeholder="e.g. Learn More" />
+                <label>Button URL:</label><input id="opportunityBtnUrl" placeholder="https://..." />
+                <button id="saveOpportunityBtn" class="settings-action-btn">Save</button>
+                <button id="cancelOpportunityBtn" class="settings-action-btn">Cancel</button>
+            </div>
+        </div>
+        <div class="section">
+            <h3>What Our Clients Say (Testimonials)</h3>
+            <div id="testimonialList" class="item-list"></div>
+            <button id="addTestimonialBtn" class="settings-action-btn">Add Testimonial</button>
+            <div id="addTestimonialForm" style="display:none; margin-top:12px; background:#232526; padding:18px; border-radius:8px;">
+                <label>Client Name:</label><input id="testimonialName" />
+                <label>Role/Title:</label><input id="testimonialRole" />
+                <label>Photo URL:</label><input id="testimonialImg" />
+                <label>Testimonial Text:</label><textarea id="testimonialText" rows="3"></textarea>
+                <button id="saveTestimonialBtn" class="settings-action-btn">Save</button>
+                <button id="cancelTestimonialBtn" class="settings-action-btn">Cancel</button>
+            </div>
+        </div>
+        <div class="section">
+    </div>
+        <div class="section">
+            <h3>Homepage Media & Descriptions</h3>
+            <div id="mediaDescList" class="item-list"></div>
+            <button id="addMediaDescBtn" class="settings-action-btn">Add Media/Description</button>
+            <div id="addMediaDescForm" style="display:none; margin-top:12px; background:#232526; padding:18px; border-radius:8px;">
+                <input type="text" id="mediaDescTitle" placeholder="Title (optional)">
+                <input type="text" id="mediaDescImg" placeholder="Image URL (optional)">
+                <input type="text" id="mediaDescVideo" placeholder="Video URL (optional)">
+                <textarea id="mediaDescDesc" placeholder="Description (optional)"></textarea>
+                <div style="margin-top:10px;display:flex;gap:10px;justify-content:flex-end;">
+                    <button id="saveMediaDescBtn" class="settings-action-btn">Save</button>
+                    <button id="cancelMediaDescBtn" class="settings-action-btn" style="background:#232526;color:#ffd54f;">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <h3>Audit Log</h3>
+            <div id="auditLog" style="background:#232526; color:#ffd54f; padding:12px; border-radius:8px; max-height:120px; overflow-y:auto;"></div>
+        </div>
+    </div>
+    <script>
+    // --- Homepage Media & Descriptions Logic ---
+    let mediaDescs = JSON.parse(localStorage.getItem('mediaDescs') || '[]');
+    function renderMediaDescList() {
+        const list = document.getElementById('mediaDescList');
+        list.innerHTML = '';
+        mediaDescs.forEach((m, idx) => {
+            const div = document.createElement('div');
+            div.innerHTML = `<span style='display:inline-flex;align-items:center;gap:8px;'>${m.img ? `<img src='${m.img}' alt='img' style='height:32px;width:32px;object-fit:cover;border-radius:6px;'>` : ''}${m.video ? `<a href='${m.video}' target='_blank' style='color:#ffd54f;'>🎥</a>` : ''}<strong>${m.title || '(No Title)'}</strong>${m.desc ? `<span style='color:#aaa;font-size:0.95em;margin-left:8px;'>${m.desc}</span>` : ''}</span> <button onclick='deleteMediaDesc(${idx})' class='settings-action-btn' style='background:#ff6b6b;color:#fff;'>Delete</button>`;
+            list.appendChild(div);
+        });
+        if (mediaDescs.length === 0) {
+            list.innerHTML = '<div style="color:#aaa;">No media/descriptions added yet.</div>';
+        }
+    }
+    document.getElementById('addMediaDescBtn').onclick = function() {
+        document.getElementById('addMediaDescForm').style.display = 'block';
+    };
+    document.getElementById('cancelMediaDescBtn').onclick = function() {
+        document.getElementById('addMediaDescForm').style.display = 'none';
+        document.getElementById('mediaDescTitle').value = '';
+        document.getElementById('mediaDescImg').value = '';
+        document.getElementById('mediaDescVideo').value = '';
+        document.getElementById('mediaDescDesc').value = '';
+    };
+    document.getElementById('saveMediaDescBtn').onclick = function() {
+        mediaDescs.push({
+            title: document.getElementById('mediaDescTitle').value,
+            img: document.getElementById('mediaDescImg').value,
+            video: document.getElementById('mediaDescVideo').value,
+            desc: document.getElementById('mediaDescDesc').value
+        });
+        localStorage.setItem('mediaDescs', JSON.stringify(mediaDescs));
+        window.dispatchEvent(new Event('storage'));
+        renderMediaDescList();
+        document.getElementById('addMediaDescForm').style.display = 'none';
+        document.getElementById('mediaDescTitle').value = '';
+        document.getElementById('mediaDescImg').value = '';
+        document.getElementById('mediaDescVideo').value = '';
+        document.getElementById('mediaDescDesc').value = '';
+    };
+    function deleteMediaDesc(idx) {
+        mediaDescs.splice(idx, 1);
+        localStorage.setItem('mediaDescs', JSON.stringify(mediaDescs));
+        window.dispatchEvent(new Event('storage'));
+        renderMediaDescList();
+    }
+    renderMediaDescList();
+    // Demo storage
+    // Running message logic
+    let runningMessage = JSON.parse(localStorage.getItem('runningMessage') || '{"text":"","color":"#ffd54f"}');
+    const runningMessageInput = document.getElementById('runningMessageInput');
+    const runningMessageColor = document.getElementById('runningMessageColor');
+    const runningMessagePreview = document.getElementById('runningMessagePreview');
+    if (runningMessageInput && runningMessageColor && runningMessagePreview) {
+        runningMessageInput.value = runningMessage.text || '';
+        runningMessageColor.value = runningMessage.color || '#ffd54f';
+        function updatePreview() {
+            runningMessagePreview.innerHTML = `<span style='display:inline-block;padding:8px 18px;background:#232526;border-radius:8px;font-weight:600;color:${runningMessageColor.value};animation: marquee 12s linear infinite;white-space:nowrap;'>${runningMessageInput.value}</span>`;
+        }
+        runningMessageInput.addEventListener('input', updatePreview);
+        runningMessageColor.addEventListener('input', updatePreview);
+        updatePreview();
+        document.getElementById('saveRunningMessageBtn').onclick = function() {
+            runningMessage = { text: runningMessageInput.value, color: runningMessageColor.value };
+            localStorage.setItem('runningMessage', JSON.stringify(runningMessage));
+            updatePreview();
+            window.dispatchEvent(new Event('storage'));
+            alert('Running message saved!');
+        };
+    }
+    let testimonials = JSON.parse(localStorage.getItem('testimonials') || '[]');
+    // Sectors logic
+    let sectors = JSON.parse(localStorage.getItem('sectors') || '[{"name":"Real Estate","img":"","video":"","desc":""},{"name":"Agriculture","img":"","video":"","desc":""},{"name":"Technology","img":"","video":"","desc":""},{"name":"Education","img":"","video":"","desc":""},{"name":"Other","img":"","video":"","desc":""}]');
+    function renderSectorList() {
+        const list = document.getElementById('sectorList');
+        list.innerHTML = '';
+        // Show all available sectors
+        sectors.forEach((s, idx) => {
+            const div = document.createElement('div');
+            div.innerHTML = `<span style='display:inline-flex;align-items:center;'>${s.img ? `<img src='${s.img}' alt='icon' style='height:28px;width:28px;vertical-align:middle;margin-right:8px;border-radius:4px;'>` : ''}<strong style='margin-right:8px;'>${s.name}</strong>${s.video ? `<a href='${s.video}' target='_blank' style='margin-right:8px;color:#ffd54f;'>🎥</a>` : ''}${s.desc ? `<span style='color:#aaa;font-size:0.95em;'>${s.desc}</span>` : ''}</span>
+                <span>
+                    <button onclick="editSector(${idx})" class="settings-action-btn">Edit</button>
+                    <button onclick="deleteSector(${idx})" class="settings-action-btn">Delete</button>
+                </span>`;
+            list.appendChild(div);
+        });
+        if (sectors.length === 0) {
+            list.innerHTML = '<div style="color:#aaa;">No sectors available.</div>';
+        }
+    }
+    document.getElementById('addSectorBtn').onclick = function() {
+        document.getElementById('addSectorForm').style.display = 'block';
+    };
+    document.getElementById('cancelSectorBtn').onclick = function() {
+        document.getElementById('addSectorForm').style.display = 'none';
+    };
+    document.getElementById('saveSectorBtn').onclick = function() {
+        sectors.push({
+            name: document.getElementById('sectorName').value,
+            img: document.getElementById('sectorImg').value,
+            video: document.getElementById('sectorVideo').value,
+            desc: document.getElementById('sectorDesc').value
+        });
+        localStorage.setItem('sectors', JSON.stringify(sectors));
+        window.dispatchEvent(new Event('storage'));
+        renderSectorList();
+        renderOpportunityCategoryOptions();
+        document.getElementById('addSectorForm').style.display = 'none';
+        document.getElementById('sectorName').value = '';
+        document.getElementById('sectorImg').value = '';
+        document.getElementById('sectorVideo').value = '';
+        document.getElementById('sectorDesc').value = '';
+    };
+    function editSector(idx) {
+        const s = sectors[idx];
+        document.getElementById('sectorName').value = s.name;
+        document.getElementById('sectorImg').value = s.img || '';
+        document.getElementById('sectorVideo').value = s.video || '';
+        document.getElementById('sectorDesc').value = s.desc || '';
+        document.getElementById('addSectorForm').style.display = 'block';
+        document.getElementById('saveSectorBtn').onclick = function() {
+            sectors[idx] = {
+                name: document.getElementById('sectorName').value,
+                img: document.getElementById('sectorImg').value,
+                video: document.getElementById('sectorVideo').value,
+                desc: document.getElementById('sectorDesc').value
+            };
+            localStorage.setItem('sectors', JSON.stringify(sectors));
+            window.dispatchEvent(new Event('storage'));
+            renderSectorList();
+            renderOpportunityCategoryOptions();
+            document.getElementById('addSectorForm').style.display = 'none';
+            document.getElementById('sectorName').value = '';
+            document.getElementById('sectorImg').value = '';
+            document.getElementById('sectorVideo').value = '';
+            document.getElementById('sectorDesc').value = '';
+            document.getElementById('saveSectorBtn').onclick = null;
+        };
+    }
+    function deleteSector(idx) {
+        sectors.splice(idx, 1);
+    localStorage.setItem('sectors', JSON.stringify(sectors));
+    window.dispatchEvent(new Event('storage'));
+    renderSectorList();
+    renderOpportunityCategoryOptions();
+    }
+    renderSectorList();
+
+    // Opportunities logic
+    let opportunities = JSON.parse(localStorage.getItem('opportunities') || '[]');
+    function renderOpportunityCategoryOptions() {
+        const select = document.getElementById('opportunityCategory');
+        if (!select) return;
+        select.innerHTML = '';
+        sectors.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.name;
+            opt.textContent = s.name;
+            select.appendChild(opt);
+        });
+    }
+    renderOpportunityCategoryOptions();
+    function renderOpportunityList() {
+        const list = document.getElementById('opportunityList');
+        list.innerHTML = '';
+        opportunities.forEach((o, idx) => {
+            const div = document.createElement('div');
+            div.innerHTML = `<span><img src="${o.img}" alt="Opp" style="height:32px;vertical-align:middle;margin-right:12px;border-radius:6px;"> <strong>${o.title}</strong> (${o.category}): ${o.desc}${o.btnLabel && o.btnUrl ? ` <a href='${o.btnUrl}' target='_blank' class='settings-action-btn' style='margin-left:10px;'>${o.btnLabel}</a>` : ''}</span>
+                <span>
+                    <button onclick="editOpportunity(${idx})" class="settings-action-btn">Edit</button>
+                    <button onclick="deleteOpportunity(${idx})" class="settings-action-btn">Delete</button>
+                </span>`;
+            list.appendChild(div);
+        });
+    }
+    document.getElementById('addOpportunityBtn').onclick = function() {
+        renderOpportunityCategoryOptions();
+        document.getElementById('addOpportunityForm').style.display = 'block';
+    };
+    document.getElementById('cancelOpportunityBtn').onclick = function() {
+        document.getElementById('addOpportunityForm').style.display = 'none';
+    };
+    document.getElementById('saveOpportunityBtn').onclick = function() {
+        opportunities.push({
+            img: document.getElementById('opportunityImg').value,
+            title: document.getElementById('opportunityTitle').value,
+            desc: document.getElementById('opportunityDesc').value,
+            category: document.getElementById('opportunityCategory').value,
+            btnLabel: document.getElementById('opportunityBtnLabel').value,
+            btnUrl: document.getElementById('opportunityBtnUrl').value
+        });
+        localStorage.setItem('opportunities', JSON.stringify(opportunities));
+        window.dispatchEvent(new Event('storage'));
+        renderOpportunityList();
+        document.getElementById('addOpportunityForm').style.display = 'none';
+        document.getElementById('opportunityImg').value = '';
+        document.getElementById('opportunityTitle').value = '';
+        document.getElementById('opportunityDesc').value = '';
+        document.getElementById('opportunityCategory').value = sectors[0] ? sectors[0].name : '';
+        document.getElementById('opportunityBtnLabel').value = '';
+        document.getElementById('opportunityBtnUrl').value = '';
+    };
+    function editOpportunity(idx) {
+        const o = opportunities[idx];
+        renderOpportunityCategoryOptions();
+        document.getElementById('opportunityImg').value = o.img;
+        document.getElementById('opportunityTitle').value = o.title;
+        document.getElementById('opportunityDesc').value = o.desc;
+        document.getElementById('opportunityCategory').value = o.category;
+        document.getElementById('opportunityBtnLabel').value = o.btnLabel || '';
+        document.getElementById('opportunityBtnUrl').value = o.btnUrl || '';
+        document.getElementById('addOpportunityForm').style.display = 'block';
+        document.getElementById('saveOpportunityBtn').onclick = function() {
+            opportunities[idx] = {
+                img: document.getElementById('opportunityImg').value,
+                title: document.getElementById('opportunityTitle').value,
+                desc: document.getElementById('opportunityDesc').value,
+                category: document.getElementById('opportunityCategory').value,
+                btnLabel: document.getElementById('opportunityBtnLabel').value,
+                btnUrl: document.getElementById('opportunityBtnUrl').value
+            };
+            localStorage.setItem('opportunities', JSON.stringify(opportunities));
+            window.dispatchEvent(new Event('storage'));
+            renderOpportunityList();
+            document.getElementById('addOpportunityForm').style.display = 'none';
+            document.getElementById('opportunityImg').value = '';
+            document.getElementById('opportunityTitle').value = '';
+            document.getElementById('opportunityDesc').value = '';
+            document.getElementById('opportunityCategory').value = sectors[0] ? sectors[0].name : '';
+            document.getElementById('opportunityBtnLabel').value = '';
+            document.getElementById('opportunityBtnUrl').value = '';
+            document.getElementById('saveOpportunityBtn').onclick = null;
+        };
+    }
+    function deleteOpportunity(idx) {
+        opportunities.splice(idx, 1);
+    localStorage.setItem('opportunities', JSON.stringify(opportunities));
+    window.dispatchEvent(new Event('storage'));
+    renderOpportunityList();
+    }
+    renderOpportunityList();
+    // Feature toggles
+    let features = JSON.parse(localStorage.getItem('features') || '{"banners":true,"promos":true,"notices":true}');
+    // Layout settings
+    let layoutStyle = localStorage.getItem('layoutStyle') || 'default';
+    // Approval workflow
+    let approvalRequired = JSON.parse(localStorage.getItem('approvalRequired') || 'false');
+    let approvalStatus = localStorage.getItem('approvalStatus') || 'Pending';
+    // Audit log
+    let auditLog = JSON.parse(localStorage.getItem('auditLog') || '[]');
+    // Testimonial logic
+    function renderTestimonialList() {
+        const list = document.getElementById('testimonialList');
+        list.innerHTML = '';
+        testimonials.forEach((t, idx) => {
+            const div = document.createElement('div');
+            div.innerHTML = `<span><img src='${t.img}' alt='Client' style='height:32px;vertical-align:middle;margin-right:12px;border-radius:50%;'>${t.name} (${t.role}): ${t.text}</span>
+                <span>
+                    <button onclick="editTestimonial(${idx})" class="settings-action-btn">Edit</button>
+                    <button onclick="deleteTestimonial(${idx})" class="settings-action-btn">Delete</button>
+                </span>`;
+            list.appendChild(div);
+        });
+    }
+    document.getElementById('addTestimonialBtn').onclick = function() {
+        document.getElementById('addTestimonialForm').style.display = 'block';
+    };
+    document.getElementById('cancelTestimonialBtn').onclick = function() {
+        document.getElementById('addTestimonialForm').style.display = 'none';
+    };
+    document.getElementById('saveTestimonialBtn').onclick = function() {
+        testimonials.push({
+            name: document.getElementById('testimonialName').value,
+            role: document.getElementById('testimonialRole').value,
+            img: document.getElementById('testimonialImg').value,
+            text: document.getElementById('testimonialText').value
+        });
+        localStorage.setItem('testimonials', JSON.stringify(testimonials));
+        renderTestimonialList();
+        document.getElementById('addTestimonialForm').style.display = 'none';
+        document.getElementById('testimonialName').value = '';
+        document.getElementById('testimonialRole').value = '';
+        document.getElementById('testimonialImg').value = '';
+        document.getElementById('testimonialText').value = '';
+    };
+    function editTestimonial(idx) {
+        const t = testimonials[idx];
+        document.getElementById('testimonialName').value = t.name;
+        document.getElementById('testimonialRole').value = t.role;
+        document.getElementById('testimonialImg').value = t.img;
+        document.getElementById('testimonialText').value = t.text;
+        document.getElementById('addTestimonialForm').style.display = 'block';
+        document.getElementById('saveTestimonialBtn').onclick = function() {
+            testimonials[idx] = {
+                name: document.getElementById('testimonialName').value,
+                role: document.getElementById('testimonialRole').value,
+                img: document.getElementById('testimonialImg').value,
+                text: document.getElementById('testimonialText').value
+            };
+            localStorage.setItem('testimonials', JSON.stringify(testimonials));
+            renderTestimonialList();
+            document.getElementById('addTestimonialForm').style.display = 'none';
+            document.getElementById('testimonialName').value = '';
+            document.getElementById('testimonialRole').value = '';
+            document.getElementById('testimonialImg').value = '';
+            document.getElementById('testimonialText').value = '';
+            document.getElementById('saveTestimonialBtn').onclick = null;
+        };
+    }
+    function deleteTestimonial(idx) {
+        testimonials.splice(idx, 1);
+        localStorage.setItem('testimonials', JSON.stringify(testimonials));
+        renderTestimonialList();
+    }
+    renderTestimonialList();
+    // Feature toggles
+    function renderFeatureToggles() {
+        const toggles = document.getElementById('featureToggles');
+        toggles.innerHTML = '';
+        Object.keys(features).forEach(f => {
+            toggles.innerHTML += `<label style='margin-right:18px;'><input type='checkbox' id='toggle_${f}' ${features[f] ? 'checked' : ''}/> ${f.charAt(0).toUpperCase()+f.slice(1)}</label>`;
+        });
+        Object.keys(features).forEach(f => {
+            document.getElementById('toggle_' + f).onchange = function() {
+                features[f] = this.checked;
+                localStorage.setItem('features', JSON.stringify(features));
+            };
+        });
+    }
+    renderFeatureToggles();
+    document.getElementById('layoutStyle').value = layoutStyle;
+    document.getElementById('saveLayoutBtn').onclick = function() {
+        layoutStyle = document.getElementById('layoutStyle').value;
+        localStorage.setItem('layoutStyle', layoutStyle);
+        logAudit('Layout changed to ' + layoutStyle);
+        alert('Layout saved!');
+    };
+    document.getElementById('refreshContentBtn').onclick = function() {
+        logAudit('Homepage content refreshed');
+        alert('Homepage content refreshed!');
+    };
+    function updateApprovalStatus() {
+        document.getElementById('approvalStatus').textContent = 'Approval Status: ' + approvalStatus;
+    }
+    document.getElementById('requestApprovalBtn').onclick = function() {
+        approvalRequired = true;
+        approvalStatus = 'Pending';
+        localStorage.setItem('approvalRequired', JSON.stringify(approvalRequired));
+        localStorage.setItem('approvalStatus', approvalStatus);
+        logAudit('Approval requested');
+        updateApprovalStatus();
+        alert('Approval requested. Changes will not go live until approved by admin.');
+    };
+    document.getElementById('approveChangesBtn').onclick = function() {
+        approvalRequired = false;
+        approvalStatus = 'Approved';
+        localStorage.setItem('approvalRequired', JSON.stringify(approvalRequired));
+        localStorage.setItem('approvalStatus', approvalStatus);
+        logAudit('Changes approved by admin');
+        updateApprovalStatus();
+        alert('Changes approved and live!');
+    };
+    updateApprovalStatus();
+    function logAudit(action) {
+        const admin = localStorage.getItem('currentAdmin') || 'admin1';
+        const entry = `${new Date().toLocaleString()} - ${admin}: ${action}`;
+        auditLog.unshift(entry);
+        auditLog = auditLog.slice(0, 20); // keep last 20
+        localStorage.setItem('auditLog', JSON.stringify(auditLog));
+        renderAuditLog();
+    }
+    function renderAuditLog() {
+        const logDiv = document.getElementById('auditLog');
+        logDiv.innerHTML = auditLog.map(e => `<div>${e}</div>`).join('');
+    }
+    renderAuditLog();
+    // Highlights logic
+    let highlights = JSON.parse(localStorage.getItem('highlights') || '{"topProduct":"","vipPromotion":"","featuredService":""}');
+    document.getElementById('topProduct').value = highlights.topProduct;
+    document.getElementById('vipPromotion').value = highlights.vipPromotion;
+    document.getElementById('featuredService').value = highlights.featuredService;
+    document.getElementById('saveHighlightsBtn').onclick = function() {
+        highlights.topProduct = document.getElementById('topProduct').value;
+        highlights.vipPromotion = document.getElementById('vipPromotion').value;
+        highlights.featuredService = document.getElementById('featuredService').value;
+        localStorage.setItem('highlights', JSON.stringify(highlights));
+        logAudit('Homepage highlights updated');
+        alert('Highlights saved!');
+    };
+    // Schedule logic
+    let scheduled = JSON.parse(localStorage.getItem('scheduled') || '[]');
+    document.getElementById('saveScheduleBtn').onclick = function() {
+        scheduled.push({ content: document.getElementById('scheduledContent').value, dateTime: document.getElementById('scheduleDateTime').value });
+        localStorage.setItem('scheduled', JSON.stringify(scheduled));
+        logAudit('Content scheduled for ' + document.getElementById('scheduleDateTime').value);
+        alert('Content scheduled!');
+        document.getElementById('scheduledContent').value = '';
+        document.getElementById('scheduleDateTime').value = '';
+    };
+    // Live stats logic (demo data)
+    function renderLiveStats() {
+        // Demo: Replace with real backend integration
+        const stats = {
+            addedProduct: 12,
+            newUser: 5,
+            newDeposit: 7,
+            addedWithdrawal: [{ user: 'Alice', amount: 2000 }, { user: 'Bob', amount: 1500 }]
+        };
+        let html = `<strong>Added Products:</strong> ${stats.addedProduct}<br>`;
+        html += `<strong>New Users:</strong> ${stats.newUser}<br>`;
+        html += `<strong>New Deposits:</strong> ${stats.newDeposit}<br>`;
+        html += `<strong>Added Withdrawals:</strong><br>`;
+        stats.addedWithdrawal.forEach(w => {
+            html += `&nbsp;&nbsp;${w.user}: Ksh ${w.amount}<br>`;
+        });
+        document.getElementById('liveStats').innerHTML = html;
+    }
+    renderLiveStats();
+
+    // --- Reset and Sync Logic ---
+function confirmSystemReset() {
+  document.getElementById('resetConfirmModal').style.display = 'flex';
+}
+function closeAdminModal() {
+  document.getElementById('resetConfirmModal').style.display = 'none';
+}
+function executeSystemReset() {
+  const key = document.getElementById('resetSecurityKey').value;
+  if (key === '1540568e') {
+    // Clear localStorage and reload page
+    localStorage.clear();
+    sessionStorage.clear();
+    location.reload();
+  } else {
+    alert('Incorrect security key.');
+  }
+}
+async function syncChanges() {
+  try {
+    const syncStatus = document.getElementById('syncStatus');
+    const syncProgress = document.getElementById('syncProgress');
+    const syncMessage = document.getElementById('syncMessage');
+    syncStatus.style.display = 'block';
+    syncMessage.textContent = 'Synchronizing changes...';
+    // Simulate sync progress
+    const steps = ['settings'];
+    for (let i = 0; i < steps.length; i++) {
+      syncProgress.style.width = ((i + 1) / steps.length * 100) + '%';
+      syncMessage.textContent = `Syncing ${steps[i]}...`;
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    syncMessage.textContent = 'All changes synchronized!';
+    setTimeout(() => { syncStatus.style.display = 'none'; }, 2000);
+    // Optionally, reload settings data here
+  } catch (error) {
+    alert('Failed to sync changes. Please try again.');
+  }
+}
+    </script>
+    <script>
+    // --- Admin Notification Bar Logic ---
+    function renderAdminNotifications() {
+        let notifications = [];
+        try { notifications = JSON.parse(localStorage.getItem('adminDepositNotifications') || '[]'); } catch {}
+        const list = document.getElementById('adminNotificationList');
+        if (!list) return;
+        if (!notifications.length) {
+            list.innerHTML = '<li style="color:#aaa;">No notifications yet.</li>';
+            return;
+        }
+        list.innerHTML = notifications.map(n => {
+            let info = `<strong>${n.number || 'N/A'}</strong> tried to deposit <strong>KES ${n.amount || 'N/A'}</strong>`;
+            if (n.txid) info += ` (TxID: <span style='color:#ffd54f;'>${n.txid}</span>)`;
+            info += ` <span style='font-size:0.95em;color:#aaa;'>[${new Date(n.time).toLocaleString()}]</span>`;
+            return `<li style='margin-bottom:8px;'>${info}</li>`;
+        }).join('');
+    }
+    renderAdminNotifications();
+    setInterval(renderAdminNotifications, 5000);
+    </script>
+</body>
+</html>

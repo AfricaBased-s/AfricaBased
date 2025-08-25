@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invest in Products | AfricaBased</title>
+    <script type="module" src="js/supabaseClient.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <style>
+        :root {
+            --modal-transition: 0.3s ease;
+            --modal-bg: rgba(0, 0, 0, 0.5);
+            --primary: #1a2238;
+            --accent: #4ecdc4;
+            --accent-gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            --secondary: #ff6b6b;
+            --text: #ffffff;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --bg: #0f172a;
+            --border: #e0e0e0;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            --color-dashboard: #4ecdc4;
+            --color-exchange: #ff6b6b;
+            --color-services: #9b59b6;
+            --color-withdraw: #e74c3c;
+            --color-products: #3498db;
+            --color-deposit: #2ecc71;
+            --color-active: #f1c40f;
+            --color-referrals: #1abc9c;
+            --color-statistics: #34495e;
+            --color-profile: #8e44ad;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --bg: #0f172a;
+            --nav-bg: rgba(26, 34, 56, 0.98);
+        }
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: rgba(255,255,255,0.07);
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(78,205,196,0.08);
+        }
+        h1 {
+            color: #4ecdc4;
+            margin-bottom: 24px;
+        }
+        .admin-link {
+            display: block;
+            margin-bottom: 24px;
+            text-align: right;
+        }
+        .admin-link a {
+            color: #2980b9;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .sector-filter {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .sector-btn, .invest-btn, .collect-btn, .back-btn, #toggle-wallet-visibility, .close-modal {
+            background: var(--accent-gradient);
+            color: #232526;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 22px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(78,205,196,0.10);
+            transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        .sector-btn:not(.active):hover, .invest-btn:hover, .collect-btn:hover, .back-btn:hover, #toggle-wallet-visibility:hover, .close-modal:hover {
+            background: #fff;
+            color: #4ecdc4;
+            box-shadow: 0 4px 16px rgba(78,205,196,0.18);
+        }
+        .sector-btn.active, .invest-btn:active, .collect-btn:active, .back-btn:active, #toggle-wallet-visibility:active, .close-modal:active {
+            background: #4ecdc4;
+            color: #232526;
+            box-shadow: 0 4px 16px rgba(78,205,196,0.25);
+        }
+        .products {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+        .product-card {
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            border-radius: 8px;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.18);
+            padding: 0 0 24px 0;
+            text-align: left;
+            transition: box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: auto;
+            height: 520px;
+            min-height: 520px;
+            max-height: 520px;
+        }
+        .product-card:hover {
+            box-shadow: 0 4px 24px rgba(44,62,80,0.22);
+        }
+        .product-image {
+            width: 100%;
+            height: 75%;
+            object-fit: cover;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            margin-bottom: 0;
+            display: block;
+        }
+        .collect-btn {
+            background: #ffd54f;
+            color: #232526;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+        .collect-btn:hover {
+            background: #80cbc4;
+            color: #232526;
+        }
+        .product-title {
+            font-size: 1.2rem;
+            color: #fff;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .product-sector {
+            font-size: 1rem;
+            color: #b39ddb;
+            margin-bottom: 8px;
+        }
+        .product-desc-top {
+            margin-bottom: 14px;
+            font-size: 1.05rem;
+            color: #e0e0e0;
+            text-align: center;
+        }
+        .product-details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+        .product-detail-box {
+            background: rgba(255,255,255,0.04);
+            border-radius: 6px;
+            padding: 12px 18px;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: none;
+        }
+        .product-detail-label {
+            font-weight: 600;
+            color: #ffd54f;
+            margin-bottom: 4px;
+        }
+        .product-detail-value {
+            color: #80cbc4;
+            font-weight: 500;
+            font-size: 1.08rem;
+        }
+        .product-returns {
+            color: #e67e22;
+            margin-bottom: 8px;
+        }
+        .product-duration {
+            color: #2980b9;
+            margin-bottom: 8px;
+        }
+        .product-desc {
+            color: #7f8c8d;
+            font-size: 0.98rem;
+            margin-bottom: 8px;
+        }
+        .product-limit {
+            color: #c0392b;
+            margin-bottom: 16px;
+        }
+        .invest-btn {
+            background: #ffd54f;
+            color: #232526;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .invest-btn:hover {
+            background: #80cbc4;
+            color: #232526;
+        }
+        .back-btn-container {
+            position: absolute;
+            top: 24px;
+            left: 32px;
+            z-index: 10;
+        }
+        .back-btn {
+            background: #0c0faccc;
+            color: #0b627259;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            transition: background 0.2s, color 0.2s;
+        }
+        .back-btn:hover {
+            background: #2112a8;
+            color: #232526;
+        }
+    </style>
+</head>
+<body>
+    <div class="back-btn-container">
+        <button class="back-btn" onclick="window.history.back()">&#8592; Back</button>
+    </div>
+    <div id="wallet-balance-bar" style="display:flex;align-items:center;justify-content:center;margin-top:24px;margin-bottom:12px;gap:12px;">
+        <span style="color:#0b8128;font-weight:600;font-size:1.15rem;">Wallet Balance:</span>
+        <span id="wallet-balance-value" style="color:#4ecdc4;font-size:1.15rem;font-weight:700;letter-spacing:0.5px;">Ksh 0</span>
+        <button id="toggle-wallet-visibility" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:#ffd54f;outline:none;" title="Hide/Show Balance">
+            <i id="wallet-eye-icon" class="fa fa-eye"></i>
+        </button>
+    </div>
+    <script>
+    // On real account, clear wallet and transactions for a fresh start
+    window.addEventListener('DOMContentLoaded', function() {
+        localStorage.setItem('walletBalance', '0');
+        localStorage.setItem('accountBalance', '0');
+        localStorage.setItem('transactions', '[]');
+        localStorage.setItem('myProducts', '[]');
+        updateWalletDisplay && updateWalletDisplay();
+    });
+    </script>
+    <div class="container">
+    <!-- Admin panel link removed -->
+        <h1>Invest in Products</h1>
+        <div class="sector-filter-container" style="display:flex;align-items:center;justify-content:center;margin-bottom:32px;">
+            <label for="sectorFilter" class="sector-label" style="color:#ffd54f;font-weight:600;margin-right:12px;font-size:1.08rem;">Filter by Sector:</label>
+            <select id="sectorFilter" class="sector-filter" style="padding:8px 18px;border-radius:6px;border:none;background:#232526;color:#ffd54f;font-size:1rem;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+                <option value="All">All</option>
+            </select>
+        </div>
+    <div class="products"></div>
+    </div>
+    <div id="toastContainer" class="toast-container"></div>
+    <script type="module" src="js/products.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+<script>
+// Wallet balance display logic
+function updateWalletDisplay() {
+    const walletBalance = parseInt(localStorage.getItem('walletBalance') || '0');
+    const walletValue = document.getElementById('wallet-balance-value');
+    if (walletValue.dataset.hidden === 'true') {
+        walletValue.textContent = '••••••';
+    } else {
+        walletValue.textContent = 'Ksh ' + walletBalance.toLocaleString();
+    }
+}
+// Hide/show wallet balance
+const walletValue = document.getElementById('wallet-balance-value');
+walletValue.dataset.hidden = 'true'; // hidden by default
+const toggleBtn = document.getElementById('toggle-wallet-visibility');
+const eyeIcon = document.getElementById('wallet-eye-icon');
+eyeIcon.classList.remove('fa-eye');
+eyeIcon.classList.add('fa-eye-slash');
+toggleBtn.addEventListener('click', function() {
+    if (walletValue.dataset.hidden === 'true') {
+        walletValue.dataset.hidden = 'false';
+        eyeIcon.classList.remove('fa-eye-slash');
+        eyeIcon.classList.add('fa-eye');
+    } else {
+        walletValue.dataset.hidden = 'true';
+        eyeIcon.classList.remove('fa-eye');
+        eyeIcon.classList.add('fa-eye-slash');
+    }
+    updateWalletDisplay();
+});
+// Update on load and on wallet change
+updateWalletDisplay();
+window.updateWalletDisplay = updateWalletDisplay;
+window.addEventListener('storage', function(e) {
+    if (e.key === 'walletBalance') updateWalletDisplay();
+});
+</script>
+</body>
+<script>
+// Populate sector dropdown from admin products (localStorage 'products')
+function populateSectorDropdown() {
+    const sectors = JSON.parse(localStorage.getItem('sectors') || '[]');
+    const filter = document.getElementById('sectorFilter');
+    filter.innerHTML = '<option value="All">All</option>';
+    sectors.forEach(sector => {
+        if (sector.status === 'active') {
+            const option = document.createElement('option');
+            option.value = sector.id;
+            option.textContent = sector.name;
+            filter.appendChild(option);
+        }
+    });
+}
+populateSectorDropdown();
+// Re-populate if admin products or sectors change
+window.addEventListener('storage', function(e) {
+    if (e.key === 'products' || e.key === 'sectors') populateSectorDropdown();
+});
+// Sector dropdown filter logic
+document.getElementById('sectorFilter').addEventListener('change', function() {
+    const selected = this.value;
+    const cards = document.querySelectorAll('.product-card');
+    cards.forEach(card => {
+        const sector = card.querySelector('.product-sector')?.textContent?.replace('Sector: ','')?.trim();
+        if (selected === 'All' || sector === selected) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="js/supabaseClient.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AfricaBased - Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+    /* Custom modal for M-Pesa confirmation */
+    .custom-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .custom-modal-content {
+        background: var(--main-bg, #101c1c);
+        color: var(--main-text, #fff);
+        border-radius: 16px;
+        box-shadow: 0 4px 32px 0 rgba(0,0,0,0.25);
+        padding: 2em 2.5em 1.5em 2.5em;
+        min-width: 320px;
+        max-width: 90vw;
+        text-align: center;
+    }
+    .custom-modal-content h3 {
+        margin-top: 0;
+        color: var(--accent, #00e6d0);
+    }
+    .modal-btns-row {
+        display: flex;
+        gap: 1em;
+        justify-content: center;
+    }
+    .custom-modal-content .modal-btn.confirm-btn {
+        background: var(--button-gradient, linear-gradient(90deg, #00e6d0 0%, #00b3a4 100%));
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.7em 1.5em;
+        font-weight: 600;
+        font-size: 1em;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .custom-modal-content .modal-btn.confirm-btn:hover {
+        background: var(--accent, #00e6d0);
+    }
+    .custom-modal-content .modal-btn.cancel-btn {
+        background: #222c2c;
+        color: #fff;
+        border: 1px solid var(--accent, #00e6d0);
+        border-radius: 8px;
+        padding: 0.7em 1.5em;
+        font-weight: 600;
+        font-size: 1em;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .custom-modal-content .modal-btn.cancel-btn:hover {
+        background: #182222;
+    }
+        :root {
+            --primary: #0f172a;
+            --accent: #4ecdc4;
+            --text: #fff;
+            --text-light: #bfc9d1;
+            --background: #0f172a;
+            --white: #1a2238;
+            --error: #ff6b6b;
+            --success: #2ecc71;
+            --border: #232c43;
+            --shadow: 0 2px 12px rgba(0,0,0,0.18);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            position: relative;
+        }
+
+        .back-btn-container {
+            margin-bottom: 2rem;
+        }
+
+        .back-btn {
+            background: linear-gradient(90deg, #232c43, #4ecdc4);
+            color: #fff;
+            border: 1px solid #4ecdc4;
+            border-radius: 10px;
+            padding: 0.5rem 1.2rem;
+            cursor: pointer;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(78,205,196,0.10);
+        }
+
+        .back-btn:hover {
+            background: linear-gradient(90deg, #4ecdc4, #232c43);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(78,205,196,0.18);
+        }
+
+        .back-btn i {
+            font-size: 1rem;
+        }
+
+        .profile-container {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 0;
+            margin: 0 auto;
+            max-width: 800px;
+            overflow: hidden;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            padding: 3rem 2rem;
+            color: var(--white);
+            text-align: center;
+            position: relative;
+        }
+
+        .profile-photo-container {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 1.5rem;
+            position: relative;
+        }
+
+        .profile-photo {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid var(--white);
+            box-shadow: var(--shadow);
+            object-fit: cover;
+            background-color: var(--background);
+            transition: all 0.3s ease;
+        }
+
+        .photo-upload-label {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid var(--white);
+            box-shadow: var(--shadow);
+        }
+
+        .photo-upload-label:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .photo-upload-input {
+            display: none;
+        }
+
+        .profile-header h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .profile-header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .profile-content {
+            padding: 2rem;
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .info-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .info-group label {
+            color: var(--text-light);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .info-value {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.125rem;
+            color: var(--text);
+        }
+
+        .static-value {
+            color: var(--text-light);
+        }
+
+        .edit-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .edit-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .edit-btn:hover {
+            background: var(--accent);
+            color: var(--white);
+        }
+
+        .update-btn {
+            background: linear-gradient(90deg, #232c43, #4ecdc4);
+            color: #fff;
+            border: 1px solid #4ecdc4;
+            padding: 0.5rem 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            align-self: flex-start;
+            box-shadow: 0 2px 8px rgba(78,205,196,0.10);
+        }
+
+        .update-btn:hover {
+            background: linear-gradient(90deg, #4ecdc4, #232c43);
+        }
+
+        .edit-input {
+            font: inherit;
+            color: inherit;
+            background: var(--white);
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .edit-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .save-cancel-btns {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 0.5rem;
+        }
+
+        /* Bank Selection Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: var(--white);
+            margin: 10% auto;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            animation: slideIn 0.3s;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .bank-search {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .bank-search i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .bank-search input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .bank-search input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .bank-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin: -0.5rem;
+            padding: 0.5rem;
+            max-height: 400px;
+        }
+
+        .bank-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .bank-item:hover {
+            border-color: var(--accent);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .bank-item.selected {
+            border-color: var(--accent);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .bank-item i {
+            color: var(--accent);
+            font-size: 1.25rem;
+        }
+
+        .bank-info {
+            flex-grow: 1;
+        }
+
+        .bank-name {
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .bank-code {
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .payment-method-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .payment-method-item:hover {
+            border-color: var(--accent);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .payment-method-item i {
+            font-size: 1.5rem;
+            color: var(--accent);
+        }
+
+        .payment-method-info {
+            flex-grow: 1;
+        }
+
+        .payment-method-name {
+            font-weight: 500;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .payment-method-detail {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            margin-bottom: 0.25rem;
+        }
+
+        .payment-method-hint {
+            font-size: 0.813rem;
+            color: var(--text-light);
+            opacity: 0.8;
+        }
+
+        .payment-method-arrow {
+            color: var(--text-light);
+            opacity: 0.5;
+            transition: all 0.2s;
+        }
+
+        .payment-method-item:hover .payment-method-arrow {
+            opacity: 1;
+            transform: translateX(4px);
+        }
+
+        .modal-subtitle {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+            font-size: 0.938rem;
+        }
+
+        .modal-actions {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .modal-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .save-btn, .cancel-btn {
+            background: linear-gradient(90deg, #232c43, #4ecdc4);
+            color: #fff;
+            border: 1px solid #4ecdc4;
+            padding: 0.5rem 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(78,205,196,0.10);
+        }
+
+        .save-btn {
+            background: linear-gradient(90deg, #232c43, #4ecdc4);
+            color: #fff;
+            border-color: #4ecdc4;
+        }
+
+        .save-btn:hover {
+            background: linear-gradient(90deg, #4ecdc4, #232c43);
+        }
+
+        .cancel-btn:hover {
+            background: #ff6b6b;
+            color: #fff;
+            border-color: #ff6b6b;
+        }
+
+        /* Impersonation banner styles */
+        .impersonation-banner {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: #ffd54f;
+            color: #232526;
+            padding: 16px 32px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+        .impersonation-banner button {
+            margin-left: 24px;
+            background: #232526;
+            color: #ffd54f;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .impersonation-banner button:hover {
+            background: #ffd54f;
+            color: #232526;
+            border: 1px solid #232526;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="back-btn-container">
+            <button class="back-btn" onclick="window.history.back()">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+        </div>
+        <div class="profile-container">
+            <div class="profile-header">
+                <div class="profile-photo-container">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%237f8c8d'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" 
+                         alt="Profile Photo" 
+                         id="profilePhoto"
+                         class="profile-photo">
+                    <label for="photoUpload" class="photo-upload-label">
+                        <i class="fas fa-camera"></i>
+                    </label>
+                    <input type="file" 
+                           id="photoUpload" 
+                           class="photo-upload-input" 
+                           accept="image/*">
+                </div>
+                <h1 id="headerName">John Doe</h1>
+                <p id="headerEmail">john.doe@example.com</p>
+            </div>
+            <div class="profile-content">
+                <div class="profile-info">
+                <div class="info-group">
+                    <label>Full Name</label>
+                    <div class="edit-group">
+                        <div class="info-value">
+                            <span id="userName">John Doe</span>
+                            <button class="edit-btn" onclick="startEditing('userName')">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-group">
+                    <label>Email</label>
+                    <div class="info-value static-value">
+                        <span id="userEmail">john.doe@example.com</span>
+                    </div>
+                </div>
+
+                <div class="info-group">
+                    <label>M-Pesa Number</label>
+                    <div class="edit-group">
+                        <div class="info-value">
+                            <span id="mpesaNumber">254712345678</span>
+                            <button class="edit-btn" onclick="startEditing('mpesaNumber')">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-group">
+                    <label>Bank Name</label>
+                    <div class="edit-group">
+                        <div class="info-value">
+                            <span id="bankType">Not Set</span>
+                            <button class="edit-btn" title="Select bank" onclick="startBankSelection()">
+                                <i class="fas fa-building-columns"></i>
+                            </button>
+                        </div>
+                        <button class="update-btn" onclick="startBankSelection()">
+                            Select Bank
+                        </button>
+                    </div>
+                </div>
+
+                <div class="info-group">
+                    <label>Bank Account Number</label>
+                    <div class="edit-group">
+                        <div class="info-value">
+                            <span id="accountNumber">Not Set</span>
+                            <button class="edit-btn" onclick="startEditing('accountNumber')">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-actions" style="display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border);">
+                <button id="saveProfileBtn" class="update-btn" style="background: var(--success); min-width: 150px;">
+                    <i class="fas fa-save"></i> Update Profile
+                </button>
+                <div>
+                    <button id="logoutBtn" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bank Selection Modal -->
+        <div class="modal" id="bankModal">
+            <div class="modal-content">
+                <h2 class="modal-title">Select Your Bank</h2>
+                <div class="bank-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="bankSearch" placeholder="Search banks...">
+                </div>
+                <div class="bank-list" id="bankList">
+                    <!-- Banks will be populated by JavaScript -->
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn cancel-btn" onclick="closeBankModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Method Selection Modal -->
+        <div class="modal" id="paymentMethodModal">
+            <div class="modal-content">
+                <h2 class="modal-title">Select Payment Method</h2>
+                <p class="modal-subtitle">Choose how you would like to receive your funds:</p>
+                <div class="payment-methods">
+                    <div class="payment-method-item" onclick="selectPaymentMethod('mpesa')">
+                        <i class="fas fa-mobile-alt"></i>
+                        <div class="payment-method-info">
+                            <div class="payment-method-name">M-Pesa Transfer</div>
+                            <div class="payment-method-detail" id="mpesaDetail"></div>
+                            <div class="payment-method-hint">Instant transfer to your M-Pesa account</div>
+                        </div>
+                        <i class="fas fa-chevron-right payment-method-arrow"></i>
+                    </div>
+                    <div class="payment-method-item" onclick="selectPaymentMethod('bank')">
+                        <i class="fas fa-building-columns"></i>
+                        <div class="payment-method-info">
+                            <div class="payment-method-name">Bank Transfer</div>
+                            <div class="payment-method-detail" id="bankDetail"></div>
+                            <div class="payment-method-hint">Direct transfer to your bank account</div>
+                        </div>
+                        <i class="fas fa-chevron-right payment-method-arrow"></i>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn cancel-btn" onclick="closePaymentMethodModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Changes Modal -->
+        <div class="modal" id="saveChangesModal">
+            <div class="modal-content">
+                <h2 class="modal-title">Save Changes?</h2>
+                <p class="modal-subtitle">Are you sure you want to save all changes to your profile?</p>
+                <div class="modal-actions">
+                    <button class="modal-btn save-btn" onclick="saveProfileChanges()">
+                        <i class="fas fa-check"></i> Save Changes
+                    </button>
+                    <button class="modal-btn cancel-btn" onclick="closeSaveChangesModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/profile.js"></script>
+
+    <script>
+        // Initialize userData in localStorage if not exists
+        if (!localStorage.getItem('userData')) {
+            const initialData = {
+                name: 'Not Set',
+                email: 'Not Set',
+                mpesa: 'Not Set',
+                bankType: 'Not Set',
+                accountNumber: 'Not Set',
+                photoUrl: null,
+                bankDetailsVerified: false
+            };
+            localStorage.setItem('userData', JSON.stringify(initialData));
+        }
+
+        // Bank list data
+        const banks = [
+            { name: 'Equity Bank', code: 'EQT' },
+            { name: 'KCB Bank', code: 'KCB' },
+            { name: 'Standard Chartered', code: 'SCB' },
+            { name: 'ABSA Bank', code: 'ABSA' },
+            { name: 'Cooperative Bank', code: 'COOP' },
+            { name: 'Family Bank', code: 'FMB' },
+            { name: 'National Bank', code: 'NBK' },
+            { name: 'DTB Bank', code: 'DTB' },
+            { name: 'I&M Bank', code: 'IMB' },
+            { name: 'Stanbic Bank', code: 'STB' },
+            { name: 'NCBA Bank', code: 'NCBA' },
+            { name: 'HF Group', code: 'HF' },
+            { name: 'Ecobank', code: 'ECO' },
+            { name: 'Bank of Africa', code: 'BOA' },
+            { name: 'Guaranty Trust Bank', code: 'GTB' },
+            { name: 'SBM Bank', code: 'SBM' },
+            { name: 'Credit Bank', code: 'CRB' },
+            { name: 'Victoria Commercial Bank', code: 'VCB' },
+            { name: 'Citibank', code: 'CITI' },
+            { name: 'UBA Bank', code: 'UBA' },
+            { name: 'Access Bank', code: 'ACCESS' },
+            { name: 'Kingdom Bank', code: 'KNGD' },
+            { name: 'ABC Bank', code: 'ABC' },
+            { name: 'Prime Bank', code: 'PRIME' },
+            { name: 'Postbank', code: 'POST' },
+            { name: 'Jamii Bora Bank', code: 'JBB' },
+            { name: 'Consolidated Bank', code: 'CON' },
+            { name: 'Gulf African Bank', code: 'GAB' },
+            { name: 'First Community Bank', code: 'FCB' },
+            { name: 'Spire Bank', code: 'SPIRE' },
+            { name: 'Habib Bank AG Zurich', code: 'HBZ' },
+            { name: 'Middle East Bank', code: 'MEB' },
+            { name: 'Paramount Bank', code: 'PARA' },
+            { name: 'Transnational Bank', code: 'TNB' },
+            { name: 'Guardian Bank', code: 'GUARD' },
+            { name: 'Development Bank of Kenya', code: 'DBK' },
+            { name: 'Chase Bank', code: 'CHASE' },
+            { name: 'Imperial Bank', code: 'IMPERIAL' },
+            { name: 'Fidelity Commercial Bank', code: 'FIDELITY' },
+            { name: 'Oriental Commercial Bank', code: 'ORIENT' },
+            { name: 'Equatorial Commercial Bank', code: 'ECB' },
+            { name: 'K-Rep Bank', code: 'KREP' },
+            { name: 'Commercial Bank of Africa', code: 'CBA' },
+            { name: 'Housing Finance Bank', code: 'HFB' },
+            { name: 'Microfinance Bank', code: 'MFB' },
+            { name: 'Faulu Microfinance Bank', code: 'FAULU' },
+            { name: 'SMEP Microfinance Bank', code: 'SMEP' },
+            { name: 'Rafiki Microfinance Bank', code: 'RAFIKI' },
+            { name: 'Musoni Microfinance', code: 'MUSONI' },
+            { name: 'Kenya Women Microfinance Bank', code: 'KWFT' },
+            { name: 'Caritas Microfinance Bank', code: 'CARITAS' },
+            { name: 'Uwezo Microfinance Bank', code: 'UWEZO' },
+            { name: 'Sumac Microfinance Bank', code: 'SUMAC' },
+            { name: 'Century Microfinance Bank', code: 'CENTURY' },
+            { name: 'Daraja Microfinance Bank', code: 'DARAJA' },
+            { name: 'Remu Microfinance Bank', code: 'REMU' },
+            { name: 'Choice Microfinance Bank', code: 'CHOICE' },
+            { name: 'Key Microfinance Bank', code: 'KEY' },
+            { name: 'Vision Fund Kenya', code: 'VISION' },
+            { name: 'Suntra Investment Bank', code: 'SUNTRA' },
+            { name: 'NIC Bank', code: 'NIC' },
+            { name: 'Barclays Bank', code: 'BBK' },
+            { name: 'Standard Bank', code: 'STDB' },
+            { name: 'Bank of Baroda', code: 'BARODA' },
+            { name: 'Bank of India', code: 'BOI' },
+            { name: 'State Bank of India', code: 'SBI' },
+            { name: 'Habib Bank', code: 'HBL' },
+            { name: 'United Bank for Africa', code: 'UBA2' },
+            { name: 'First Bank of Nigeria', code: 'FBN' },
+            { name: 'EcoBank Nigeria', code: 'ECO2' },
+            { name: 'Access Bank Nigeria', code: 'ACCESS2' },
+            { name: 'Zenith Bank', code: 'ZENITH' },
+            { name: 'Fina Bank', code: 'FINA' },
+            { name: 'Transnational Bank', code: 'TNB2' }
+        ];
+
+        const initialData = {
+            name: 'John Doe',
+            email: '',  // Will be populated from registration data
+            mpesa: '+254 712 345 678',
+            bankType: 'Not Set',
+            accountNumber: 'Not Set',
+            photoUrl: null,
+            bankDetailsVerified: false  // New flag to track if bank details are properly set
+        };
+
+        // Get email from registration data
+        const getRegisteredEmail = () => {
+            const registrationData = JSON.parse(localStorage.getItem('registrationData')) || {};
+            return registrationData.email || '';
+        };
+
+        // Load user profile from localStorage
+        const loadUserProfile = () => {
+            let userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+            
+            // Get email from registration data if not already set
+            if (!userData.email) {
+                userData.email = getRegisteredEmail();
+                localStorage.setItem('userData', JSON.stringify(userData));
+            }
+
+            // Update profile fields
+            document.getElementById('userName').textContent = userData.name;
+            document.getElementById('userEmail').textContent = userData.email;
+            document.getElementById('mpesaNumber').textContent = userData.mpesa;
+            document.getElementById('bankType').textContent = userData.bankType;
+            document.getElementById('accountNumber').textContent = userData.accountNumber;
+            
+            // Update header
+            document.getElementById('headerName').textContent = userData.name;
+            document.getElementById('headerEmail').textContent = userData.email;
+            
+            // Update photo if exists
+            if (userData.photoUrl) {
+                document.getElementById('profilePhoto').src = userData.photoUrl;
+            }
+        };
+
+        const startEditing = (elementId) => {
+            // Lock M-Pesa number after 2 days unless in admin impersonation mode
+            if (elementId === 'mpesaNumber') {
+                const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+                const urlParams = new URLSearchParams(window.location.search);
+                const isImpersonating = urlParams.get('impersonate') === '1' && urlParams.get('user');
+                // Check if mpesaSetAt exists and is older than 2 days
+                if (userData.mpesaSetAt && !isImpersonating) {
+                    const setDate = new Date(userData.mpesaSetAt);
+                    const now = new Date();
+                    const diffDays = (now - setDate) / (1000 * 60 * 60 * 24);
+                    if (diffDays > 2) {
+                        showToast('You cannot edit your M-Pesa number after 2 days. Please contact support.', 'error');
+                        return;
+                    }
+                }
+            }
+            const element = document.getElementById(elementId);
+            const container = element.parentElement;
+            const currentValue = element.textContent;
+
+            // Create input
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentValue === 'Not Set' ? '' : currentValue;
+            input.className = 'edit-input';
+            input.placeholder = `Enter your ${elementId.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
+
+            // Create buttons container
+            const buttonsDiv = document.createElement('div');
+            buttonsDiv.className = 'save-cancel-btns';
+
+            // Create save button
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'save-btn';
+            saveBtn.innerHTML = '<i class="fas fa-check"></i>';
+            saveBtn.onclick = () => saveEdit(elementId, input.value);
+
+            // Create cancel button
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'cancel-btn';
+            cancelBtn.innerHTML = '<i class="fas fa-times"></i>';
+            cancelBtn.onclick = () => cancelEdit(elementId);
+
+            // Add buttons to container
+            buttonsDiv.appendChild(saveBtn);
+            buttonsDiv.appendChild(cancelBtn);
+
+            // Hide original elements
+            element.style.display = 'none';
+            element.nextElementSibling.style.display = 'none';
+
+            // Add new elements
+            container.insertBefore(input, element);
+            container.insertBefore(buttonsDiv, input.nextSibling);
+
+            input.focus();
+        };
+
+        const saveEdit = (elementId, newValue) => {
+            if (!newValue.trim()) return cancelEdit(elementId);
+
+            const element = document.getElementById(elementId);
+            const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+
+            // Update value based on field
+            switch(elementId) {
+                case 'userName':
+                    userData.name = newValue;
+                    break;
+                case 'userEmail':
+                    if (!isValidEmail(newValue)) {
+                        alert('Please enter a valid email address');
+                        return;
+                    }
+                    userData.email = newValue;
+                    break;
+                case 'mpesaNumber': {
+                    // Format the number: remove non-digits and check if it's valid
+                    const cleaned = newValue.replace(/[^0-9]/g, '');
+                    if (!isValidMPesa(cleaned)) {
+                        showMpesaErrorModal('Please enter a valid M-Pesa number starting with 254 followed by 9 digits');
+                        return;
+                    }
+        // Custom error modal for invalid M-Pesa number
+        function showMpesaErrorModal(message) {
+            // Remove any existing modal
+            const oldModal = document.getElementById('mpesa-error-modal');
+            if (oldModal) oldModal.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'mpesa-error-modal';
+            modal.className = 'custom-modal-overlay';
+            modal.innerHTML = `
+                <div class="custom-modal-content">
+                    <h3 style="color: var(--accent, #00e6d0);">Invalid M-Pesa Number</h3>
+                    <p style="margin-bottom: 1.5em; color: var(--main-text, #fff);">${message}</p>
+                    <div class="modal-btns-row">
+                        <button class="modal-btn confirm-btn" id="mpesa-error-ok">OK</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.getElementById('mpesa-error-ok').onclick = () => {
+                modal.remove();
+            };
+        }
+                    // Set or update the mpesaSetAt timestamp if not impersonating
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const isImpersonating = urlParams.get('impersonate') === '1' && urlParams.get('user');
+                    if (!isImpersonating) {
+                        if (!userData.mpesaSetAt) {
+                            // Show custom warning modal before saving for the first time
+                            showMpesaConfirmModal(() => {
+                                userData.mpesaSetAt = new Date().toISOString();
+                                userData.mpesa = cleaned;
+                                // Save to localStorage
+                                localStorage.setItem('userData', JSON.stringify(userData));
+                                element.textContent = newValue;
+                                cleanupEditUI(elementId);
+                                showToast('M-Pesa number saved successfully', 'success');
+                            });
+                            return;
+                        }
+                    } else {
+                        // If admin impersonating, allow reset of mpesaSetAt
+                        userData.mpesaSetAt = null;
+                    }
+                    // Format the number for display (254XXXXXXXXX)
+                    userData.mpesa = cleaned;
+                    // Show success message
+                    showToast('M-Pesa number saved successfully', 'success');
+                    break;
+        // Custom confirmation modal for M-Pesa number lock warning
+        function showMpesaConfirmModal(onConfirm) {
+            // Remove any existing modal
+            const oldModal = document.getElementById('mpesa-confirm-modal');
+            if (oldModal) oldModal.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'mpesa-confirm-modal';
+            modal.className = 'custom-modal-overlay';
+            modal.innerHTML = `
+                <div class="custom-modal-content">
+                    <h3>Warning</h3>
+                    <p style="margin-bottom: 1.5em;">You will not be able to change your M-Pesa number after 2 days. Are you sure you want to save this number?</p>
+                    <div class="modal-btns-row">
+                        <button class="modal-btn confirm-btn" id="mpesa-confirm-yes">Yes, Save</button>
+                        <button class="modal-btn cancel-btn" id="mpesa-confirm-no">Cancel</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.getElementById('mpesa-confirm-yes').onclick = () => {
+                modal.remove();
+                onConfirm();
+            };
+            document.getElementById('mpesa-confirm-no').onclick = () => {
+                modal.remove();
+            };
+        }
+    /* Custom modal for M-Pesa confirmation: see <style> in <head> */
+<!-- Custom modal styles for M-Pesa confirmation -->
+                }
+                case 'accountNumber':
+                    if (!isValidAccountNumber(newValue)) {
+                        alert('Please enter a valid account number (8-12 digits)');
+                        return;
+                    }
+                    userData.accountNumber = newValue;
+                    // Mark bank details as verified when account number is set in profile
+                    if (userData.bankType !== 'Not Set') {
+                        userData.bankDetailsVerified = true;
+                    }
+                    break;
+            }
+
+            // Save to localStorage
+            localStorage.setItem('userData', JSON.stringify(userData));
+
+            // Update display
+            element.textContent = newValue;
+            cleanupEditUI(elementId);
+        };
+
+        const cancelEdit = (elementId) => {
+            cleanupEditUI(elementId);
+        };
+
+        const cleanupEditUI = (elementId) => {
+            const element = document.getElementById(elementId);
+            const container = element.parentElement;
+            const input = container.querySelector('.edit-input');
+            const buttons = container.querySelector('.save-cancel-btns');
+
+            // Remove input and buttons
+            if (input) input.remove();
+            if (buttons) buttons.remove();
+
+            // Show original elements
+            element.style.display = '';
+            element.nextElementSibling.style.display = '';
+        };
+
+        const isValidEmail = (email) => {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        };
+
+        const isValidMPesa = (number) => {
+            // Remove any spaces, +, or other characters and check if it starts with 254
+            const cleaned = number.replace(/[^0-9]/g, '');
+            return cleaned.length === 12 && cleaned.startsWith('254');
+        };
+
+        const isValidAccountNumber = (number) => {
+            return /^\d{8,12}$/.test(number.replace(/\s/g, ''));
+        };
+
+        // Bank selection functionality
+        const startBankSelection = () => {
+            document.getElementById('bankModal').style.display = 'block';
+            document.getElementById('bankSearch').focus();
+            populateBankList();
+        };
+
+        const closeBankModal = () => {
+            document.getElementById('bankModal').style.display = 'none';
+            document.getElementById('bankSearch').value = '';
+        };
+
+        const populateBankList = (searchTerm = '') => {
+            const bankList = document.getElementById('bankList');
+            bankList.innerHTML = '';
+            
+            const filteredBanks = banks.filter(bank => 
+                bank.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                bank.code.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            
+            filteredBanks.forEach(bank => {
+                const div = document.createElement('div');
+                div.className = 'bank-item';
+                div.innerHTML = `
+                    <i class="fas fa-building-columns"></i>
+                    <div class="bank-info">
+                        <div class="bank-name">${bank.name}</div>
+                        <div class="bank-code">${bank.code}</div>
+                    </div>
+                `;
+                
+                div.onclick = () => selectBank(bank);
+                bankList.appendChild(div);
+            });
+        };
+
+        const selectBank = (bank) => {
+            const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+            userData.bankType = bank.name;
+            // Mark bank details as verified when set in profile page
+            userData.bankDetailsVerified = true;
+            localStorage.setItem('userData', JSON.stringify(userData));
+            
+            document.getElementById('bankType').textContent = bank.name;
+            closeBankModal();
+        };
+
+        // Profile photo handling
+        const handlePhotoUpload = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image size should be less than 5MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+                
+                // Compress image if needed
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const maxSize = 800; // Max width or height
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Calculate new dimensions while maintaining aspect ratio
+                    if (width > height) {
+                        if (width > maxSize) {
+                            height *= maxSize / width;
+                            width = maxSize;
+                        }
+                    } else {
+                        if (height > maxSize) {
+                            width *= maxSize / height;
+                            height = maxSize;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convert to base64 with reduced quality
+                    const compressedImageData = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // Save compressed image
+                    userData.photoUrl = compressedImageData;
+                    localStorage.setItem('userData', JSON.stringify(userData));
+                    
+                    // Update all profile images on the page
+                    const profileImages = document.querySelectorAll('.profile-image, #profilePhoto');
+                    profileImages.forEach(img => {
+                        img.src = compressedImageData;
+                    });
+
+                    // Notify user
+                    showToast('Profile photo updated successfully', 'success');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        // Set up event listeners
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // Function to save all profile changes
+        function saveAllProfileChanges() {
+            const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+            
+            // Get all current values from the page
+            const newData = {
+                name: document.getElementById('userName').textContent,
+                email: document.getElementById('userEmail').textContent,
+                mpesa: document.getElementById('mpesaNumber').textContent,
+                bankType: document.getElementById('bankType').textContent,
+                accountNumber: document.getElementById('accountNumber').textContent,
+                photoUrl: userData.photoUrl,
+                bankDetailsVerified: userData.bankDetailsVerified
+            };
+
+            // Validate M-Pesa number
+            if (newData.mpesa !== 'Not Set' && !isValidMPesa(newData.mpesa)) {
+                showToast('Invalid M-Pesa number format', 'error');
+                return false;
+            }
+
+            // Validate bank details if they are set
+            if (newData.bankType !== 'Not Set' && newData.accountNumber !== 'Not Set') {
+                if (!isValidAccountNumber(newData.accountNumber)) {
+                    showToast('Invalid bank account number', 'error');
+                    return false;
+                }
+                newData.bankDetailsVerified = true;
+            }
+
+            // Save to localStorage
+            localStorage.setItem('userData', JSON.stringify(newData));
+
+            // Update header
+            document.getElementById('headerName').textContent = newData.name;
+            document.getElementById('headerEmail').textContent = newData.email;
+
+            showToast('Profile updated successfully', 'success');
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserProfile();
+
+            // Load profile photo
+            const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+            if (userData.photoUrl) {
+                document.getElementById('profilePhoto').src = userData.photoUrl;
+            }
+
+            // Add click event listener for save profile button
+            document.getElementById('saveProfileBtn').addEventListener('click', async (e) => {
+                const button = e.target.closest('button');
+                const originalContent = button.innerHTML;
+                
+                // Show loading state
+                button.classList.add('loading');
+                button.innerHTML = '<i class="fas fa-spinner"></i> Saving...';
+
+                try {
+                    // Add a small delay to show the loading state (remove in production)
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    
+                    if (saveAllProfileChanges()) {
+                        button.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                        setTimeout(() => {
+                            button.classList.remove('loading');
+                            button.innerHTML = originalContent;
+                        }, 2000);
+                    } else {
+                        button.classList.remove('loading');
+                        button.innerHTML = originalContent;
+                    }
+                } catch (error) {
+                    showToast('Error saving profile', 'error');
+                    button.classList.remove('loading');
+                    button.innerHTML = originalContent;
+                }
+            });
+            
+            // Photo upload functionality
+            document.getElementById('photoUpload').addEventListener('change', handlePhotoUpload);
+            
+            // Bank search functionality
+            document.getElementById('bankSearch').addEventListener('input', (e) => {
+                populateBankList(e.target.value);
+            });
+
+            // Handle logout
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                if (confirm('Are you sure you want to sign out?')) {
+                    localStorage.removeItem('isLoggedIn'); // Clear login state
+                    window.location.href = 'login.html'; // Redirect to login page
+                }
+            });
+
+            // Function to check if bank details are properly set up
+            window.isBankDetailsVerified = () => {
+                const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+                return userData.bankDetailsVerified && 
+                       userData.bankType !== 'Not Set' && 
+                       userData.accountNumber !== 'Not Set';
+            };
+
+            // Add window function for withdraw button
+            window.handleWithdraw = (amount) => {
+                const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+                const hasMpesa = userData.mpesa && userData.mpesa !== 'Not Set';
+                const hasBank = isBankDetailsVerified();
+
+                if (!hasMpesa && !hasBank) {
+                    alert('Please set up either M-Pesa or Bank details in your profile before withdrawing.');
+                    window.location.href = 'profile.html'; // Redirect to profile page to set up payment details
+                    return;
+                }
+
+                // Update payment details in the modal
+                if (hasMpesa) {
+                    document.getElementById('mpesaDetail').textContent = `Send to: ${userData.mpesa}`;
+                }
+
+                if (hasBank) {
+                    document.getElementById('bankDetail').textContent = `${userData.bankType}\nAccount: ${userData.accountNumber}`;
+                }
+
+                // Show/hide payment methods based on availability
+                const mpesaOption = document.querySelector('[onclick="selectPaymentMethod(\'mpesa\')"]');
+                const bankOption = document.querySelector('[onclick="selectPaymentMethod(\'bank\')"]');
+                
+                mpesaOption.style.display = hasMpesa ? 'flex' : 'none';
+                bankOption.style.display = hasBank ? 'flex' : 'none';
+
+                // Store withdrawal amount for confirmation
+                window.withdrawalAmount = amount;
+
+                // Show the payment method modal
+                document.getElementById('paymentMethodModal').style.display = 'block';
+            };
+        });
+
+        // Payment method modal functions
+        const closePaymentMethodModal = () => {
+            document.getElementById('paymentMethodModal').style.display = 'none';
+        };
+
+        const selectPaymentMethod = (method) => {
+            const userData = JSON.parse(localStorage.getItem('userData')) || initialData;
+            const amount = window.withdrawalAmount || 0;
+            let confirmMessage = '';
+            
+            if (method === 'mpesa') {
+                confirmMessage = `Confirm withdrawal of KES ${amount} to:\nM-Pesa number: ${userData.mpesa}`;
+            } else {
+                confirmMessage = `Confirm withdrawal of KES ${amount} to:\nBank: ${userData.bankType}\nAccount: ${userData.accountNumber}`;
+            }
+
+            if (confirm(confirmMessage)) {
+                // Store the selected payment method
+                localStorage.setItem('lastUsedPaymentMethod', method);
+                alert(`Withdrawal of KES ${amount} initiated. Processing your request...`);
+                closePaymentMethodModal();
+                
+                // You can add additional logic here to handle the actual withdrawal process
+            }
+        };
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            // Create toast container if it doesn't exist
+            let container = document.getElementById('toastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toastContainer';
+                document.body.appendChild(container);
+            }
+
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                ${message}
+            `;
+
+            // Add to container
+            container.appendChild(toast);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-out forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+
+            // Click to dismiss
+            toast.onclick = () => toast.remove();
+        }
+
+        // Impersonation banner for profile page
+        function showImpersonationBannerProfile(user) {
+          let banner = document.getElementById('impersonationBanner');
+          if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'impersonationBanner';
+            banner.className = 'impersonation-banner';
+            document.body.prepend(banner);
+          }
+          // Calculate time taken
+          const urlParams = new URLSearchParams(window.location.search);
+          const start = parseInt(urlParams.get('start'), 10);
+          let timerInterval;
+          function updateTimer() {
+            if (!start) return;
+            const now = Date.now();
+            const seconds = Math.floor((now - start) / 1000);
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            document.getElementById('impersonationTime').textContent = `${mins}m ${secs}s`;
+          }
+          banner.innerHTML = `<strong>Impersonating:</strong> ${user.name || user.username} (${user.id}) <span style='margin-left:18px;'>Time: <span id='impersonationTime'>0m 0s</span></span> <button onclick='stopImpersonationProfile()'>Stop Impersonating</button>`;
+          banner.style.display = 'block';
+          banner.style.position = 'fixed';
+          banner.style.top = '0';
+          banner.style.left = '0';
+          banner.style.right = '0';
+          banner.style.zIndex = '99999';
+          if (start) {
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+            banner.dataset.timerInterval = timerInterval;
+          }
+        }
+
+        function stopImpersonationProfile() {
+          let banner = document.getElementById('impersonationBanner');
+          if (banner && banner.dataset.timerInterval) {
+            clearInterval(banner.dataset.timerInterval);
+          }
+          if (banner) banner.style.display = 'none';
+          window.location.href = 'admin-user.html';
+        }
+
+        // Add impersonation banner styles
+        const impStyle = document.createElement('style');
+        impStyle.textContent = `
+        .impersonation-banner {
+          position: fixed;
+          top: 0; left: 0; right: 0;
+          background: #ffd54f;
+          color: #232526;
+          padding: 16px 32px;
+          font-size: 1.15rem;
+          font-weight: 600;
+          z-index: 99999;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+        .impersonation-banner button {
+          margin-left: 24px;
+          background: #232526;
+          color: #ffd54f;
+          border: none;
+          border-radius: 6px;
+          padding: 8px 18px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .impersonation-banner button:hover {
+          background: #ffd54f;
+          color: #232526;
+          border: 1px solid #232526;
+        }
+        `;
+        document.head.appendChild(impStyle);
+
+        // Ensure banner persists on navigation
+        function checkImpersonationModeProfile() {
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.get('impersonate') === '1' && urlParams.get('user')) {
+            let userData = JSON.parse(localStorage.getItem('userData')) || {};
+            userData.id = urlParams.get('user');
+            showImpersonationBannerProfile(userData);
+            window.addEventListener('popstate', () => showImpersonationBannerProfile(userData));
+            window.addEventListener('hashchange', () => showImpersonationBannerProfile(userData));
+          }
+        }
+        document.addEventListener('DOMContentLoaded', checkImpersonationModeProfile);
+    </script>
+</body>
+</html>

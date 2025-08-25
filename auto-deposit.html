@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>AfricaBased - Auto Deposit</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+	<link rel="stylesheet" href="css/modals.css">
+	<style>
+		body{margin:0;background:#0f172a;color:#fff;min-height:100vh;padding-top:76px;font-family:'Poppins',sans-serif}
+		.container{max-width:600px;margin:48px auto;padding:24px}
+		.card{background:rgba(26,34,56,0.98);padding:24px 20px 32px 20px;border-radius:16px;box-shadow:0 6px 28px rgba(0,0,0,0.4)}
+		label{display:block;font-size:.95rem;margin-bottom:6px;color:rgba(255,255,255,0.9)}
+		input[type=text],input[type=number]{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#fff;margin-bottom:12px}
+		.btn{display:inline-block;padding:10px 16px;border-radius:12px;border:none;background:linear-gradient(90deg,#4ecdc4,#ff6b6b);color:#111;font-weight:700;cursor:pointer;margin-top:10px}
+	</style>
+</head>
+<body>
+	<main class="container">
+			<div id="otpModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+						<div style="background:#232c43;padding:32px 28px 28px 28px;border-radius:16px;box-shadow:0 6px 28px rgba(0,0,0,0.25);max-width:340px;text-align:center;">
+							<i class="fas fa-mobile-alt" style="font-size:3rem;color:#4ecdc4;"></i>
+							<h2 style="color:#4ecdc4;margin:18px 0 8px 0;">STK Push Sent!</h2>
+							<div style="color:#fff;font-size:1.08rem;margin-bottom:18px;">A payment prompt (STK Push) has been sent to your phone number.<br>Please check your phone and enter your M-PESA PIN to complete the deposit.<br>If you do not receive the prompt within a minute, please ensure your number is correct and try again.</div>
+							<button onclick="document.getElementById('otpModal').style.display='none'" style="background:linear-gradient(90deg,#232c43,#4ecdc4);color:#fff;padding:10px 22px;border-radius:10px;font-weight:600;border:1px solid #4ecdc4;box-shadow:0 2px 8px rgba(78,205,196,0.10);cursor:pointer;transition:background 0.2s, color 0.2s;">OK</button>
+						</div>
+			</div>
+		<button onclick="window.top.location.href='home.html'" style="background:linear-gradient(90deg,#232c43,#4ecdc4);color:#fff;padding:10px 22px;border-radius:10px;font-weight:600;border:1px solid #4ecdc4;box-shadow:0 2px 8px rgba(78,205,196,0.10);margin-bottom:18px;cursor:pointer;transition:background 0.2s, color 0.2s;">&larr; Back to Dashboard</button>
+		<div class="card">
+					<h1>Auto Deposit (M-PESA)</h1>
+					<div id="autoDepositInstructions" style="background:rgba(78,205,196,0.08);border-radius:10px;padding:16px 18px 14px 18px;margin-bottom:18px;color:#fff;font-size:1.04rem;">
+						<b>How to Use Auto Deposit</b><br>
+						<ol style='margin:10px 0 0 18px;'>
+							<li>Enter your M-PESA phone number and the amount you wish to deposit.</li>
+							<li>Click <b>Deposit via M-PESA (Auto)</b>.</li>
+							<li>You will receive a prompt on your phone to enter your M-PESA PIN and confirm the payment.</li>
+							<li>Once you confirm, your deposit will be processed automatically and credited to your account.</li>
+							<li>If you do not receive a prompt, ensure your phone number is correct and try again.</li>
+						</ol>
+					</div>
+			<form id="autoMpesaForm" style="margin-top:18px;">
+				<div class="form-row" style="display:flex;gap:12px;flex-wrap:wrap;">
+					<div style="flex:1;min-width:180px;">
+						<label for="autoMpesaNumber">M-PESA Number</label>
+						<input type="text" id="autoMpesaNumber" name="autoMpesaNumber" placeholder="e.g. 07XXXXXXXX" maxlength="13" required>
+					</div>
+					<div style="flex:1;min-width:120px;">
+						<label for="autoMpesaAmount">Amount</label>
+						<input type="number" id="autoMpesaAmount" name="autoMpesaAmount" min="150" step="1" placeholder="Amount" required>
+					</div>
+				</div>
+				<button type="submit" class="btn">Deposit via M-PESA (Auto)</button>
+			</form>
+		</div>
+	</main>
+<script>
+// Manual deposit save function (from deposit.html)
+function saveDeposit(deposit) {
+	let deposits = [];
+	try { deposits = JSON.parse(localStorage.getItem('userDeposits') || '[]'); } catch {}
+	deposits.push(deposit);
+	localStorage.setItem('userDeposits', JSON.stringify(deposits));
+}
+
+// Example: Save auto deposit as a manual deposit type for demo
+document.addEventListener('DOMContentLoaded', function() {
+		const autoForm = document.getElementById('autoMpesaForm');
+		if (autoForm) {
+			autoForm.addEventListener('submit', function(e) {
+				e.preventDefault();
+				const number = document.getElementById('autoMpesaNumber').value;
+				const amount = document.getElementById('autoMpesaAmount').value;
+				saveDeposit({
+					type: 'manual', // or 'auto' if you want to distinguish
+					number,
+					amount,
+					timestamp: new Date().toISOString()
+				});
+				autoForm.reset();
+				// Show OTP modal
+				document.getElementById('otpModal').style.display = 'flex';
+			});
+		}
+});
+</script>
+</body>
+</html>

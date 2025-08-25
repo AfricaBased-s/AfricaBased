@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="js/supabaseClient.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Services - Africa Based</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="module">
+        import { supabase } from './js/supabaseClient.js';
+        
+        // Check authentication state
+        async function checkAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            // Load available services
+            const { data: services, error } = await supabase
+                .from('services')
+                .select('*')
+                .eq('status', 'active')
+                .order('created_at', { ascending: false });
+                
+            if (!error && services) {
+                renderServices(services);
+            }
+        }
+        
+        // Render services to the page
+        function renderServices(services) {
+            const servicesContainer = document.querySelector('.services-grid');
+            if (!servicesContainer) return;
+            
+            servicesContainer.innerHTML = services.map(service => `
+                <div class="service-card">
+                    <div class="service-image">
+                        ${service.image_url ? `<img src="${service.image_url}" alt="${service.name}">` : '<div class="placeholder-image"><i class="fas fa-tools"></i></div>'}
+                    </div>
+                    <div class="service-details">
+                        <h3>${service.name}</h3>
+                        <p>${service.description || ''}</p>
+                        <div class="service-price">KSH ${service.price.toFixed(2)}</div>
+                        <button onclick="requestService('${service.id}')" class="request-btn">
+                            <i class="fab fa-whatsapp"></i> Request Service
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Make function available globally
+        window.requestService = async function(serviceId) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            try {
+                const { data: service } = await supabase
+                    .from('services')
+                    .select('*')
+                    .eq('id', serviceId)
+                    .single();
+                    
+                if (service) {
+                    // Create a support ticket for the service request
+                    const { error: ticketError } = await supabase
+                        .from('support_tickets')
+                        .insert([{
+                            user_id: session.user.id,
+                            subject: `Service Request: ${service.name}`,
+                            description: `Service request for ${service.name} at KSH ${service.price}`,
+                            status: 'open',
+                            priority: 'medium'
+                        }]);
+                        
+                    if (ticketError) throw ticketError;
+                    
+                    alert('Service request submitted successfully! Our team will contact you shortly.');
+                }
+            } catch (error) {
+                console.error('Error requesting service:', error);
+                alert('Failed to submit service request. Please try again.');
+            }
+        }
+        
+        // Check auth when page loads
+        checkAuth();
+    </script>
+    <style>
+        :root {
+            --primary: #1a2238;
+            --accent: #4ecdc4;
+            --accent-gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            --secondary: #ff6b6b;
+            --text: #ffffff;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --bg: #f4f6f8;
+            --card-bg: #ffffff;
+            --border: #e0e0e0;
+            --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            --hover-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            --whatsapp-green: #25D366;
+            --whatsapp-dark: #128C7E;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg);
+            background-color: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: white;
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .services-container {
+            max-width: 600px;
+            margin: 60px auto 0;
+            padding: 20px;
+        }
+
+        /* Clean WhatsApp Feature Styling */
+        .whatsapp-card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(37,211,102,0.08);
+            padding: 32px 24px;
+            position: relative;
+            border: 1px solid #e0e0e0;
+        }
+        .whatsapp-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            margin-bottom: 32px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .whatsapp-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(37,211,102,0.12);
+            background: #fff;
+            border: 2px solid #25D366;
+            padding: 4px;
+        }
+        .whatsapp-header h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #128C7E;
+            margin: 0;
+        }
+        .whatsapp-badge {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            background: #25D366;
+            color: #fff;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(37,211,102,0.15);
+            font-size: 1.4rem;
+        }
+        .whatsapp-section {
+            background: #f7fdf9;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(37,211,102,0.04);
+        }
+        .section-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #128C7E;
+            margin-bottom: 18px;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title i {
+            color: #25D366;
+            font-size: 1.2rem;
+        }
+        .whatsapp-btn {
+            background: #25D366;
+            color: #fff;
+            border: none;
+            box-shadow: 0 2px 8px rgba(37,211,102,0.10);
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 14px 20px;
+            margin-bottom: 8px;
+            transition: background 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+        }
+        .whatsapp-btn i {
+            font-size: 1.3rem;
+            color: #fff;
+            background: #128C7E;
+            border-radius: 50%;
+            padding: 6px;
+            box-shadow: 0 1px 4px rgba(18,140,126,0.10);
+        }
+        .whatsapp-btn:hover {
+            background: #128C7E;
+            box-shadow: 0 4px 16px rgba(18,140,126,0.12);
+        }
+        .btn-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #128C7E;
+        }
+        .btn-subtitle {
+            font-size: 0.92rem;
+            color: #25D366;
+            opacity: 0.85;
+        }
+        .section-divider {
+            background: #e0e0e0;
+            height: 2px;
+            border-radius: 2px;
+            margin: 32px 0;
+        }
+
+        @media (max-width: 480px) {
+            .services-container {
+                padding: 16px;
+            }
+
+            .whatsapp-btn {
+                padding: 12px 16px;
+            }
+
+            .btn-title {
+                font-size: 1rem;
+            }
+
+            .btn-subtitle {
+                font-size: 0.8rem;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text);
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .service-card {
+            background: var(--card-color);
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .admin-portal {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .service-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .action-btn {
+            background: var(--secondary-color);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        /* WhatsApp Feature Decorations */
+        .floating-whatsapp {
+            position: absolute;
+            top: -40px;
+            right: -40px;
+            width: 120px;
+            height: 120px;
+            z-index: 1;
+            opacity: 0.12;
+            animation: floatWhatsApp 6s infinite ease-in-out;
+        }
+
+        @keyframes floatWhatsApp {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(20px) scale(1.08); }
+        }
+
+        .back-btn-container {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .back-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: var(--secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Removed duplicate back button -->
+
+    <button onclick="window.location.href='home.html'" class="back-button">
+        <i class="fas fa-arrow-left"></i>
+        Back to Home
+    </button>
+
+    <div class="services-container">
+        <div class="whatsapp-card">
+            <div class="whatsapp-header">
+                <img src="../assets/images/whatsapp-logo.png" alt="WhatsApp" class="whatsapp-logo">
+                <h2>Our WhatsApp Services</h2>
+            </div>
+            
+            <div class="whatsapp-section">
+                <h3 class="section-title">
+                    <i class="fas fa-users"></i>
+                    WhatsApp Groups
+                </h3>
+                <div class="whatsapp-buttons">
+                    <a href="#" class="whatsapp-btn group-btn" id="group1Link">
+                        <i class="fab fa-whatsapp"></i>
+                        <div class="btn-text">
+                            <span class="btn-title">Main Community Group</span>
+                            <span class="btn-subtitle">General discussions and updates</span>
+                        </div>
+                    </a>
+
+                    <a href="#" class="whatsapp-btn group-btn" id="group2Link">
+                        <i class="fab fa-whatsapp"></i>
+                        <div class="btn-text">
+                            <span class="btn-title">Finance & Product Group</span>
+                            <span class="btn-subtitle">Finance and product updates</span>
+                        </div>
+                    </a>
+
+                    <a href="#" class="whatsapp-btn group-btn" id="group3Link">
+                        <i class="fab fa-whatsapp"></i>
+                        <div class="btn-text">
+                            <span class="btn-title">Support Group</span>
+                            <span class="btn-subtitle">Technical support and help</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="whatsapp-section">
+                <h3 class="section-title">
+                    <i class="fas fa-headset"></i>
+                    Chat with Managers
+                </h3>
+                <div class="whatsapp-buttons">
+                    <a href="#" class="whatsapp-btn manager-btn" id="manager1Link">
+                        <i class="fab fa-whatsapp"></i>
+                        <div class="btn-text">
+                            <span class="btn-title">General Manager</span>
+                            <span class="btn-subtitle">For general inquiries</span>
+                            <span class="btn-category" style="color:#128C7E;font-size:0.95rem;font-weight:500;display:block;margin-top:2px;">Category</span>
+                        </div>
+                    </a>
+
+                    <a href="#" class="whatsapp-btn manager-btn" id="manager2Link">
+                        <i class="fab fa-whatsapp"></i>
+                        <div class="btn-text">
+                            <span class="btn-title">Support Manager</span>
+                            <span class="btn-subtitle">For technical support</span>
+                            <span class="btn-category" style="color:#128C7E;font-size:0.95rem;font-weight:500;display:block;margin-top:2px;">Category</span>
+                        </div>
+                    </a>
+
+                    <a href="#" class="whatsapp-btn manager-btn" id="manager3Link">
+                        <i class="fab fa-whatsapp"></i>
+                        <div class="btn-text">
+                            <span class="btn-title">Finance & Product Manager</span>
+                            <span class="btn-subtitle">For finance and product assistance</span>
+                            <span class="btn-category" style="color:#128C7E;font-size:0.95rem;font-weight:500;display:block;margin-top:2px;">Category</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="whatsapp-badge">
+                <i class="fab fa-whatsapp"></i>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // WhatsApp configuration
+        const whatsappConfig = {
+            groups: {
+                group1: {
+                    link: 'https://chat.whatsapp.com/group1-code',
+                    name: 'Main Community Group'
+                },
+                group2: {
+                    link: 'https://chat.whatsapp.com/group2-code',
+                    name: 'Finance & Product Group'
+                },
+                group3: {
+                    link: 'https://chat.whatsapp.com/group3-code',
+                    name: 'Support Group'
+                }
+            },
+            managers: {
+                manager1: {
+                    number: '254711111111',
+                    name: 'General Manager'
+                },
+                manager2: {
+                    number: '254722222222',
+                    name: 'Support Manager'
+                },
+                manager3: {
+                    number: '254733333333',
+                    name: 'Finance & Product Manager'
+                }
+            }
+        };
+
+        // Set up WhatsApp links with active member check
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check if user is logged in and active
+            let isActive = false;
+            try {
+                // Check session using supabase
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session && session.user) {
+                    // Fetch user profile from 'users' table
+                    const { data: userData, error } = await supabase
+                        .from('users')
+                        .select('status')
+                        .eq('id', session.user.id)
+                        .single();
+                    if (!error && userData && userData.status === 'active') {
+                        isActive = true;
+                    }
+                }
+            } catch (e) {
+                isActive = false;
+            }
+
+            // Set up group links
+            Object.keys(whatsappConfig.groups).forEach(groupId => {
+                const button = document.getElementById(`${groupId}Link`);
+                if (button) {
+                    if (isActive) {
+                        button.href = whatsappConfig.groups[groupId].link;
+                        button.setAttribute('title', `Join ${whatsappConfig.groups[groupId].name}`);
+                        button.onclick = null;
+                    } else {
+                        button.href = '#';
+                        button.onclick = function(e) {
+                            e.preventDefault();
+                            alert('Only active members can access this WhatsApp group.');
+                        };
+                        button.setAttribute('title', 'Only active members can access this group');
+                    }
+                }
+            });
+
+            // Set up manager chat links (no restriction)
+            Object.keys(whatsappConfig.managers).forEach(managerId => {
+                const button = document.getElementById(`${managerId}Link`);
+                if (button) {
+                    button.href = `https://wa.me/${whatsappConfig.managers[managerId].number}`;
+                    button.setAttribute('title', `Chat with ${whatsappConfig.managers[managerId].name}`);
+                }
+            });
+        });
+
+        // Listen for changes in localStorage and update WhatsApp links and image dynamically
+        function updateWhatsAppLinksFromAdmin() {
+            // Get groups, managers, and image from localStorage (set by admin-service.html)
+            const groups = JSON.parse(localStorage.getItem('serviceGroups') || '[]');
+            const managers = JSON.parse(localStorage.getItem('serviceManagers') || '[]');
+            const serviceImage = localStorage.getItem('serviceImageUrl') || '../assets/images/whatsapp-logo.png';
+            // Update image in the round space
+            const logoImg = document.querySelector('.whatsapp-logo');
+            if (logoImg) logoImg.src = serviceImage;
+            // Update group links and category text
+            const groupButtons = document.querySelectorAll('.group-btn');
+            groupButtons.forEach((btn, idx) => {
+                if (groups[idx]) {
+                    btn.href = groups[idx].link;
+                    btn.querySelector('.btn-title').textContent = groups[idx].name;
+                    btn.querySelector('.btn-subtitle').textContent = groups[idx].category || '';
+                    btn.style.display = '';
+                } else {
+                    btn.style.display = 'none';
+                }
+            });
+            // Update manager links and category text
+            const managerButtons = document.querySelectorAll('.manager-btn');
+            managerButtons.forEach((btn, idx) => {
+                if (managers[idx]) {
+                    btn.href = managers[idx].link;
+                    btn.querySelector('.btn-title').textContent = managers[idx].name;
+                    btn.querySelector('.btn-subtitle').textContent = managers[idx].category || '';
+                    const catSpan = btn.querySelector('.btn-category');
+                    if (catSpan) catSpan.textContent = managers[idx].category || '';
+                    btn.style.display = '';
+                } else {
+                    btn.style.display = 'none';
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', updateWhatsAppLinksFromAdmin);
+        window.addEventListener('storage', function(e) {
+            if (['serviceGroups','serviceManagers','serviceImageUrl'].includes(e.key)) {
+                updateWhatsAppLinksFromAdmin();
+            }
+        });
+    </script>
+    </script>
+</body>
+</html>
