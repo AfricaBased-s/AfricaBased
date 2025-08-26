@@ -1,3 +1,10 @@
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+      const supabase = supabase.createClient(
+        'https://yoqtahdctzponqkmgkzn.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
+      );
+    </script>
 <!-- User Management Table with Profile Picture -->
 <div style="margin: 24px 0 0 24px;">
   <a href="Admin-panel.html" class="back-btn" style="background:#ffd54f;color:#232526;padding:8px 18px;border-radius:6px;text-decoration:none;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.10);transition:background 0.2s, color 0.2s;">&larr; Back to Admin Panel</a>
@@ -7,105 +14,10 @@
 <div class="dashboard-header">
     <h2>User Management</h2>
     <div class="search-filters">
-        <input type="text" id="searchInput" placeholder="Sear// Add jsPDF library
-const script = document.createElement('script');
-script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
 document.head.appendChild(script);
-
-const autoTableScript = document.createElement('script');
 autoTableScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js';
 document.head.appendChild(autoTableScript);
-
-function exportToCSV() {
-    const filteredUsers = searchAndFilterUsers();
-    const headers = ['Username', 'User ID', 'Mpesa Number', 'Email', 'Phone', 'Amount Invested', 'Wallet Amount', 'Account Balance', 'Referrals', 'Status'];
-    const rows = filteredUsers.map(user => [
-        user.username,
-        user.id,
-        user.mpesa,
-        user.email || '-',
-        user.phone || '-',
-        'Ksh ' + user.invested,
-        'Ksh ' + user.wallet,
-        'Ksh ' + user.balance,
-        user.referrals,
-        user.status
-    ]);
-    const csv = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const date = new Date().toISOString().split('T')[0];
-    a.download = `users-export-${date}.csv`;
-    a.click();
-}
-
-function exportToPDF() {
-    const { jsPDF } = window.jspdf;
-    if (!jsPDF) {
-        alert('PDF library is still loading. Please try again in a moment.');
-        return;
-    }
-
-    const filteredUsers = searchAndFilterUsers();
-    const doc = new jsPDF();
-    
-    // Add title
-    doc.setFontSize(18);
-    doc.text('User Management Report', 14, 20);
-    
-    // Add date
-    doc.setFontSize(12);
-    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
-    
-    // Prepare table data
-    const headers = [['Username', 'User ID', 'Mpesa', 'Invested', 'Wallet', 'Balance', 'Referrals', 'Status']];
-    const data = filteredUsers.map(user => [
-        user.username,
-        user.id,
-        user.mpesa,
-        'Ksh ' + user.invested,
-        'Ksh ' + user.wallet,
-        'Ksh ' + user.balance,
-        user.referrals,
-        user.status
-    ]);
-    
-    // Add table
-    doc.autoTable({
-        head: headers,
-        body: data,
-        startY: 40,
-        styles: {
-            fontSize: 10,
-            cellPadding: 3,
-        },
-        headStyles: {
-            fillColor: [35, 37, 38],
-            textColor: [255, 213, 79]
-        },
-        alternateRowStyles: {
-            fillColor: [245, 245, 245]
-        },
-    });
-    
-    // Add summary
-    const totalUsers = filteredUsers.length;
-    const totalInvested = filteredUsers.reduce((sum, user) => sum + user.invested, 0);
-    const totalWallet = filteredUsers.reduce((sum, user) => sum + user.wallet, 0);
-    
-    const finalY = doc.lastAutoTable.finalY || 40;
-    doc.setFontSize(12);
-    doc.text(`Summary:`, 14, finalY + 10);
-    doc.text(`Total Users: ${totalUsers}`, 14, finalY + 20);
-    doc.text(`Total Invested: Ksh ${totalInvested}`, 14, finalY + 30);
-    doc.text(`Total in Wallets: Ksh ${totalWallet}`, 14, finalY + 40);
-    
-    // Save the PDF
-    const date = new Date().toISOString().split('T')[0];
-    doc.save(`user-management-report-${date}.pdf`); class="search-input">
+  <input type="text" id="searchInput" class="search-input" placeholder="Search users...">
         <select id="statusFilter" class="filter-select">
             <option value="">All Status</option>
             <option value="Active">Active</option>
@@ -701,29 +613,23 @@ function confirmFreezeManager(idx) {
 }
 
 // --- Reset and Sync Logic ---
-<script src="js/supabaseClient.js"></script>
-<script>
-// --- Reset and Sync Logic with DB Logging ---
-async function logAdminAction(actionType) {
-  try {
-    const page = 'admin-user';
-    let performed_by = null;
-    if (localStorage.getItem('adminData')) {
-      try {
-        performed_by = JSON.parse(localStorage.getItem('adminData')).email;
-      } catch (e) {}
-    }
-    if (window.supabase) {
-      await window.supabase.from('admin_actions').insert([
-        { action_type: actionType, page, performed_by }
-      ]);
-    }
-  } catch (e) { /* ignore logging errors */ }
-}
-function confirmSystemReset() {
+<!-- Removed stray script and broken code block -->
+
+function showResetConfirmModal() {
   document.getElementById('resetConfirmModal').style.display = 'flex';
 }
-function closeAdminModal() {
+
+function hideResetConfirmModal() {
+  document.getElementById('resetConfirmModal').style.display = 'none';
+}
+
+async function handleResetSecurityKey() {
+  const key = document.getElementById('resetSecurityKey').value;
+  if (key === 'expectedKey') {
+    await logAdminAction('reset');
+  } else {
+    alert('Incorrect security key.');
+  }
   document.getElementById('resetConfirmModal').style.display = 'none';
 }
 async function executeSystemReset() {

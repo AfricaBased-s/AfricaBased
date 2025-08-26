@@ -1,3 +1,4 @@
+-- If this file is used for HTML/JS, add Supabase setup. Otherwise, skip.
 -- Create user_wallet table
 create table if not exists public.user_wallet (
   id uuid primary key default uuid_generate_v4(),

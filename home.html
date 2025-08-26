@@ -1,105 +1,29 @@
-    <script>
-    // Show sector content (image, video, description) from admin settings
-    function renderSectorContent(selectedCategory = 'all') {
-        const sectors = JSON.parse(localStorage.getItem('sectors') || '[]');
-        const productGrid = document.getElementById('productGrid');
-        productGrid.innerHTML = '';
-        let filtered;
-        if (selectedCategory === 'all') {
-            filtered = sectors;
-        } else {
-            filtered = sectors.filter(s => s.name === selectedCategory);
-        }
-        if (filtered.length === 0) {
-            productGrid.innerHTML = '<p style="text-align:center;color:#888;">No information available for this sector yet.</p>';
-            return;
-        }
-        filtered.forEach(s => {
-            if (s.img) {
-                // Arrangement: image on top, description below, both centered, no card
-                const container = document.createElement('div');
-                container.style.display = 'flex';
-                container.style.flexDirection = 'column';
-                container.style.alignItems = 'center';
-                container.style.margin = '32px auto 40px auto';
-                container.style.maxWidth = '600px';
-                const img = document.createElement('img');
-                img.src = s.img;
-                img.alt = s.name;
-                img.style.display = 'block';
-                img.style.maxWidth = '100%';
-                img.style.maxHeight = '340px';
-                img.style.width = 'auto';
-                img.style.height = 'auto';
-                img.style.objectFit = 'contain';
-                img.style.margin = '0 auto';
-                img.style.borderRadius = '0';
-                img.style.boxShadow = 'none';
-                img.style.background = 'transparent';
-                img.onmouseover = function() {
-                    img.style.filter = 'brightness(1.12) contrast(1.12) saturate(1.12)';
-                };
-                img.onmouseout = function() {
-                    img.style.filter = 'none';
-                };
-                container.appendChild(img);
-                if (s.name || s.desc) {
-                    const caption = document.createElement('div');
-                    caption.style.textAlign = 'center';
-                    caption.style.margin = '18px auto 0 auto';
-                    caption.style.maxWidth = '480px';
-                    caption.innerHTML = `<h4 style=\"color:#4ecdc4;margin-bottom:6px;font-size:1.18rem;font-weight:700;">${s.name}</h4>${s.desc ? `<p style=\\"color:#232526;font-size:1.01rem;max-width:420px;margin:0 auto;\\">${s.desc}</p>` : ''}`;
-                    container.appendChild(caption);
-                }
-                productGrid.appendChild(container);
-            }
-            if (s.video) {
-                const videoCard = document.createElement('div');
-                videoCard.style.textAlign = 'center';
-                videoCard.style.margin = '0 auto 24px auto';
-                videoCard.style.maxWidth = '480px';
-                videoCard.innerHTML = `
-                    <h4 style="color:#ffd54f;margin-bottom:8px;">${s.name} Video</h4>
-                    <video src="${s.video}" controls style="width:100%;max-width:420px;margin-top:10px;border-radius:8px;"></video>
-                    ${s.desc && !s.img ? `<p style=\"color:#fff;font-size:1.05rem;\">${s.desc}</p>` : ''}
-                `;
-                productGrid.appendChild(videoCard);
-            }
-            if (!s.img && !s.video && s.desc) {
-                const descCard = document.createElement('div');
-                descCard.style.textAlign = 'center';
-                descCard.style.margin = '0 auto 24px auto';
-                descCard.style.maxWidth = '480px';
-                descCard.innerHTML = `
-                    <h4 style="color:#ffd54f;margin-bottom:8px;">${s.name}</h4>
-                    <p style=\"color:#fff;font-size:1.05rem;\">${s.desc}</p>
-                `;
-                productGrid.appendChild(descCard);
-            }
-        });
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-        renderSectorContent('all');
-        document.querySelectorAll('.category-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                renderSectorContent(this.getAttribute('data-category'));
-            });
-        });
-    });
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'sectors') {
-            // Re-render with the currently active category
-            const activeBtn = document.querySelector('.category-btn.active');
-            const cat = activeBtn ? activeBtn.getAttribute('data-category') : 'all';
-            renderSectorContent(cat);
-        }
-    });
-    </script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AfricaBased - Home</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="css/modals.css">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        // Only declare supabase if not already declared
+        if (typeof supabase === 'undefined') {
+            var supabase = window.supabase.createClient(
+                'https://yoqtahdctzponqkmgkzn.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
+            );
+        }
+    </script>
+    <script src="js/modals.js" defer></script>
+    <script type="module" src="js/supabaseClient.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/sessionUtils.js"></script>
+    <script type="module" src="js/homepage-handler.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
+            </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AfricaBased - Home</title>
@@ -120,7 +44,14 @@
         window.handleProductClick = async (e) => {
             e.preventDefault();
             const session = await getSession();
-            // ...existing code for handleProductClick...
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+            const productId = e.target.getAttribute('data-product-id');
+            if (productId) {
+                window.location.href = `My-products.html#${productId}`;
+            }
         };
         // Render Investment Opportunities and all sectors from localStorage
         function renderOpportunitiesAndSectors(selectedCategory = 'all') {
@@ -228,8 +159,6 @@
                     });
                     productGrid.appendChild(grid);
                 });
-            }
-        }
         document.addEventListener('DOMContentLoaded', function() {
             renderOpportunitiesAndSectors();
             // Also re-render after a short delay to catch any async admin updates
@@ -277,7 +206,7 @@
             gap: 12px;
             margin-bottom: 24px;
             justify-content: center;
-        }
+}
         .category-btn {
             background: var(--accent-gradient);
             color: #232526;
@@ -302,13 +231,7 @@
             box-shadow: 0 4px 16px rgba(78,205,196,0.25);
         }
 
-:root {
-    --card-bg: rgba(255, 255, 255, 0.05);
-    --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    --hover-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
-    --transition: all 0.3s ease;
-}
-        }
+/* Moved misplaced :root block to top and closed previous CSS block */
 
         * {
             margin: 0;
@@ -718,16 +641,21 @@
         .deposit-close:hover {
             opacity: 1;
         }
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
+
+.deposit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    display: none;
+.deposit-modal.active {
+    display: flex;
+}
 
         .modal.active {
             display: flex;
@@ -1621,9 +1549,7 @@ function showImpersonationBannerHome(user) {
     updateTimer();
     timerInterval = setInterval(updateTimer, 1000);
     banner.dataset.timerInterval = timerInterval;
-  }
-}
-
+    }
 // Ensure banner persists on navigation
 function checkImpersonationModeHome() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -1634,11 +1560,12 @@ function checkImpersonationModeHome() {
     // Listen for navigation events to re-show banner
     window.addEventListener('popstate', () => showImpersonationBannerHome(userData));
     window.addEventListener('hashchange', () => showImpersonationBannerHome(userData));
-  }
-}
+    }
 
 document.addEventListener('DOMContentLoaded', checkImpersonationModeHome);
-    </script>
+}
+}
+</script>
 </head>
 <body>
     <nav class="navbar">
@@ -1661,8 +1588,9 @@ document.addEventListener('DOMContentLoaded', checkImpersonationModeHome);
         <button class="menu-button" id="menuButton">
             <i class="fas fa-bars"></i>
         </button>
+    </nav>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
+        // Menu button click handler
         const menuButton = document.getElementById('menuButton');
         const navLinks = document.querySelector('.nav-links');
         if (menuButton && navLinks) {
@@ -1670,36 +1598,32 @@ document.addEventListener('DOMContentLoaded', checkImpersonationModeHome);
                 navLinks.classList.toggle('active');
             });
         }
-    });
+        
+        // Profile image setup
+        const img = document.getElementById('profileImageTop');
+        if (img) {
+            function setProfileImageFromLocalStorage() {
+                var userData = {};
+                try { 
+                    userData = JSON.parse(localStorage.getItem('userData') || '{}'); 
+                } catch(e) {}
+                var profileUrl = userData.profileImageUrl || userData.profilePic || userData.photoUrl || '';
+                if (profileUrl && typeof profileUrl === 'string' && profileUrl.trim() !== '') {
+                    img.src = profileUrl;
+                } else {
+                    img.src = 'https://ui-avatars.com/api/?name=User&background=4ecdc4&color=fff&size=80';
+                }
+            }
+            setProfileImageFromLocalStorage();
+            window.addEventListener('storage', function(e) {
+                if (!e.key || e.key === 'userData') setProfileImageFromLocalStorage();
+            });
+        }
     </script>
-    </nav>
-<script>
-// Set and update profile image in navbar to reflect user's uploaded profile picture
-function setProfileImageFromLocalStorage() {
-    var img = document.getElementById('profileImageTop');
-    if (!img) return;
-    var userData = {};
-    try { userData = JSON.parse(localStorage.getItem('userData') || '{}'); } catch(e) {}
-    var profileUrl = userData.profileImageUrl || userData.profilePic || userData.photoUrl || '';
-    if (profileUrl && typeof profileUrl === 'string' && profileUrl.trim() !== '') {
-        img.src = profileUrl;
-    } else {
-        img.src = 'https://ui-avatars.com/api/?name=User&background=4ecdc4&color=fff&size=80';
-    }
-}
-document.addEventListener('DOMContentLoaded', setProfileImageFromLocalStorage);
-window.addEventListener('storage', function(e) {
-    if (!e.key || e.key === 'userData') setProfileImageFromLocalStorage();
-});
-</script>
-
-    <!-- Running Message Marquee (moved for reliability) -->
     <div id="runningMessageBar" style="width:100vw;overflow:hidden;margin:0 auto 18px auto;position:relative;z-index:1001;"></div>
     <main>
-<script>
-// Dynamically render sector buttons from localStorage (admin-defined sectors)
-function renderSectorButtons() {
-    const sectorButtonsDiv = document.getElementById('sectorButtons');
+        <script>
+            const sectorButtonsDiv = document.getElementById('sectorButtons');
     if (!sectorButtonsDiv) return;
     const sectors = JSON.parse(localStorage.getItem('sectors') || '[]');
     let html = '<button class="category-btn active" data-category="all">All Opportunities</button>';
@@ -1715,7 +1639,6 @@ function renderSectorButtons() {
             renderSectorContent(this.getAttribute('data-category'));
         });
     });
-}
 document.addEventListener('DOMContentLoaded', renderSectorButtons);
 window.addEventListener('storage', function(e) {
     if (e.key === 'sectors') renderSectorButtons();
@@ -1769,9 +1692,7 @@ window.addEventListener('storage', function(e) {
             <!-- Other stat cards -->
         </section>
     </main>
-<script>
-// Real-time update for current time, date, and last login
-function updateDateTimeAndLogin() {
+</script>
     const now = new Date();
     // Format date and time
     const dateStr = now.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
@@ -1801,25 +1722,26 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-    <style>
-        <script>
-        // Running message marquee logic
-        function renderRunningMessage() {
-            var bar = document.getElementById('runningMessageBar');
-            if (!bar) return;
-            var runningMessage = {text: '', color: '#ffd54f'};
-            try {
-                runningMessage = JSON.parse(localStorage.getItem('runningMessage') || '{"text":"","color":"#ffd54f"}');
-            } catch(e) {}
-            if (runningMessage.text && runningMessage.text.trim() !== "") {
-                bar.innerHTML = `<div class="running-marquee" style="color:${runningMessage.color};">${runningMessage.text}</div>`;
-                bar.style.display = '';
-            } else {
-                bar.innerHTML = '';
-                bar.style.display = 'none';
-            }
+        <style>
+                /* ...existing CSS code... */
+        </style>
+    </script>
+                var bar = document.getElementById('runningMessageBar');
+                if (!bar) return;
+                var runningMessage = {text: '', color: '#ffd54f'};
+                try {
+                    runningMessage = JSON.parse(localStorage.getItem('runningMessage') || '{"text":"","color":"#ffd54f"}');
+                } catch(e) {}
+                if (runningMessage.text && runningMessage.text.trim() !== "") {
+            bar.innerHTML = '<div class="running-marquee" style="color:' + runningMessage.color + '; display:inline-block;">' + runningMessage.text + '</div>';
+            bar.style.display = '';
+        } else {
+            bar.innerHTML = '';
+            bar.style.display = 'none';
         }
-        // Ensure this runs after DOM is ready
+    }
+    
+    function initRunningMessage() {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', renderRunningMessage);
         } else {
@@ -1828,28 +1750,28 @@ document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('storage', function(e) {
             if (!e.key || e.key === 'runningMessage') renderRunningMessage();
         });
-
-        // Dynamically render sector buttons from localStorage (admin-defined sectors)
-        function renderSectorButtons() {
-            const sectorButtonsDiv = document.getElementById('sectorButtons');
-            if (!sectorButtonsDiv) return;
-            const sectors = JSON.parse(localStorage.getItem('sectors') || '[]');
-            let html = '<button class="category-btn active" data-category="all">All Opportunities</button>';
-            sectors.forEach(s => {
-                html += `<button class="category-btn" data-category="${s.name}">${s.name}</button>`;
-            });
-            sectorButtonsDiv.innerHTML = html;
-            // Add event listeners for filtering
-            sectorButtonsDiv.querySelectorAll('.category-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    renderSectorContent(this.getAttribute('data-category'));
+    }
+    
+    initRunningMessage();            // Dynamically render sector buttons from localStorage (admin-defined sectors)
+            function renderSectorButtons() {
+                const sectorButtonsDiv = document.getElementById('sectorButtons');
+                if (!sectorButtonsDiv) return;
+                const sectors = JSON.parse(localStorage.getItem('sectors') || '[]');
+                let html = '<button class="category-btn active" data-category="all">All Opportunities</button>';
+                sectors.forEach(s => {
+                    html += `<button class="category-btn" data-category="${s.name}">${s.name}</button>`;
                 });
+                sectorButtonsDiv.innerHTML = html;
+                sectorButtonsDiv.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        renderSectorContent(this.getAttribute('data-category'));
+                    });
+                });
+            }
+            document.addEventListener('DOMContentLoaded', renderSectorButtons);
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'sectors') renderSectorButtons();
             });
-        }
-        document.addEventListener('DOMContentLoaded', renderSectorButtons);
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'sectors') renderSectorButtons();
-        });
         </script>
                         const imgCard = document.createElement('div');
                         imgCard.className = 'opportunity-card';
@@ -1911,6 +1833,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             }
+
+            // Initialize sector content when DOM is loaded
             document.addEventListener('DOMContentLoaded', () => {
                 renderSectorContent('all');
                 document.querySelectorAll('.category-btn').forEach(btn => {
@@ -1921,16 +1845,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 });
             });
+
+            // Update sector content when storage changes
             window.addEventListener('storage', function(e) {
                 if (e.key === 'sectors') {
-                    // Re-render with the currently active category
                     const activeBtn = document.querySelector('.category-btn.active');
                     const cat = activeBtn ? activeBtn.getAttribute('data-category') : 'all';
                     renderSectorContent(cat);
                 }
             });
-// ...existing code...
-        }
+        </script>
+    </main>
+</body>
+</html>
 
         .product-grid {
             display: grid;
@@ -2608,51 +2535,49 @@ document.addEventListener('DOMContentLoaded', function() {
                         .from('products')
                         .select('*')
                         .eq('status', 'active');
-                    
                     if (error) throw error;
-                    
                     const productGrid = document.getElementById('productGrid');
                     productGrid.innerHTML = '';
-                    
                     const filteredProducts = category === 'all' 
                         ? products 
                         : products.filter(product => product.category === category);
-                    
                     filteredProducts.forEach(product => {
                         const productCard = document.createElement('div');
                         productCard.className = 'product-card';
                         if (product.featured) productCard.classList.add('featured');
-                    
-                    productCard.innerHTML = `
-                        <div class="product-badge">${product.featured ? '<span class="featured-badge">Featured</span>' : ''}</div>
-                        <img src="${product.image}" alt="${product.name}" class="product-image">
-                        <div class="product-info">
-                            <h3 class="product-title">${product.name}</h3>
-                            <p class="product-description">${product.description}</p>
-                            <div class="product-details">
-                                <div class="detail-item">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <span>${product.details.location}</span>
+                        productCard.innerHTML = `
+                            <div class="product-badge">${product.featured ? '<span class="featured-badge">Featured</span>' : ''}</div>
+                            <img src="${product.image}" alt="${product.name}" class="product-image">
+                            <div class="product-info">
+                                <h3 class="product-title">${product.name}</h3>
+                                <p class="product-description">${product.description}</p>
+                                <div class="product-details">
+                                    <div class="detail-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span>${product.details.location}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span>${product.details.duration}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-coins"></i>
+                                        <span>Min: ${product.details.minInvestment}</span>
+                                    </div>
                                 </div>
-                                <div class="detail-item">
-                                    <i class="fas fa-clock"></i>
-                                    <span>${product.details.duration}</span>
+                                <div class="product-price">
+                                    <span class="price-label">Investment Amount:</span>
+                                    <span class="price-value">$${parseInt(product.price).toLocaleString()}</span>
                                 </div>
-                                <div class="detail-item">
-                                    <i class="fas fa-coins"></i>
-                                    <span>Min: ${product.details.minInvestment}</span>
-                                </div>
+                                <button class="invest-btn" onclick="window.location.href='My-products.html'">View My Investments</button>
                             </div>
-                            <div class="product-price">
-                                <span class="price-label">Investment Amount:</span>
-                                <span class="price-value">$${parseInt(product.price).toLocaleString()}</span>
-                            </div>
-                            <button class="invest-btn" onclick="window.location.href='My-products.html'">View My Investments</button>
-                        </div>
-                    `;
-                    productGrid.appendChild(productCard);
-                });
-            }
+                        `;
+                        productGrid.appendChild(productCard);
+                    });
+                } catch (err) {
+                    console.error('Error displaying products:', err);
+                }
+        }
 
             // Category filter functionality
             const categoryButtons = document.querySelectorAll('.category-btn');
@@ -2742,9 +2667,8 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
       <div id="mediaDescsSection"></div>
     </section>
-    <script>
-    function renderMediaDescs() {
-        var section = document.getElementById('mediaDescsSection');
+    </script>
+</html>
         if (!section) return;
         var mediaDescs = [];
         try { mediaDescs = JSON.parse(localStorage.getItem('mediaDescs') || '[]'); } catch (e) { mediaDescs = []; }
@@ -2832,13 +2756,13 @@ window.addEventListener('storage', function(e) {
                                autocomplete="off"
                                spellcheck="false">
                     </div>
-                    <button id="redeemBtn" class="modal-button">
+                    <button id="confirmBtn" class="modal-button">
                         <i class="fas fa-check"></i>
                         Redeem Code
                     </button>
                 </div>
 
-                <div id="exchangeSuccess" class="modal-message success" style="display: none;">
+                <div id="successMessage" class="modal-message success" style="display: none;">
                     <div class="message-icon">
                         <i class="fas fa-check-circle"></i>
                     </div>
@@ -2848,7 +2772,7 @@ window.addEventListener('storage', function(e) {
                     <button id="exchangeDoneBtn" class="modal-button done">Done</button>
                 </div>
 
-                <div id="exchangeError" class="modal-message error" style="display: none;">
+                <div id="errorMessage" class="modal-message error" style="display: none;">
                     <div class="message-icon">
                         <i class="fas fa-times-circle"></i>
                     </div>
@@ -3316,12 +3240,22 @@ window.addEventListener('storage', function(e) {
         }
 
         function validateCode() {
+            console.log('Validating code...');
             const code = document.getElementById('codeInput').value.trim().toUpperCase();
-            // Only allow codes generated from admin-exchange (stored in localStorage)
             const codes = JSON.parse(localStorage.getItem('redemptionCodes') || '[]');
             const found = codes.find(c => c.code === code && !c.deactivated);
+            
             if (found) {
-                showConfirmModal(found.amount || found.pool || 'N/A');
+                // Hide error message if shown
+                document.getElementById('errorMessage').style.display = 'none';
+                
+                // Show success message
+                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('awardedAmount').textContent = `Ksh ${found.amount || found.pool || 'N/A'}`;
+                document.getElementById('exchangeInputGroup').style.display = 'none';
+                document.querySelector('.modal-header').style.display = 'none';
+                
+                // Mark code as used
                 if (found.type === 'single' || found.type === 'user') {
                     found.used = true;
                 }
@@ -3331,19 +3265,23 @@ window.addEventListener('storage', function(e) {
                 }
                 localStorage.setItem('redemptionCodes', JSON.stringify(codes));
             } else {
-                showInvalidModal();
+                // Show error message
+                document.getElementById('successMessage').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('exchangeInputGroup').style.display = 'none';
+                document.querySelector('.modal-header').style.display = 'none';
             }
         }
 
+        // Event listeners for exchange modal
         document.getElementById('confirmBtn').onclick = validateCode;
         document.getElementById('exchangeCloseBtn').onclick = closeExchangeModal;
+        document.getElementById('exchangeDoneBtn').onclick = closeExchangeModal;
         document.getElementById('codeInput').onkeypress = function(e) {
             if (e.key === 'Enter') validateCode();
         };
-        document.querySelector('.menu-button').onclick = function() {
-            const navLinks = document.querySelector('.nav-links');
-            navLinks.classList.toggle('active');
-        };
+
+        // The mobile menu toggle is handled in the DOM loaded event handler
 
         // Impersonation banner for home page
 function showImpersonationBannerHome(user) {
@@ -3393,7 +3331,77 @@ function checkImpersonationModeHome() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', checkImpersonationModeHome);
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize all main functionality
+    checkImpersonationModeHome();
+    updateHomepageFromAdmin();
+    initializeModals();
+    initializeCodeValidation();
+    loadUserProfile();
+    updateDateTime();
+    renderSectorContent('all');
+    
+    // Initialize mobile menu
+    const menuButton = document.querySelector('.menu-button');
+    const navLinks = document.querySelector('.nav-links');
+    if (menuButton && navLinks) {
+        menuButton.onclick = function() {
+            navLinks.classList.toggle('active');
+            if (navLinks.classList.contains('active')) {
+                const menuBtnRect = this.getBoundingClientRect();
+                const navRect = navLinks.parentElement.getBoundingClientRect();
+                navLinks.style.left = (menuBtnRect.left - navRect.left) + 'px';
+                navLinks.style.top = (menuBtnRect.bottom - navRect.top) + 'px';
+                setTimeout(() => {
+                    document.addEventListener('click', closeMenuOnClickOutside);
+                }, 0);
+            } else {
+                navLinks.style.left = '';
+                navLinks.style.top = '';
+                document.removeEventListener('click', closeMenuOnClickOutside);
+            }
+        };
+        function closeMenuOnClickOutside(e) {
+            if (!navLinks.contains(e.target) && e.target !== menuButton) {
+                navLinks.classList.remove('active');
+                navLinks.style.left = '';
+                navLinks.style.top = '';
+                document.removeEventListener('click', closeMenuOnClickOutside);
+            }
+        }
+    }
+    
+    // Initialize category buttons
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentCategory = this.getAttribute('data-category');
+            renderSectorContent(currentCategory);
+        });
+    });
+    
+    // Setup event listeners
+    setInterval(updateDateTime, 1000);
+    window.addEventListener('storage', (e) => {
+        const storageKeys = [
+            'homepageTexts', 'banners', 'testimonials', 'promos', 
+            'notices', 'userData', 'sectors', 'mediaDescs', 'profilePhotoUpdated'
+        ];
+        if (!e.key || storageKeys.includes(e.key)) {
+            updateHomepageFromAdmin();
+        }
+        if (!e.key || e.key === 'userData') {
+            loadUserProfile();
+        }
+        if (!e.key || e.key === 'sectors') {
+            renderSectorContent(currentCategory);
+        }
+        if (!e.key || e.key === 'mediaDescs') {
+            renderMediaDescs();
+        }
+    });
+});
     </script>
 </body>
 </html>

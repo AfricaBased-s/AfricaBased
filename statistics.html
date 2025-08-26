@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
+            <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+            <script>
+                // Only declare supabase if not already declared
+                if (typeof supabase === 'undefined') {
+                    supabase = supabase.createClient(
+                        'https://yoqtahdctzponqkmgkzn.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9zZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
+                    );
+                }
+            </script>
     <script src="js/supabaseClient.js"></script>
     <title>Statistics Dashboard - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">

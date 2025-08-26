@@ -1,3 +1,4 @@
+<!-- If this file is used for HTML/JS, add Supabase setup. Otherwise, skip. -->
 # AfricaBased Web App
 
 ## Overview

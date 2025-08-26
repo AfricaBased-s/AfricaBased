@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+        <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+        <script>
+            const supabase = supabase.createClient(
+                'https://yoqtahdctzponqkmgkzn.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
+            );
+        </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exchange - AfricaBased</title>
@@ -12,6 +19,7 @@
         const user = await supabase.auth.getSession();
         if (!user.data.session) {
             window.location.href = '/login.html';
+        }
 
     </script>
     <style>
@@ -104,18 +112,13 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-        }
-        .modal-button:hover {
-            background: #45b7af;
-            transform: translateY(-2px);
-        }
         .status-message {
             padding: 1rem;
             border-radius: 10px;
             margin: 1rem 0;
             text-align: center;
             display: none;
-        }
+    }
         .status-message.success {
             background: rgba(72, 187, 120, 0.2);
             color: #48bb78;

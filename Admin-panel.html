@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+            <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+            <script>
+                // Only declare supabase if not already declared
+                if (typeof supabase === 'undefined') {
+                    var supabase = supabase.createClient(
+                        'https://yoqtahdctzponqkmgkzn.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
+                    );
+                }
+            </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -636,7 +646,7 @@
             document.getElementById('loadingIndicator').style.display = 'none';
         }
 
-        let supabase;
+    // supabase client already initialized in <head>
 
         // Initialize Supabase client
         async function initializeSupabase() {
