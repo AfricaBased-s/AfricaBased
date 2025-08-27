@@ -1,37 +1,78 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-            <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-            <script>
-                // Only declare supabase if not already declared
-                if (typeof supabase === 'undefined') {
-                    supabase = supabase.createClient(
-                        'https://yoqtahdctzponqkmgkzn.supabase.co',
-                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9zZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
-                    );
-                }
-            </script>
-    <script src="js/supabaseClient.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Statistics Dashboard - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script type="module" src="js/supabaseClient.js"></script>
-    <script type="module" src="js/auth.js"></script>
-    <script type="module" src="js/sessionUtils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script src="./js/supabaseClient.js"></script>
+    <script>
+        // Function to check if we're already on the login page
+        function isLoginPage() {
+            return window.location.pathname.includes('login.html');
+        }
+
+        // Function to redirect to login
+        function redirectToLogin() {
+            if (!isLoginPage()) {
+                const currentPage = encodeURIComponent(window.location.pathname);
+                window.location.href = `/login.html?redirect=${currentPage}`;
+            }
+        }
+
+        // Wait for supabase client to be initialized
+        window.addEventListener('load', () => {
+            // Add a small delay to ensure Supabase is fully initialized
+            setTimeout(async () => {
+                try {
+                    // Wait for window.supabase to be available
+                    if (!window.supabase) {
+                        console.error('Supabase client not initialized');
+                        return redirectToLogin();
+                    }
+
+                    // Check authentication state
+                    const { data: { session }, error } = await window.supabase.auth.getSession();
+                    
+                    if (error) {
+                        console.error('Auth error:', error.message);
+                        return redirectToLogin();
+                    }
+
+                    if (!session || !session.user) {
+                        console.log('No active session found');
+                        return redirectToLogin();
+                    }
+
+                    // If we get here, we're authenticated
+                    console.log('Authentication successful');
+                    
+                } catch (err) {
+                    console.error('Failed to check auth state:', err);
+                    redirectToLogin();
+                }
+            }, 500); // 500ms delay
+        });
+    </script>
     <style>
         :root {
-            --primary-color: #00A859;
-            --primary-dark: #007540;
-            --secondary-color: #2C3E50;
-            --accent-color: #4ecdc4;
-            --background-color: #000000;
-            --card-color: #1a1a1a;
-            --success-color: #27AE60;
-            --warning-color: #F39C12;
-            --danger-color: #E74C3C;
+            --primary: #1a2238;
+            --accent: #4ecdc4;
+            --accent-gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            --secondary: #ff6b6b;
+            --text: #ffffff;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --bg: #0f172a;
+            --background-color: #0f172a;
+            --card-color: rgba(26,34,56,0.98);
+            --success-color: #4ecdc4;
+            --warning-color: #ffd54f;
+            --danger-color: #ff6b6b;
             --text-color: #ffffff;
             --text-color-secondary: rgba(255, 255, 255, 0.7);
-            --shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
             --transition: all 0.3s ease;
         }
 
@@ -43,9 +84,10 @@
         }
 
         body {
-            background-color: var(--background-color);
+            background: var(--bg);
+            background-image: radial-gradient(circle at center, var(--primary) 0%, var(--bg) 100%);
             padding: 20px;
-            color: var(--text-color);
+            color: var(--text);
         }
 
         .statistics-dashboard {
@@ -67,29 +109,14 @@
             overflow: hidden;
         }
 
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
-            transition: 0.5s;
-        }
-
-        .header:hover::before {
-            left: 100%;
-        }
-
         .header h1 {
             color: var(--text-color);
             font-size: 24px;
         }
 
         .back-button {
-            background-color: var(--primary-color);
-            color: white;
+            background: var(--accent-gradient);
+            color: var(--text);
             padding: 10px 20px;
             border-radius: 8px;
             text-decoration: none;
@@ -98,12 +125,14 @@
             align-items: center;
             gap: 8px;
             font-weight: 500;
+            border: none;
+            cursor: pointer;
         }
 
         .back-button:hover {
-            background-color: var(--primary-dark);
+            opacity: 0.9;
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
         }
 
         .stats-grid {
@@ -123,30 +152,11 @@
             overflow: hidden;
         }
 
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.05),
-                transparent
-            );
-            transition: 0.5s;
-        }
-
         .stat-card:hover {
             transform: translateY(-5px);
-            border-color: var(--primary-color);
-            box-shadow: 0 8px 32px rgba(0, 168, 89, 0.15);
-        }
-
-        .stat-card:hover::before {
-            left: 100%;
+            border-color: var(--accent);
+            box-shadow: 0 8px 32px rgba(78, 205, 196, 0.15);
+            background: linear-gradient(135deg, var(--card-color) 0%, rgba(26,34,56,0.85) 100%);
         }
 
         .stat-header {
@@ -172,39 +182,39 @@
         }
 
         .wallet-icon {
-            background-color: var(--primary-color);
+            background: var(--accent-gradient);
             color: white;
-            box-shadow: 0 4px 12px rgba(0, 168, 89, 0.2);
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
         }
 
         .balance-icon {
-            background-color: var(--success-color);
+            background: var(--accent-gradient);
             color: white;
-            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
         }
 
         .asset-icon {
-            background-color: var(--warning-color);
+            background: linear-gradient(45deg, var(--warning-color), var(--secondary));
             color: white;
-            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.2);
+            box-shadow: 0 4px 12px rgba(255, 213, 79, 0.2);
         }
 
         .income-icon {
-            background-color: var(--secondary-color);
+            background: linear-gradient(45deg, var(--accent), var(--secondary));
             color: white;
-            box-shadow: 0 4px 12px rgba(44, 62, 80, 0.2);
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
         }
 
         .today-icon {
-            background-color: var(--accent-color);
+            background: var(--accent-gradient);
             color: white;
             box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
         }
 
         .recharge-icon {
-            background-color: var(--danger-color);
+            background: linear-gradient(45deg, var(--secondary), var(--danger-color));
             color: white;
-            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.2);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
         }
 
         .stat-icon i {
@@ -231,22 +241,7 @@
             margin-top: 10px;
             font-size: 14px;
             gap: 4px;
-        }
-
-        .positive {
-            color: var(--success-color);
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .negative {
-            color: var(--danger-color);
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            opacity: 0.7;
         }
 
         @media (max-width: 768px) {
@@ -279,10 +274,8 @@
                     </div>
                     <div class="stat-title">Wallet Balance</div>
                 </div>
-                <div class="stat-value">KSH 125,000</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> +2.5% from last week
-                </div>
+                <div class="stat-value">KSH 0.00</div>
+                <div class="stat-change">Start your journey</div>
             </div>
 
             <div class="stat-card">
@@ -292,10 +285,8 @@
                     </div>
                     <div class="stat-title">Account Balance</div>
                 </div>
-                <div class="stat-value">KSH 450,000</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> +3.2% from last month
-                </div>
+                <div class="stat-value">KSH 0.00</div>
+                <div class="stat-change">Start your journey</div>
             </div>
 
             <div class="stat-card">
@@ -305,10 +296,8 @@
                     </div>
                     <div class="stat-title">Total Assets</div>
                 </div>
-                <div class="stat-value">KSH 2,750,000</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> +5.8% from last month
-                </div>
+                <div class="stat-value">KSH 0.00</div>
+                <div class="stat-change">Start your journey</div>
             </div>
 
             <div class="stat-card">
@@ -318,10 +307,8 @@
                     </div>
                     <div class="stat-title">Total Income</div>
                 </div>
-                <div class="stat-value">KSH 875,000</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> +4.3% from last month
-                </div>
+                <div class="stat-value">KSH 0.00</div>
+                <div class="stat-change">Start your journey</div>
             </div>
 
             <div class="stat-card">
@@ -331,10 +318,8 @@
                     </div>
                     <div class="stat-title">Today's Income</div>
                 </div>
-                <div class="stat-value">KSH 15,000</div>
-                <div class="stat-change negative">
-                    <i class="fas fa-arrow-down"></i> -1.2% from yesterday
-                </div>
+                <div class="stat-value">KSH 0.00</div>
+                <div class="stat-change">Start your journey</div>
             </div>
 
             <div class="stat-card">
@@ -344,218 +329,264 @@
                     </div>
                     <div class="stat-title">Total Recharge</div>
                 </div>
-                <div class="stat-value">KSH 350,000</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> +2.8% from last month
-                </div>
+                <div class="stat-value">KSH 0.00</div>
+                <div class="stat-change">Start your journey</div>
             </div>
         </div>
     </div>
 
-    <script type="module">
-        import { supabase } from './js/supabaseClient.js';
-        import { checkAuth } from './js/sessionUtils.js';
-
+    <script>
         // Format currency
         function formatCurrency(amount) {
-            return `KSH ${amount.toLocaleString()}`;
+            return `KSH ${amount.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })}`;
         }
 
-        // Calculate percentage change with period comparison
-        function calculatePercentageChange(current, previous) {
-            if (!previous || previous === 0) return 0;
-            return ((current - previous) / previous) * 100;
-        }
-
+        // Initialize statistics with zero values
+        let statistics = {
+            walletBalance: 0,
+            accountBalance: 0,
+            totalAssets: 0,
+            totalIncome: 0,
+            todayIncome: 0,
+            totalRecharge: 0
+        };
+        
         // Show loading state
         function showLoading() {
             document.querySelectorAll('.stat-value').forEach(el => {
-                el.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                el.innerHTML = '<span style="opacity: 0.5">Loading...</span>';
+            });
+            document.querySelectorAll('.stat-change').forEach(el => {
+                el.style.display = 'none';
             });
         }
 
         // Show error state
         function showError(message) {
-            const header = document.querySelector('.header');
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.style.color = 'var(--danger-color)';
-            errorDiv.textContent = message;
-            header.appendChild(errorDiv);
-            setTimeout(() => errorDiv.remove(), 5000);
+            document.querySelectorAll('.stat-value').forEach(el => {
+                el.innerHTML = '<span style="color: var(--danger-color)">Error</span>';
+            });
+            document.querySelectorAll('.stat-change').forEach(el => {
+                el.textContent = message || 'Failed to load data';
+                el.style.color = 'var(--danger-color)';
+                el.style.display = 'block';
+            });
         }
 
-        // Update statistics display with loading and error handling
-        async function updateStatisticsDisplay(data) {
+        // Update display for all statistics
+        function updateDisplay() {
             try {
-                // Update each statistic with error handling
-                const updateStat = (iconClass, value, change, period) => {
-                    const valueEl = document.querySelector(`${iconClass} + .stat-title + .stat-value`);
-                    const changeEl = valueEl.nextElementSibling;
-
-                    // Default to null, show 0 if null
-                    let displayValue = value == null ? 0 : value;
-                    if (valueEl) {
-                        valueEl.textContent = formatCurrency(displayValue);
+                // Validate statistics object
+                Object.entries(statistics).forEach(([key, value]) => {
+                    if (typeof value !== 'number' || isNaN(value)) {
+                        statistics[key] = 0;
+                        console.error(`Invalid value for ${key}, resetting to 0`);
                     }
+                });
 
-                    // Only show change if value is not null and income is increasing
-                    let showChange = (change != null && value != null && value > 0);
-                    if (changeEl) {
-                        if (showChange) {
-                            const isPositive = change >= 0;
-                            changeEl.className = `stat-change ${isPositive ? 'positive' : 'negative'}`;
-                            changeEl.innerHTML = `
-                                <i class="fas fa-arrow-${isPositive ? 'up' : 'down'}"></i>
-                                ${isPositive ? '+' : ''}${change.toFixed(1)}% from ${period}
-                            `;
-                        } else {
-                            changeEl.className = 'stat-change';
-                            changeEl.innerHTML = '';
-                        }
-                    }
-                };
+                // Update wallet balance
+                const walletValue = document.querySelector('.wallet-icon + .stat-title + .stat-value');
+                if (walletValue) {
+                    walletValue.textContent = formatCurrency(statistics.walletBalance);
+                }
 
-                // Update all statistics, defaulting to null (shows 0) and only increasing with income
-                updateStat('.wallet-icon', data.wallet_balance ?? null, data.wallet_change ?? null, 'last week');
-                updateStat('.balance-icon', data.account_balance ?? null, data.balance_change ?? null, 'last month');
-                updateStat('.asset-icon', data.total_assets ?? null, data.asset_change ?? null, 'last month');
-                updateStat('.income-icon', data.total_income ?? null, data.income_change ?? null, 'last month');
-                updateStat('.today-icon', data.today_income ?? null, data.today_income_change ?? null, 'yesterday');
-                updateStat('.recharge-icon', data.total_recharge ?? null, data.recharge_change ?? null, 'last month');
+            // Update account balance
+            const accountValue = document.querySelector('.balance-icon + .stat-title + .stat-value');
+            if (accountValue) {
+                accountValue.textContent = formatCurrency(statistics.accountBalance);
+            }
 
-            } catch (error) {
-                console.error('Error updating display:', error);
-                showError('Error updating statistics display');
+            // Update total assets (wallet + account balance)
+            const assetValue = document.querySelector('.asset-icon + .stat-title + .stat-value');
+            if (assetValue) {
+                statistics.totalAssets = statistics.walletBalance + statistics.accountBalance;
+                assetValue.textContent = formatCurrency(statistics.totalAssets);
+            }
+
+            // Update total income
+            const incomeValue = document.querySelector('.income-icon + .stat-title + .stat-value');
+            if (incomeValue) {
+                incomeValue.textContent = formatCurrency(statistics.totalIncome);
+            }
+
+            // Update today's income
+            const todayValue = document.querySelector('.today-icon + .stat-title + .stat-value');
+            if (todayValue) {
+                todayValue.textContent = formatCurrency(statistics.todayIncome);
+            }
+
+            // Update total recharge
+            const rechargeValue = document.querySelector('.recharge-icon + .stat-title + .stat-value');
+            if (rechargeValue) {
+                rechargeValue.textContent = formatCurrency(statistics.totalRecharge);
             }
         }
 
-        // Calculate period comparisons
-        function getPeriodComparisons(transactions) {
-            const now = new Date();
-            const today = now.toISOString().split('T')[0];
-            const yesterday = new Date(now.setDate(now.getDate() - 1)).toISOString().split('T')[0];
-            const lastWeek = new Date(now.setDate(now.getDate() - 7)).toISOString().split('T')[0];
-            const lastMonth = new Date(now.setMonth(now.getMonth() - 1)).toISOString().split('T')[0];
+        // Handle different transaction types
+        async function handleTransaction(transaction) {
+            if (!transaction || typeof transaction !== 'object') {
+                console.error('Invalid transaction data received:', transaction);
+                return;
+            }
 
-            const periodTransactions = {
-                today: transactions.filter(t => t.created_at.startsWith(today)),
-                yesterday: transactions.filter(t => t.created_at.startsWith(yesterday)),
-                thisWeek: transactions.filter(t => t.created_at >= lastWeek),
-                lastWeek: transactions.filter(t => t.created_at < lastWeek && t.created_at >= new Date(now.setDate(now.getDate() - 14)).toISOString().split('T')[0]),
-                thisMonth: transactions.filter(t => t.created_at >= lastMonth),
-                lastMonth: transactions.filter(t => t.created_at < lastMonth && t.created_at >= new Date(now.setMonth(now.getMonth() - 2)).toISOString().split('T')[0])
-            };
+            const today = new Date().toISOString().split('T')[0];
+            const transactionDate = new Date(transaction.created_at || Date.now()).toISOString().split('T')[0];
+            const amount = parseFloat(transaction.amount) || 0;
 
-            return periodTransactions;
+            if (isNaN(amount)) {
+                console.error('Invalid transaction amount:', transaction.amount);
+                return;
+            }
+
+            switch (transaction.type) {
+                case 'deposit':
+                    statistics.walletBalance += amount;
+                    statistics.totalRecharge += amount;
+                    break;
+                case 'withdrawal':
+                    statistics.walletBalance -= amount;
+                    break;
+                case 'income':
+                case 'reward':
+                case 'bonus':
+                    statistics.accountBalance += amount;
+                    statistics.totalIncome += amount;
+                    if (transactionDate === today) {
+                        statistics.todayIncome += amount;
+                    }
+                    break;
+                case 'exchange':
+                    // For exchange from wallet to account balance
+                    statistics.walletBalance -= amount;
+                    statistics.accountBalance += amount;
+                    break;
+                case 'transfer':
+                    // Handle transfers between wallets if needed
+                    if (transaction.from_wallet === 'main') {
+                        statistics.walletBalance -= amount;
+                    } else if (transaction.to_wallet === 'main') {
+                        statistics.walletBalance += amount;
+                    }
+                    break;
+            }
+
+            updateDisplay();
         }
 
-        // Fetch statistics from Supabase
-        async function fetchStatistics() {
+        // Initialize real-time subscription for updates
+        async function initializeRealtime(retryCount = 0) {
+            const MAX_RETRIES = 3;
+            showLoading();
             try {
-                showLoading();
-
-                const user = await checkAuth();
-                if (!user) {
+                const { data: { session }, error } = await window.supabase.auth.getSession();
+                if (!session) {
                     window.location.href = '/login.html';
                     return;
                 }
+                if (error) {
+                    console.error('Auth error:', error.message);
+                    return;
+                }
 
-                // Fetch all required data in parallel
-                const [walletResponse, investmentsResponse, transactionsResponse] = await Promise.all([
-                    supabase.from('user_wallet').select('balance').eq('user_id', user.id).single(),
-                    supabase.from('user_products').select('*').eq('user_id', user.id),
-                    supabase.from('transactions').select('*').eq('user_id', user.id)
-                ]);
+                // Fetch initial balances
+                const { data: walletData, error: walletError } = await window.supabase
+                    .from('user_wallet')
+                    .select('balance')
+                    .eq('user_id', session.user.id)
+                    .single();
 
-                // Check for errors
-                if (walletResponse.error) throw new Error('Error fetching wallet data: ' + walletResponse.error.message);
-                if (investmentsResponse.error) throw new Error('Error fetching investments: ' + investmentsResponse.error.message);
-                if (transactionsResponse.error) throw new Error('Error fetching transactions: ' + transactionsResponse.error.message);
+                if (walletData) {
+                    statistics.walletBalance = parseFloat(walletData.balance) || 0;
+                }
+                if (walletError) {
+                    console.error('Error fetching wallet balance:', walletError.message);
+                }
 
-                const periods = getPeriodComparisons(transactionsResponse.data || []);
-                
-                // Calculate current values
-                const current = {
-                    wallet_balance: walletResponse.data?.balance || 0,
-                    invested_amount: investmentsResponse.data?.reduce((sum, inv) => sum + (inv.invested_amount || 0), 0) || 0,
-                    today_income: periods.today.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0),
-                    total_income: (transactionsResponse.data || []).filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0),
-                    total_recharge: (transactionsResponse.data || []).filter(t => t.type === 'deposit').reduce((sum, t) => sum + (t.amount || 0), 0)
-                };
+                // Fetch initial account balance
+                const { data: accountData, error: accountError } = await window.supabase
+                    .from('user_account')
+                    .select('balance')
+                    .eq('user_id', session.user.id)
+                    .single();
 
-                // Calculate previous values for comparison
-                const previous = {
-                    wallet_balance: current.wallet_balance - periods.thisWeek.filter(t => t.type === 'deposit').reduce((sum, t) => sum + (t.amount || 0), 0),
-                    invested_amount: current.invested_amount - periods.thisMonth.filter(t => t.type === 'investment').reduce((sum, t) => sum + (t.amount || 0), 0),
-                    yesterday_income: periods.yesterday.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0),
-                    last_month_income: periods.lastMonth.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0),
-                    last_month_recharge: periods.lastMonth.filter(t => t.type === 'deposit').reduce((sum, t) => sum + (t.amount || 0), 0)
-                };
+                if (accountData) {
+                    statistics.accountBalance = parseFloat(accountData.balance) || 0;
+                }
+                if (accountError) {
+                    console.error('Error fetching account balance:', accountError.message);
+                }
 
-                // Calculate statistics with changes
-                const stats = {
-                    wallet_balance: current.wallet_balance,
-                    wallet_change: calculatePercentageChange(current.wallet_balance, previous.wallet_balance),
-                    account_balance: current.invested_amount,
-                    balance_change: calculatePercentageChange(current.invested_amount, previous.invested_amount),
-                    total_assets: current.wallet_balance + current.invested_amount,
-                    asset_change: calculatePercentageChange(
-                        current.wallet_balance + current.invested_amount,
-                        previous.wallet_balance + previous.invested_amount
-                    ),
-                    total_income: current.total_income,
-                    income_change: calculatePercentageChange(
-                        periods.thisMonth.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0),
-                        previous.last_month_income
-                    ),
-                    today_income: current.today_income,
-                    today_income_change: calculatePercentageChange(current.today_income, previous.yesterday_income),
-                    total_recharge: current.total_recharge,
-                    recharge_change: calculatePercentageChange(
-                        periods.thisMonth.filter(t => t.type === 'deposit').reduce((sum, t) => sum + (t.amount || 0), 0),
-                        previous.last_month_recharge
-                    )
-                };
+                // Subscribe to transactions
+                const transactionChannel = window.supabase.channel('transaction_changes')
+                    .on('postgres_changes', {
+                        event: '*',
+                        schema: 'public',
+                        table: 'transactions',
+                        filter: `user_id=eq.${session.user.id}`
+                    }, (payload) => {
+                        if (payload.new) {
+                            handleTransaction(payload.new);
+                        }
+                    })
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            console.log('Successfully subscribed to transaction changes');
+                        } else if (status === 'CLOSED') {
+                            console.error('Transaction subscription closed');
+                        } else if (status === 'CHANNEL_ERROR') {
+                            console.error('Error in transaction subscription');
+                        }
+                    });
 
-                await updateStatisticsDisplay(stats);
+                // Subscribe to wallet changes
+                const walletChannel = window.supabase.channel('wallet_changes')
+                    .on('postgres_changes', {
+                        event: '*',
+                        schema: 'public',
+                        table: 'user_wallet',
+                        filter: `user_id=eq.${session.user.id}`
+                    }, (payload) => {
+                        if (payload.new) {
+                            statistics.walletBalance = parseFloat(payload.new.balance) || 0;
+                            updateDisplay();
+                        }
+                    })
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            console.log('Successfully subscribed to wallet changes');
+                        } else if (status === 'CLOSED') {
+                            console.error('Wallet subscription closed');
+                        } else if (status === 'CHANNEL_ERROR') {
+                            console.error('Error in wallet subscription');
+                        }
+                    });
+
+                // Initial display update
+                updateDisplay();
+
+                // Clean up subscriptions on page unload
+                window.addEventListener('unload', () => {
+                    transactionChannel.unsubscribe();
+                    walletChannel.unsubscribe();
+                });
 
             } catch (error) {
-                console.error('Error fetching statistics:', error);
-                showError(error.message);
+                console.error('Error initializing realtime:', error);
+                if (retryCount < MAX_RETRIES) {
+                    console.log(`Retrying... Attempt ${retryCount + 1} of ${MAX_RETRIES}`);
+                    setTimeout(() => initializeRealtime(retryCount + 1), 2000 * (retryCount + 1));
+                } else {
+                    showError('Failed to connect to server');
+                    console.error('Max retries reached');
+                }
             }
         }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchStatistics();
-
-            // Set up real-time subscriptions for updates
-            const subscriptions = [
-                supabase.channel('wallet_changes').on('postgres_changes', {
-                    event: '*',
-                    schema: 'public',
-                    table: 'user_wallet'
-                }, fetchStatistics).subscribe(),
-
-                supabase.channel('transaction_changes').on('postgres_changes', {
-                    event: '*',
-                    schema: 'public',
-                    table: 'transactions'
-                }, fetchStatistics).subscribe(),
-
-                supabase.channel('investment_changes').on('postgres_changes', {
-                    event: '*',
-                    schema: 'public',
-                    table: 'user_products'
-                }, fetchStatistics).subscribe()
-            ];
-
-            // Cleanup subscriptions on page unload
-            window.addEventListener('unload', () => {
-                subscriptions.forEach(sub => sub.unsubscribe());
-            });
-        });
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializeRealtime);
     </script>
 </body>
 </html>
