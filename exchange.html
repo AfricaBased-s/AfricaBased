@@ -5,134 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exchange - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script>
-        // Wait for the page to load
-        window.addEventListener('DOMContentLoaded', async () => {
-            const loadSupabase = new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-                script.onload = resolve;
-                script.onerror = reject;
-                document.head.appendChild(script);
-            });
-
-            try {
-                await loadSupabase;
-                const supabaseUrl = 'https://yoqtahdctzponqkmgkzn.supabase.co';
-                const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk';
-                window.supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
-                
-                // Check authentication after Supabase is initialized
-                const { data: { session }, error } = await window.supabase.auth.getSession();
-                if (!session) {
-                    window.location.href = '/login.html';
-                }
-            } catch (error) {
-                console.error('Error initializing Supabase:', error);
-            }
-        });
-    </script>
-    
-    <script>
-        // Authentication check is now handled in the initialization code above
-    </script>
     <style>
-        /* Common styles */
         :root {
             --primary: #1a2238;
             --accent: #4ecdc4;
-            --accent-gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
             --secondary: #ff6b6b;
-            --text: #ffffff;
-            --text-dark: #333333;
-            --text-light: #666666;
             --bg: #0f172a;
-            --border: #e0e0e0;
-            --shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-            --color-dashboard: #4ecdc4;
-            --color-exchange: #ff6b6b;
-            --color-services: #9b59b6;
-            --color-withdraw: #e74c3c;
-            --color-products: #3498db;
-            --color-deposit: #2ecc71;
-            --color-active: #f1c40f;
-            --color-referrals: #1abc9c;
-            --color-statistics: #34495e;
-            --color-profile: #8e44ad;
-            --text-secondary: rgba(255, 255, 255, 0.7);
-            --nav-bg: rgba(26, 34, 56, 0.98);
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --hover-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
-            --transition: all 0.3s ease;
+            --text: #ffffff;
         }
 
         body {
             background: var(--bg);
             color: var(--text);
             font-family: 'Poppins', sans-serif;
-            min-height: 100vh;
             margin: 0;
-            padding: 0;
+            padding: 20px;
         }
 
         .container {
             max-width: 500px;
-            margin: 60px auto;
+            margin: 0 auto;
             background: rgba(26,34,56,0.98);
             border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
             padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
         }
 
-        .modal {
-            display: block;
-            position: relative;
-            background: #1a2238;
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .exchange-form {
+            background: var(--primary);
             padding: 2rem;
+            border-radius: 15px;
             margin-bottom: 2rem;
         }
 
-        .modal-header h2 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
+        .form-title {
+            margin: 0 0 1rem;
             color: var(--text);
         }
 
-        .modal-form {
-            margin: 1.5rem 0;
+        .input-group {
+            margin-bottom: 1.5rem;
         }
 
-        .input-wrapper {
-            margin-bottom: 1rem;
-        }
-
-        .modal-input {
+        .code-input {
             width: 100%;
-            padding: 1rem 1.5rem;
+            padding: 1rem;
             background: rgba(255,255,255,0.05);
             border: 2px solid transparent;
-            border-radius: 15px;
+            border-radius: 10px;
             color: #fff;
             font-size: 1.1rem;
             text-align: center;
-            transition: all 0.3s ease;
-            letter-spacing: 2px;
             box-sizing: border-box;
         }
 
-        .modal-input:focus {
+        .code-input:focus {
             outline: none;
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(78,205,196,0.2);
         }
 
-        .modal-button {
+        .submit-btn {
             width: 100%;
             padding: 1rem;
             border: none;
-            border-radius: 15px;
+            border-radius: 10px;
             background: linear-gradient(45deg, var(--accent), var(--secondary));
             color: white;
             font-size: 1rem;
@@ -142,15 +91,14 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            transition: all 0.3s ease;
+            transition: transform 0.2s;
         }
 
-        .modal-button:hover {
+        .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: var(--hover-shadow);
         }
 
-        .status-message {
+        .message {
             padding: 1rem;
             border-radius: 10px;
             margin: 1rem 0;
@@ -158,184 +106,84 @@
             display: none;
         }
 
-        .status-message.success {
+        .message.success {
             background: rgba(72, 187, 120, 0.2);
             color: #48bb78;
             border: 1px solid #48bb78;
         }
 
-        .status-message.error {
+        .message.error {
             background: rgba(245, 101, 101, 0.2);
             color: #f56565;
             border: 1px solid #f56565;
         }
 
-        .exchange-history {
-            margin-top: 2rem;
-            padding: 1rem;
-            background: rgba(26,34,56,0.98);
+        .history {
+            background: rgba(26,34,56,0.5);
             border-radius: 15px;
+            padding: 1.5rem;
         }
 
-        .exchange-table {
+        .history-title {
+            margin: 0 0 1rem;
+        }
+
+        .history-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 1rem;
         }
 
-        .exchange-table th,
-        .exchange-table td {
-            padding: 0.75rem 1rem;
+        .history-table th,
+        .history-table td {
+            padding: 0.75rem;
             text-align: left;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
-        .exchange-table th {
-            font-weight: 600;
+        .history-table th {
             background: rgba(255,255,255,0.05);
         }
 
-        .code-type {
-            font-size: 0.8em;
-            padding: 2px 6px;
+        .type-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
             border-radius: 4px;
-            margin-left: 8px;
-        }
-
-        .type-single .code-type {
+            font-size: 0.85em;
             background: rgba(78,205,196,0.2);
             color: var(--accent);
         }
 
-        .type-random .code-type {
-            background: rgba(255,213,79,0.2);
-            color: #ffd54f;
-        }
-
-        .type-user .code-type {
-            background: rgba(129,140,248,0.2);
-            color: #818cf8;
-        }
-
         .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85em;
             background: rgba(72,187,120,0.2);
             color: #48bb78;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
-
-        .back-btn-container {
-            text-align: left;
-            margin-bottom: 1.5rem;
-        }
-
-        .back-btn {
-            background: none;
-            border: none;
-            color: var(--accent);
-            font-size: 1rem;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: color 0.3s ease;
-        }
-
-        .back-btn:hover {
-            color: #45b7af;
-        }
-
-        /* Success Modal Styles */
-        .success-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(15, 23, 42, 0.9);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .success-modal.show {
-            opacity: 1;
-            display: flex;
-        }
-
-        .success-modal-content {
-            background: linear-gradient(145deg, #1a2238, #232845);
-            padding: 2.5rem;
-            border-radius: 20px;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-            transform: translateY(20px);
-            transition: transform 0.3s ease;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-        }
-
-        .success-modal.show .success-modal-content {
-            transform: translateY(0);
-        }
-
-        .success-icon {
-            font-size: 4rem;
-            margin-bottom: 1.5rem;
-            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        }
-
-        @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-            70% { transform: scale(0.9); opacity: 0.9; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        #redeemedAmount {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin: 1.5rem 0;
-            background: var(--accent-gradient);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="back-btn-container">
-            <button class="back-btn" onclick="window.history.back()">
-                <i class="fas fa-arrow-left"></i> Back
+        <button class="back-btn" onclick="history.back()">
+            <i class="fas fa-arrow-left"></i> Back
+        </button>
+
+        <div class="exchange-form">
+            <h2 class="form-title">Exchange Code</h2>
+            <div class="input-group">
+                <input type="text" id="codeInput" class="code-input" placeholder="Enter exchange code" required>
+            </div>
+            <button id="redeemBtn" class="submit-btn">
+                <i class="fas fa-exchange-alt"></i>
+                Redeem Code
             </button>
-        </div>
-        
-        <div class="modal">
-            <div class="modal-header">
-                <h2>Exchange Code</h2>
-                <p>Enter your exchange code below to redeem</p>
-            </div>
-            <div class="modal-form">
-                <div class="input-wrapper">
-                    <input type="text" id="exchangeCode" class="modal-input" placeholder="Enter exchange code" required>
-                </div>
-                <button id="redeemButton" class="modal-button">
-                    <i class="fas fa-exchange-alt"></i>
-                    Redeem Code
-                </button>
-                <div id="statusMessage" class="status-message"></div>
-            </div>
+            <div id="message" class="message"></div>
         </div>
 
-        <div class="exchange-history">
-            <h3>Exchange History</h3>
-            <table class="exchange-table">
+        <div class="history">
+            <h3 class="history-title">Exchange History</h3>
+            <table class="history-table">
                 <thead>
                     <tr>
                         <th>Date</th>
@@ -344,257 +192,168 @@
                         <th>Status</th>
                     </tr>
                 </thead>
-                <tbody id="exchangeHistoryBody"></tbody>
+                <tbody id="historyBody"></tbody>
             </table>
         </div>
     </div>
 
-    <!-- Success Modal -->
-    <div id="successModal" class="success-modal">
-        <div class="success-modal-content">
-            <div class="success-icon">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <h2>Success!</h2>
-            <div class="code-type-indicator"></div>
-            <p id="successMessage"></p>
-            <div id="redeemedAmount"></div>
-            <button class="modal-button" onclick="closeSuccessModal()">
-                <i class="fas fa-check"></i>
-                Continue
-            </button>
-        </div>
-    </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script type="module">
-        // Initialize user data
+        // Import the existing Supabase client
+        import { supabase } from './js/supabaseClient.js';
+
+        // Get user data
         const userId = localStorage.getItem('currentUserId') || 'demo-user';
+        const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
         let exchangeHistory = JSON.parse(localStorage.getItem('exchangeHistory') || '[]');
 
-        // Update exchange history display
-        function updateExchangeHistory() {
-            const historyBody = document.getElementById('exchangeHistoryBody');
-            historyBody.innerHTML = '';
+        // Check authentication
+        async function checkAuth() {
+            // First check local storage for admin data
+            if (adminData && adminData.email) {
+                return true;
+            }
+
+            // Then check Supabase session
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (session) {
+                    return true;
+                }
+            } catch (error) {
+                console.error('Auth check error:', error);
+            }
+
+            // If neither check passes, redirect to login
+            window.location.href = 'login.html';
+            return false;
+        }
+
+        // Show message
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+            setTimeout(() => message.style.display = 'none', type === 'error' ? 8000 : 5000);
+        }
+
+        // Update history display
+        function updateHistory() {
+            const tbody = document.getElementById('historyBody');
+            tbody.innerHTML = '';
             
             exchangeHistory
-                .filter(exchange => exchange.userId === userId)
-                .forEach(exchange => {
+                .filter(ex => ex.userId === userId)
+                .forEach(ex => {
                     const row = document.createElement('tr');
-                    const typeClass = exchange.type ? `type-${exchange.type}` : '';
-                    row.className = typeClass;
-
-                    // Get code type label
-                    const codeTypeLabel = getCodeTypeLabel(exchange);
-                    const codeType = codeTypeLabel ? 
-                        `<span class="code-type ${typeClass}">${codeTypeLabel}</span>` : '';
-
                     row.innerHTML = `
-                        <td>${new Date(exchange.date).toLocaleString()}</td>
-                        <td>${exchange.code} ${codeType}</td>
-                        <td>${exchange.amount} KSH</td>
-                        <td><span class="status-badge">${exchange.status}</span></td>
+                        <td>${new Date(ex.date).toLocaleString()}</td>
+                        <td>
+                            ${ex.code}
+                            <span class="type-badge">${ex.type || 'Standard'}</span>
+                        </td>
+                        <td>${ex.amount} KSH</td>
+                        <td><span class="status-badge">${ex.status}</span></td>
                     `;
-                    historyBody.appendChild(row);
+                    tbody.appendChild(row);
                 });
         }
 
-        function getCodeTypeLabel(exchange) {
-            if (exchange.type === 'single' || exchange.type === 'bulk') {
-                const codeType = exchange.codeType || '';
-                if (!codeType || codeType.toLowerCase() === 'normal reward') return 'Reward';
-                if (codeType.toLowerCase() === 'referral bonus') return 'Referral Bonus';
-                if (codeType.toLowerCase() === 'weekly salary') return 'Weekly Salary';
-                if (codeType.toLowerCase() === 'monthly salary') return 'Monthly Salary';
-                return codeType;
-            }
-            
-            const typeMap = {
-                'random': 'Random Codes',
-                'referral': 'Referral Reward',
-                'user': 'User Assigned'
-            };
-            
-            return typeMap[exchange.type] || exchange.type;
-        }
-
-        function showStatus(message, type) {
-            console.log(`Status message (${type}):`, message);
-            const statusMessage = document.getElementById('statusMessage');
-            statusMessage.textContent = message;
-            statusMessage.className = `status-message ${type}`;
-            statusMessage.style.display = 'block';
-            // Keep error messages visible longer
-            const duration = type === 'error' ? 8000 : 5000;
-            setTimeout(() => statusMessage.style.display = 'none', duration);
-        }
-
-        function showSuccessModal(amount, codeType, message) {
-            const modal = document.getElementById('successModal');
-            const userName = localStorage.getItem('currentUserName') || localStorage.getItem('currentUser') || 'User';
-            
-            document.getElementById('redeemedAmount').textContent = `${amount} KSH`;
-            document.getElementById('successMessage').innerHTML = `${message}<br><strong>Awarded to:</strong> ${userName}`;
-            
-            const typeIndicator = document.querySelector('.code-type-indicator');
-            const codeTypeLabel = getCodeTypeLabel({ type: codeType });
-            typeIndicator.innerHTML = `<span class="code-type type-${codeType}">${codeTypeLabel}</span>`;
-
-            modal.style.display = 'flex';
-            requestAnimationFrame(() => modal.classList.add('show'));
-        }
-
-        window.closeSuccessModal = function() {
-            const modal = document.getElementById('successModal');
-            modal.classList.remove('show');
-            setTimeout(() => modal.style.display = 'none', 300);
-        }
-
+        // Handle code redemption
         async function redeemCode(code) {
             if (!code) {
-                showStatus('Please enter an exchange code', 'error');
-                return;
-            }
-
-            const normalizedCode = code.replace(/^RC-/, '');
-            
-            // Check if code was already redeemed
-            if (exchangeHistory.some(ex => 
-                (ex.code === code || ex.code === normalizedCode) && ex.userId === userId
-            )) {
-                showStatus('This code has already been redeemed', 'error');
+                showMessage('Please enter an exchange code', 'error');
                 return;
             }
 
             try {
-                // Check Supabase for the code
-                const { data: dbCode, error } = await window.supabase
+                // Check if code was already redeemed
+                if (exchangeHistory.some(ex => ex.code === code && ex.userId === userId)) {
+                    showMessage('This code has already been redeemed', 'error');
+                    return;
+                }
+
+                // Query database
+                const { data: dbCode, error } = await supabase
                     .from('reward_codes')
                     .select('*')
-                    .or(`code.eq.${code},code.eq.RC-${code}`)
+                    .eq('code', code)
                     .maybeSingle();
 
-                if (error) {
-                    console.error('Database query error:', error);
-                    showStatus('Error checking code: ' + error.message, 'error');
-                    return;
-                }
+                if (error) throw error;
                 if (!dbCode) {
-                    showStatus('Invalid code', 'error');
+                    showMessage('Invalid code', 'error');
                     return;
                 }
 
-                if (dbCode.used && dbCode.type !== 'random') {
-                    showStatus('This code has already been used', 'error');
+                // Validate code
+                if (dbCode.used) {
+                    showMessage('This code has already been used', 'error');
                     return;
                 }
 
                 if (dbCode.expiry && new Date(dbCode.expiry) < new Date()) {
-                    showStatus('This code has expired', 'error');
+                    showMessage('This code has expired', 'error');
                     return;
-                }
-
-                let amount = dbCode.amount;
-                let updateObj = { used: true };
-
-                // Handle different code types
-                if (dbCode.type === 'user' && dbCode.assignedTo && dbCode.assignedTo !== userId) {
-                    showStatus('This code is assigned to another user', 'error');
-                    return;
-                }
-
-                if (dbCode.type === 'random') {
-                    const redeemedArr = dbCode.redeemed || [];
-                    if (redeemedArr.length >= dbCode.users) {
-                        showStatus('This code has reached its maximum number of uses', 'error');
-                        return;
-                    }
-
-                    // Calculate random amount
-                    const usedAmount = redeemedArr.reduce((sum, r) => sum + r.amount, 0);
-                    const remainingPool = dbCode.pool - usedAmount;
-                    const remainingUsers = dbCode.users - redeemedArr.length;
-
-                    amount = remainingUsers === 1 ? remainingPool :
-                        Math.floor(Math.random() * (
-                            Math.min(dbCode.max, remainingPool - (dbCode.min * (remainingUsers - 1))) - 
-                            dbCode.min + 1
-                        )) + dbCode.min;
-
-                    redeemedArr.push({ 
-                        user: userId, 
-                        amount: amount, 
-                        time: new Date().toISOString() 
-                    });
-
-                    updateObj = { 
-                        redeemed: redeemedArr,
-                        used: redeemedArr.length >= dbCode.users 
-                    };
                 }
 
                 // Update code in database
-                const { error: updateError } = await window.supabase
+                const { error: updateError } = await supabase
                     .from('reward_codes')
-                    .update(updateObj)
+                    .update({ used: true })
                     .eq('id', dbCode.id);
 
-                if (updateError) {
-                    console.error('Database update error:', updateError);
-                    showStatus('Error updating code: ' + updateError.message, 'error');
-                    return;
-                }
+                if (updateError) throw updateError;
 
-                // Update user's wallet
-                let wallet = parseFloat(localStorage.getItem(`userWallet_${userId}`) || '0');
-                wallet += parseFloat(amount);
-                localStorage.setItem(`userWallet_${userId}`, wallet);
+                // Update wallet
+                const wallet = parseFloat(localStorage.getItem(`userWallet_${userId}`) || '0');
+                localStorage.setItem(`userWallet_${userId}`, wallet + dbCode.amount);
 
-                // Add to exchange history
+                // Update history
                 const exchange = {
                     userId,
                     code,
-                    amount,
+                    amount: dbCode.amount,
                     date: new Date().toISOString(),
                     status: 'Redeemed',
-                    type: dbCode.type
+                    type: dbCode.type || 'Standard'
                 };
                 exchangeHistory.push(exchange);
                 localStorage.setItem('exchangeHistory', JSON.stringify(exchangeHistory));
 
-                // Show success message
-                let successMessage = dbCode.type === 'random' ?
-                    `Successfully redeemed ${amount} KSH from pool of ${dbCode.pool} KSH!` :
-                    `Successfully redeemed ${amount} KSH!`;
-
-                document.getElementById('exchangeCode').value = '';
-                showSuccessModal(amount, dbCode.type, successMessage);
-                updateExchangeHistory();
+                // Show success and update display
+                showMessage(`Successfully redeemed ${dbCode.amount} KSH!`, 'success');
+                document.getElementById('codeInput').value = '';
+                updateHistory();
 
             } catch (error) {
-                console.error('Error redeeming code:', error);
-                let errorMessage = 'An error occurred while redeeming the code';
-                if (error.message) {
-                    errorMessage += ': ' + error.message;
-                }
-                showStatus(errorMessage, 'error');
+                console.error('Error:', error);
+                showMessage(error.message || 'An error occurred while redeeming the code', 'error');
             }
         }
 
         // Event Listeners
-        document.getElementById('redeemButton').addEventListener('click', () => {
-            const code = document.getElementById('exchangeCode').value.trim();
+        document.getElementById('redeemBtn').addEventListener('click', () => {
+            const code = document.getElementById('codeInput').value.trim();
             redeemCode(code);
         });
 
-        document.getElementById('exchangeCode').addEventListener('keypress', (e) => {
+        document.getElementById('codeInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const code = e.target.value.trim();
                 redeemCode(code);
             }
         });
 
-        // Initial history render
-        updateExchangeHistory();
+        // Initialize
+        // Check auth and then update history
+        (async () => {
+            const isAuthed = await checkAuth();
+            if (isAuthed) {
+                updateHistory();
+            }
+        })();
     </script>
 </body>
 </html>
