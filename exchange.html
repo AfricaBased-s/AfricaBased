@@ -5,19 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exchange - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-    <script type="module">
-        const supabaseUrl = 'https://yoqtahdctzponqkmgkzn.supabase.co';
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk';
-        
-        // Create Supabase client
-        const supabase = window.createClient(supabaseUrl, supabaseAnonKey);
-        
-        // Check authentication state
-        const user = await supabase.auth.getSession();
-        if (!user.data.session) {
-            window.location.href = '/login.html';
-        }
+    <script>
+        // Wait for the page to load
+        window.addEventListener('DOMContentLoaded', async () => {
+            const loadSupabase = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+
+            try {
+                await loadSupabase;
+                const supabaseUrl = 'https://yoqtahdctzponqkmgkzn.supabase.co';
+                const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk';
+                window.supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+                
+                // Check authentication after Supabase is initialized
+                const { data: { session }, error } = await window.supabase.auth.getSession();
+                if (!session) {
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error('Error initializing Supabase:', error);
+            }
+        });
+    </script>
+    
+    <script>
+        // Authentication check is now handled in the initialization code above
     </script>
     <style>
         /* Common styles */
@@ -350,8 +367,6 @@
     </div>
 
     <script type="module">
-        import { supabase } from './js/supabaseClient.js';
-
         // Initialize user data
         const userId = localStorage.getItem('currentUserId') || 'demo-user';
         let exchangeHistory = JSON.parse(localStorage.getItem('exchangeHistory') || '[]');
@@ -403,11 +418,14 @@
         }
 
         function showStatus(message, type) {
+            console.log(`Status message (${type}):`, message);
             const statusMessage = document.getElementById('statusMessage');
             statusMessage.textContent = message;
             statusMessage.className = `status-message ${type}`;
             statusMessage.style.display = 'block';
-            setTimeout(() => statusMessage.style.display = 'none', 5000);
+            // Keep error messages visible longer
+            const duration = type === 'error' ? 8000 : 5000;
+            setTimeout(() => statusMessage.style.display = 'none', duration);
         }
 
         function showSuccessModal(amount, codeType, message) {
@@ -449,13 +467,17 @@
 
             try {
                 // Check Supabase for the code
-                const { data: dbCode, error } = await supabase
+                const { data: dbCode, error } = await window.supabase
                     .from('reward_codes')
                     .select('*')
                     .or(`code.eq.${code},code.eq.RC-${code}`)
                     .maybeSingle();
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Database query error:', error);
+                    showStatus('Error checking code: ' + error.message, 'error');
+                    return;
+                }
                 if (!dbCode) {
                     showStatus('Invalid code', 'error');
                     return;
@@ -511,12 +533,16 @@
                 }
 
                 // Update code in database
-                const { error: updateError } = await supabase
+                const { error: updateError } = await window.supabase
                     .from('reward_codes')
                     .update(updateObj)
                     .eq('id', dbCode.id);
 
-                if (updateError) throw updateError;
+                if (updateError) {
+                    console.error('Database update error:', updateError);
+                    showStatus('Error updating code: ' + updateError.message, 'error');
+                    return;
+                }
 
                 // Update user's wallet
                 let wallet = parseFloat(localStorage.getItem(`userWallet_${userId}`) || '0');
@@ -546,7 +572,11 @@
 
             } catch (error) {
                 console.error('Error redeeming code:', error);
-                showStatus('An error occurred while redeeming the code', 'error');
+                let errorMessage = 'An error occurred while redeeming the code';
+                if (error.message) {
+                    errorMessage += ': ' + error.message;
+                }
+                showStatus(errorMessage, 'error');
             }
         }
 
