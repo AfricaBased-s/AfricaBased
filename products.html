@@ -1,65 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-        <script>
-            const supabase = supabase.createClient(
-                'https://yoqtahdctzponqkmgkzn.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
-            );
-        </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invest in Products | AfricaBased</title>
     <script type="module" src="js/supabaseClient.js"></script>
     <script type="module" src="js/auth.js"></script>
     <style>
-        :root {
-            --modal-transition: 0.3s ease;
-            --modal-bg: rgba(0, 0, 0, 0.5);
-            --primary: #1a2238;
-            --accent: #4ecdc4;
-            --accent-gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
-            --secondary: #ff6b6b;
-            --text: #ffffff;
-            --text-dark: #333333;
-            --text-light: #666666;
-            --bg: #0f172a;
-            --border: #e0e0e0;
-            --shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-            --color-dashboard: #4ecdc4;
-            --color-exchange: #ff6b6b;
-            --color-services: #9b59b6;
-            --color-withdraw: #e74c3c;
-            --color-products: #3498db;
-            --color-deposit: #2ecc71;
-            --color-active: #f1c40f;
-            --color-referrals: #1abc9c;
-            --color-statistics: #34495e;
-            --color-profile: #8e44ad;
-            --text-secondary: rgba(255, 255, 255, 0.7);
-            --bg: #0f172a;
-            --nav-bg: rgba(26, 34, 56, 0.98);
+        .balance-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(35, 37, 38, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
         }
+
+        .balance-modal {
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            border: 2px solid #4ecdc4;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            color: #fff;
+            text-align: center;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .balance-modal-title {
+            color: #4ecdc4;
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .balance-modal-message {
+            color: #fff;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .balance-amount {
+            font-size: 1.2rem;
+            color: #4ecdc4;
+            font-weight: 600;
+            margin: 8px 0;
+            display: block;
+        }
+
+        .balance-modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .balance-modal-button {
+            background: linear-gradient(45deg, #4ecdc4, #45b7af);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .balance-modal-button:hover {
+            background: #4ecdc4;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(78,205,196,0.18);
+        }
+
+        .balance-modal-button.continue {
+            background: linear-gradient(45deg, #ffd54f, #ffca28);
+        }
+
+        .balance-modal-button.continue:hover {
+            background: #ffd54f;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(35, 37, 38, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            border: 2px solid #4ecdc4;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            color: #fff;
+            text-align: center;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-title {
+            color: #4ecdc4;
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .modal-message {
+            color: #fff;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-button {
+            background: linear-gradient(45deg, #4ecdc4, #45b7af);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .modal-button:hover {
+            background: #4ecdc4;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(78,205,196,0.18);
+        }
+
         body {
-            font-family: 'Poppins', Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
             margin: 0;
             padding: 0;
         }
         .container {
             max-width: 1200px;
             margin: 40px auto;
-            background: rgba(255,255,255,0.07);
+            background: rgba(255,255,255,0.05);
             padding: 32px;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(78,205,196,0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
         h1 {
             color: #4ecdc4;
             margin-bottom: 24px;
+            text-align: center;
         }
         .admin-link {
             display: block;
@@ -67,7 +174,7 @@
             text-align: right;
         }
         .admin-link a {
-            color: #2980b9;
+            color: #4ecdc4;
             text-decoration: none;
             font-weight: bold;
         }
@@ -77,28 +184,26 @@
             gap: 16px;
             margin-bottom: 32px;
         }
-        .sector-btn, .invest-btn, .collect-btn, .back-btn, #toggle-wallet-visibility, .close-modal {
-            background: var(--accent-gradient);
-            color: #232526;
+        .sector-btn {
+            background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            color: #fff;
             border: none;
+            padding: 10px 24px;
             border-radius: 8px;
-            padding: 10px 22px;
+            cursor: pointer;
             font-size: 1rem;
             font-weight: 600;
-            cursor: pointer;
+            transition: all 0.3s ease;
             box-shadow: 0 2px 8px rgba(78,205,196,0.10);
-            transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-            outline: none;
         }
-        .sector-btn:not(.active):hover, .invest-btn:hover, .collect-btn:hover, .back-btn:hover, #toggle-wallet-visibility:hover, .close-modal:hover {
+        .sector-btn:not(.active):hover {
             background: #fff;
             color: #4ecdc4;
             box-shadow: 0 4px 16px rgba(78,205,196,0.18);
         }
-        .sector-btn.active, .invest-btn:active, .collect-btn:active, .back-btn:active, #toggle-wallet-visibility:active, .close-modal:active {
+        .sector-btn.active {
             background: #4ecdc4;
-            color: #232526;
-            box-shadow: 0 4px 16px rgba(78,205,196,0.25);
+            color: #fff;
         }
         .products {
             display: grid;
@@ -106,12 +211,12 @@
             gap: 32px;
         }
         .product-card {
-            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            background: rgba(255,255,255,0.08);
             border-radius: 8px;
             box-shadow: 0 1px 8px rgba(0,0,0,0.18);
             padding: 0 0 24px 0;
             text-align: left;
-            transition: box-shadow 0.2s;
+            transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -119,13 +224,18 @@
             height: 520px;
             min-height: 520px;
             max-height: 520px;
+            border: 1px solid rgba(78, 205, 196, 0.2);
         }
         .product-card:hover {
-            box-shadow: 0 4px 24px rgba(44,62,80,0.22);
+            box-shadow: 0 4px 24px rgba(78, 205, 196, 0.15);
+            transform: translateY(-2px);
+            border-color: rgba(78, 205, 196, 0.4);
         }
         .product-image {
             width: 100%;
             height: 75%;
+            min-height: 390px;
+            max-height: 390px;
             object-fit: cover;
             border-top-left-radius: 8px;
             border-top-right-radius: 8px;
@@ -133,21 +243,6 @@
             border-bottom-right-radius: 0;
             margin-bottom: 0;
             display: block;
-        }
-        .collect-btn {
-            background: #ffd54f;
-            color: #232526;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-            margin-top: 8px;
-            transition: background 0.2s;
-        }
-        .collect-btn:hover {
-            background: #80cbc4;
-            color: #232526;
         }
         .product-title {
             font-size: 1.2rem;
@@ -211,18 +306,22 @@
             margin-bottom: 16px;
         }
         .invest-btn {
-            background: #ffd54f;
-            color: #232526;
+            background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            color: #fff;
             border: none;
             padding: 10px 24px;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 1rem;
-            transition: background 0.2s;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(78,205,196,0.10);
         }
         .invest-btn:hover {
-            background: #80cbc4;
-            color: #232526;
+            background: #fff;
+            color: #4ecdc4;
+            box-shadow: 0 4px 16px rgba(78,205,196,0.18);
+            transform: translateY(-1px);
         }
         .back-btn-container {
             position: absolute;
@@ -231,20 +330,22 @@
             z-index: 10;
         }
         .back-btn {
-            background: #0c0faccc;
-            color: #0b627259;
+            background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            color: #fff;
             border: none;
             padding: 10px 22px;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 1rem;
             font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-            transition: background 0.2s, color 0.2s;
+            box-shadow: 0 2px 8px rgba(78,205,196,0.10);
+            transition: all 0.3s ease;
         }
         .back-btn:hover {
-            background: #2112a8;
-            color: #232526;
+            background: #fff;
+            color: #4ecdc4;
+            box-shadow: 0 4px 16px rgba(78,205,196,0.18);
+            transform: translateY(-1px);
         }
     </style>
 </head>
@@ -252,108 +353,475 @@
     <div class="back-btn-container">
         <button class="back-btn" onclick="window.history.back()">&#8592; Back</button>
     </div>
-    <div id="wallet-balance-bar" style="display:flex;align-items:center;justify-content:center;margin-top:24px;margin-bottom:12px;gap:12px;">
-        <span style="color:#0b8128;font-weight:600;font-size:1.15rem;">Wallet Balance:</span>
-        <span id="wallet-balance-value" style="color:#4ecdc4;font-size:1.15rem;font-weight:700;letter-spacing:0.5px;">Ksh 0</span>
-        <button id="toggle-wallet-visibility" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:#ffd54f;outline:none;" title="Hide/Show Balance">
-            <i id="wallet-eye-icon" class="fa fa-eye"></i>
-        </button>
-    </div>
-    <script>
-    // On real account, clear wallet and transactions for a fresh start
-    window.addEventListener('DOMContentLoaded', function() {
-        localStorage.setItem('walletBalance', '0');
-        localStorage.setItem('accountBalance', '0');
-        localStorage.setItem('transactions', '[]');
-        localStorage.setItem('myProducts', '[]');
-        updateWalletDisplay && updateWalletDisplay();
-    });
-    </script>
     <div class="container">
-    <!-- Admin panel link removed -->
         <h1>Invest in Products</h1>
-        <div class="sector-filter-container" style="display:flex;align-items:center;justify-content:center;margin-bottom:32px;">
-            <label for="sectorFilter" class="sector-label" style="color:#ffd54f;font-weight:600;margin-right:12px;font-size:1.08rem;">Filter by Sector:</label>
-            <select id="sectorFilter" class="sector-filter" style="padding:8px 18px;border-radius:6px;border:none;background:#232526;color:#ffd54f;font-size:1rem;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,0.10);">
-                <option value="All">All</option>
-            </select>
+        <div class="sector-filter">
+            <button class="sector-btn" data-sector="All">All</button>
+            <button class="sector-btn" data-sector="Technology">Technology</button>
+            <button class="sector-btn" data-sector="Real-estate">Real-estate</button>
+            <button class="sector-btn" data-sector="Agriculture">Agriculture</button>
+            <button class="sector-btn" data-sector="Energy">Energy</button>
         </div>
-    <div class="products"></div>
+        <div class="products">
+            <!-- Technology Sector -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" alt="Tech Hub Workspace" class="product-image">
+                <div class="product-title">Tech Hub Workspace</div>
+                <div class="product-sector">Sector: Technology</div>
+                <div class="product-desc product-desc-top">Modern coworking space for tech startups with high-speed internet and meeting facilities.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 250</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 20.5 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">25 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Units per Investor</span>
+                        <span class="product-detail-value">1</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+            
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80" alt="Software Development" class="product-image">
+                <div class="product-title">Software Development Academy</div>
+                <div class="product-sector">Sector: Technology</div>
+                <div class="product-desc product-desc-top">Professional coding bootcamp providing tech education to African youth.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 500</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 36.8 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">30 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Units per Investor</span>
+                        <span class="product-detail-value">2</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80" alt="Data Center" class="product-image">
+                <div class="product-title">Cloud Data Center</div>
+                <div class="product-sector">Sector: Technology</div>
+                <div class="product-desc product-desc-top">State-of-the-art data center providing cloud services to African businesses.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 2,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 75.50 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">40 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Units per Investor</span>
+                        <span class="product-detail-value">2</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1573152958734-1922c188fba3?auto=format&fit=crop&w=800&q=80" alt="Mobile App" class="product-image">
+                <div class="product-title">FinTech Mobile App</div>
+                <div class="product-sector">Sector: Technology</div>
+                <div class="product-desc product-desc-top">Revolutionary mobile banking application for seamless financial transactions.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 5000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 226.4 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">40 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Units per Investor</span>
+                        <span class="product-detail-value">4</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80" alt="Cybersecurity" class="product-image">
+                <div class="product-title">Cybersecurity Solutions</div>
+                <div class="product-sector">Sector: Technology</div>
+                <div class="product-desc product-desc-top">Advanced cybersecurity services protecting African businesses from digital threats.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 15,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">950.0 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">24 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Available Units</span>
+                        <span class="product-detail-value">2</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <!-- Real Estate Sector -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80" alt="Luxury Apartments" class="product-image">
+                <div class="product-title">Luxury Apartments Complex</div>
+                <div class="product-sector">Sector: Real-estate</div>
+                <div class="product-desc product-desc-top">Modern luxury apartment complex in prime urban location with high rental demand.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 9,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 390.0 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">40 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Units per Investor</span>
+                        <span class="product-detail-value">1</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=800&q=80" alt="Commercial Office Space" class="product-image">
+                <div class="product-title">Prime Commercial Office Space</div>
+                <div class="product-sector">Sector: Real-estate</div>
+                <div class="product-desc product-desc-top">Grade A office space in business district with established corporate tenants.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 3,500</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 130.5 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">37 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Available Units</span>
+                        <span class="product-detail-value">2</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <!-- Agriculture Sector -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=800&q=80" alt="Smart Farm" class="product-image">
+                <div class="product-title">Smart Agricultural Farm</div>
+                <div class="product-sector">Sector: Agriculture</div>
+                <div class="product-desc product-desc-top">Tech-enabled farming project using modern irrigation and crop management systems.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 90,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 3500.6 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">46 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Available Units</span>
+                        <span class="product-detail-value">4</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1595841696677-6489ff3f8cd1?auto=format&fit=crop&w=800&q=80" alt="Greenhouse Project" class="product-image">
+                <div class="product-title">Greenhouse Farming Project</div>
+                <div class="product-sector">Sector: Agriculture</div>
+                <div class="product-desc product-desc-top">Large-scale greenhouse project for premium vegetable production and export.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 120,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 4000.3 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">47 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Available Units</span>
+                        <span class="product-detail-value">4</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <!-- Energy Sector -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=800&q=80" alt="Solar Farm" class="product-image">
+                <div class="product-title">Solar Energy Farm</div>
+                <div class="product-sector">Sector: Energy</div>
+                <div class="product-desc product-desc-top">Large-scale solar power generation project with government power purchase agreement.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 20,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 879.2 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">42 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Available Units</span>
+                        <span class="product-detail-value">3</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=800&q=80" alt="Wind Energy" class="product-image">
+                <div class="product-title">Wind Energy Project</div>
+                <div class="product-sector">Sector: Energy</div>
+                <div class="product-desc product-desc-top">Wind farm development in high-potential areas with established power distribution.</div>
+                <div class="product-details product-details-grid">
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Investment Required</span>
+                        <span class="product-detail-value">Ksh 50,000</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Daily Returns</span>
+                        <span class="product-detail-value">Ksh 1790.4 per day</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Duration</span>
+                        <span class="product-detail-value">45 days</span>
+                    </div>
+                    <div class="product-detail-box">
+                        <span class="product-detail-label">Available Units</span>
+                        <span class="product-detail-value">3</span>
+                    </div>
+                </div>
+                <button class="invest-btn">Invest</button>
+            </div>
+        </div>
     </div>
     <div id="toastContainer" class="toast-container"></div>
     <script type="module" src="js/products.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
-<script>
-// Wallet balance display logic
-function updateWalletDisplay() {
-    const walletBalance = parseInt(localStorage.getItem('walletBalance') || '0');
-    const walletValue = document.getElementById('wallet-balance-value');
-    if (walletValue.dataset.hidden === 'true') {
-        walletValue.textContent = '••••••';
-    } else {
-        walletValue.textContent = 'Ksh ' + walletBalance.toLocaleString();
-    }
-}
-// Hide/show wallet balance
-const walletValue = document.getElementById('wallet-balance-value');
-walletValue.dataset.hidden = 'true'; // hidden by default
-const toggleBtn = document.getElementById('toggle-wallet-visibility');
-const eyeIcon = document.getElementById('wallet-eye-icon');
-eyeIcon.classList.remove('fa-eye');
-eyeIcon.classList.add('fa-eye-slash');
-toggleBtn.addEventListener('click', function() {
-    if (walletValue.dataset.hidden === 'true') {
-        walletValue.dataset.hidden = 'false';
-        eyeIcon.classList.remove('fa-eye-slash');
-        eyeIcon.classList.add('fa-eye');
-    } else {
-        walletValue.dataset.hidden = 'true';
-        eyeIcon.classList.remove('fa-eye');
-        eyeIcon.classList.add('fa-eye-slash');
-    }
-    updateWalletDisplay();
-});
-// Update on load and on wallet change
-updateWalletDisplay();
-window.updateWalletDisplay = updateWalletDisplay;
-window.addEventListener('storage', function(e) {
-    if (e.key === 'walletBalance') updateWalletDisplay();
-});
-</script>
-</body>
-<script>
-// Populate sector dropdown from admin products (localStorage 'products')
-function populateSectorDropdown() {
-    const sectors = JSON.parse(localStorage.getItem('sectors') || '[]');
-    const filter = document.getElementById('sectorFilter');
-    filter.innerHTML = '<option value="All">All</option>';
-    sectors.forEach(sector => {
-        if (sector.status === 'active') {
-            const option = document.createElement('option');
-            option.value = sector.id;
-            option.textContent = sector.name;
-            filter.appendChild(option);
+    <script>
+        // Demo wallet balance
+        let walletBalance = parseInt(localStorage.getItem('walletBalance') || '50000');
+        
+        function showInsufficientFundsModal(required, current, productName) {
+            const modal = document.createElement('div');
+            modal.className = 'balance-modal-overlay';
+            modal.innerHTML = `
+                <div class="balance-modal">
+                    <div class="balance-modal-title">Insufficient Funds</div>
+                    <div class="balance-modal-message">
+                        You need Ksh ${required.toLocaleString()} to invest in ${productName}.<br>
+                        Your current balance is Ksh ${current.toLocaleString()}.<br>
+                        Please deposit more funds to continue.
+                    </div>
+                    <div class="balance-modal-buttons">
+                        <button class="balance-modal-button" onclick="document.querySelector('.balance-modal-overlay').remove()">Close</button>
+                        <button class="balance-modal-button continue" onclick="window.location.href='deposit.html'">Deposit Funds</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
-    });
-}
-populateSectorDropdown();
-// Re-populate if admin products or sectors change
-window.addEventListener('storage', function(e) {
-    if (e.key === 'products' || e.key === 'sectors') populateSectorDropdown();
-});
-// Sector dropdown filter logic
-document.getElementById('sectorFilter').addEventListener('change', function() {
-    const selected = this.value;
-    const cards = document.querySelectorAll('.product-card');
-    cards.forEach(card => {
-        const sector = card.querySelector('.product-sector')?.textContent?.replace('Sector: ','')?.trim();
-        if (selected === 'All' || sector === selected) {
-            card.style.display = '';
-        } else {
-            card.style.display = 'none';
+
+        function saveInvestment(productData) {
+            let myInvestments = JSON.parse(localStorage.getItem('myInvestments') || '[]');
+            productData.investmentDate = new Date().toISOString();
+            productData.id = Date.now(); // Unique ID for the investment
+            myInvestments.push(productData);
+            localStorage.setItem('myInvestments', JSON.stringify(myInvestments));
         }
-    });
-});
-</script>
+
+        function proceedWithInvestment(amount, productName) {
+            const currentBalance = parseInt(localStorage.getItem('walletBalance') || '50000');
+            if (currentBalance >= amount) {
+                const card = event.target.closest('.product-card');
+                const productData = {
+                    name: productName,
+                    investment: amount,
+                    dailyReturns: card.querySelector('.product-detail-value').textContent,
+                    duration: card.querySelectorAll('.product-detail-value')[2].textContent,
+                    image: card.querySelector('.product-image').src,
+                    sector: card.querySelector('.product-sector').textContent.split(': ')[1],
+                    description: card.querySelector('.product-desc-top').textContent
+                };
+
+                const modal = document.createElement('div');
+                modal.className = 'balance-modal-overlay';
+                modal.innerHTML = `
+                    <div class="balance-modal">
+                        <div class="balance-modal-title">Confirm Investment</div>
+                        <div class="balance-modal-message">
+                            Are you sure you want to invest Ksh ${amount.toLocaleString()} in ${productName}?<br>
+                            Current Balance: <span class="balance-amount">Ksh ${currentBalance.toLocaleString()}</span>
+                            New Balance: <span class="balance-amount">Ksh ${(currentBalance - amount).toLocaleString()}</span>
+                        </div>
+                        <div class="balance-modal-buttons">
+                            <button class="balance-modal-button" onclick="document.querySelector('.balance-modal-overlay').remove()">Cancel</button>
+                            <button class="balance-modal-button continue" onclick="confirmInvestment(${JSON.stringify(productData)
+                                .replace(/"/g, '&quot;')})">Confirm</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            } else {
+                showInsufficientFundsModal(amount, currentBalance, productName);
+            }
+        }
+
+        function updateWalletDisplay() {
+            let walletDiv = document.getElementById('wallet-balance');
+            if (!walletDiv) {
+                walletDiv = document.createElement('div');
+                walletDiv.id = 'wallet-balance';
+                walletDiv.style.position = 'fixed';
+                walletDiv.style.top = '20px';
+                walletDiv.style.right = '20px';
+                walletDiv.style.background = 'rgba(255,255,255,0.1)';
+                walletDiv.style.padding = '10px 20px';
+                walletDiv.style.borderRadius = '8px';
+                walletDiv.style.color = '#4ecdc4';
+                walletDiv.style.fontWeight = 'bold';
+                document.body.appendChild(walletDiv);
+            }
+            walletDiv.innerHTML = `Wallet Balance: Ksh ${walletBalance.toLocaleString()}`;
+        }
+
+        // Activate invest buttons
+        function confirmInvestment(productData) {
+            const currentBalance = parseInt(localStorage.getItem('walletBalance') || '50000');
+            const newBalance = currentBalance - productData.investment;
+            localStorage.setItem('walletBalance', newBalance);
+            
+            // Save the investment to My Products
+            saveInvestment(productData);
+            
+            // Remove the modal
+            document.querySelector('.balance-modal-overlay').remove();
+            
+            // Show success message and redirect
+            const successModal = document.createElement('div');
+            successModal.className = 'balance-modal-overlay';
+            successModal.innerHTML = `
+                <div class="balance-modal">
+                    <div class="balance-modal-title">Investment Successful!</div>
+                    <div class="balance-modal-message">
+                        Your investment in ${productData.name} has been confirmed.<br>
+                        New Balance: <span class="balance-amount">Ksh ${newBalance.toLocaleString()}</span>
+                    </div>
+                    <div class="balance-modal-buttons">
+                        <button class="balance-modal-button" onclick="window.location.href='My-products.html'">View My Products</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(successModal);
+            
+            // Update wallet display
+            updateWalletDisplay();
+        }
+
+        function activateInvestButtons() {
+            const investBtns = document.querySelectorAll('.invest-btn');
+            investBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.product-card');
+                    const productName = card.querySelector('.product-title').textContent;
+                    const investmentRequired = parseInt(card.querySelector('.product-detail-value').textContent.replace(/[^0-9]/g, ''));
+                    const currentBalance = parseInt(localStorage.getItem('walletBalance') || '50000');
+                    
+                    if (currentBalance >= investmentRequired) {
+                        proceedWithInvestment(investmentRequired, productName);
+                    } else {
+                        showInsufficientFundsModal(investmentRequired, currentBalance, productName);
+                    }
+                });
+            });
+        }
+
+        window.onload = function() {
+            updateWalletDisplay();
+            activateInvestButtons();
+        }
+
+        // Sector filter functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sectorButtons = document.querySelectorAll('.sector-btn');
+            const productCards = document.querySelectorAll('.product-card');
+            
+            sectorButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const sector = btn.dataset.sector;
+                    
+                    sectorButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    productCards.forEach(card => {
+                        const cardSector = card.querySelector('.product-sector').textContent.split(': ')[1];
+                        if (sector === 'All' || cardSector === sector) {
+                            card.style.display = 'flex';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
 </body>
 </html>
