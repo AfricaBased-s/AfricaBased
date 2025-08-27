@@ -5,21 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exchange - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Load Supabase with createClient available globally -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        // Wait for Supabase to load
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Supabase client globally
-            try {
-                window.supabaseClient = supabase.createClient(
-                    'https://yoqtahdctzponqkmgkzn.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
-                );
-            } catch (error) {
-                console.error('Error initializing Supabase:', error);
-            }
-        });
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script type="module">
+        const supabaseUrl = 'https://yoqtahdctzponqkmgkzn.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk';
+        
+        // Create Supabase client
+        const supabase = window.createClient(supabaseUrl, supabaseAnonKey);
+        
+        // Check authentication state
+        const user = await supabase.auth.getSession();
+        if (!user.data.session) {
+            window.location.href = '/login.html';
+        }
     </script>
     <style>
         /* Common styles */
@@ -56,6 +54,8 @@
             color: var(--text);
             font-family: 'Poppins', sans-serif;
             min-height: 100vh;
+            margin: 0;
+            padding: 0;
         }
 
         .container {
@@ -80,6 +80,7 @@
         .modal-header h2 {
             font-size: 1.5rem;
             margin-bottom: 0.5rem;
+            color: var(--text);
         }
 
         .modal-form {
@@ -101,11 +102,12 @@
             text-align: center;
             transition: all 0.3s ease;
             letter-spacing: 2px;
+            box-sizing: border-box;
         }
 
         .modal-input:focus {
             outline: none;
-            border-color: #4ecdc4;
+            border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(78,205,196,0.2);
         }
 
@@ -114,7 +116,7 @@
             padding: 1rem;
             border: none;
             border-radius: 15px;
-            background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            background: linear-gradient(45deg, var(--accent), var(--secondary));
             color: white;
             font-size: 1rem;
             font-weight: 600;
@@ -128,7 +130,7 @@
 
         .modal-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+            box-shadow: var(--hover-shadow);
         }
 
         .status-message {
@@ -185,7 +187,7 @@
 
         .type-single .code-type {
             background: rgba(78,205,196,0.2);
-            color: #4ecdc4;
+            color: var(--accent);
         }
 
         .type-random .code-type {
@@ -206,6 +208,27 @@
             font-size: 0.9em;
         }
 
+        .back-btn-container {
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .back-btn:hover {
+            color: #45b7af;
+        }
+
         /* Success Modal Styles */
         .success-modal {
             display: none;
@@ -224,6 +247,7 @@
 
         .success-modal.show {
             opacity: 1;
+            display: flex;
         }
 
         .success-modal-content {
@@ -255,33 +279,26 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
-        .back-btn-container {
-            text-align: left;
-            margin-bottom: 1.5rem;
-        }
-
-        .back-btn {
-            background: none;
-            border: none;
-            color: var(--accent-color);
-            font-size: 1rem;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: color 0.3s ease;
-        }
-
-        .back-btn:hover {
-            color: #45b7af;
+        #redeemedAmount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 1.5rem 0;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="back-btn-container">
-            <button class="back-btn" onclick="window.history.back()">&#8592; Back</button>
+            <button class="back-btn" onclick="window.history.back()">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
         </div>
+        
         <div class="modal">
             <div class="modal-header">
                 <h2>Exchange Code</h2>
@@ -298,7 +315,8 @@
                 <div id="statusMessage" class="status-message"></div>
             </div>
         </div>
-        <div id="exchangeHistory" class="exchange-history">
+
+        <div class="exchange-history">
             <h3>Exchange History</h3>
             <table class="exchange-table">
                 <thead>
@@ -312,67 +330,46 @@
                 <tbody id="exchangeHistoryBody"></tbody>
             </table>
         </div>
+    </div>
 
-        <!-- Success Modal -->
-        <div id="successModal" class="success-modal">
-            <div class="success-modal-content">
-                <div class="success-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <h2>Success!</h2>
-                <div class="code-type-indicator"></div>
-                <p id="successMessage"></p>
-                <div id="redeemedAmount" class="amount"></div>
-                <button class="modal-button" onclick="closeSuccessModal()">
-                    <i class="fas fa-check"></i>
-                    Continue
-                </button>
+    <!-- Success Modal -->
+    <div id="successModal" class="success-modal">
+        <div class="success-modal-content">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
             </div>
+            <h2>Success!</h2>
+            <div class="code-type-indicator"></div>
+            <p id="successMessage"></p>
+            <div id="redeemedAmount"></div>
+            <button class="modal-button" onclick="closeSuccessModal()">
+                <i class="fas fa-check"></i>
+                Continue
+            </button>
         </div>
     </div>
 
     <script type="module">
-        // Initialize exchange history from localStorage and setup supabase when ready
-        let supabase;
-        
-        // Wait for Supabase client to be initialized
-        function waitForSupabase() {
-            return new Promise((resolve) => {
-                const check = () => {
-                    if (window.supabaseClient) {
-                        supabase = window.supabaseClient;
-                        resolve();
-                    } else {
-                        setTimeout(check, 100);
-                    }
-                };
-                check();
-            });
-        }
-        
-        // Wait for Supabase to be ready before continuing
-        await waitForSupabase();
-        let exchangeHistory = JSON.parse(localStorage.getItem('exchangeHistory') || '[]');
-        // Generate a temporary user ID if none exists
-        const userId = localStorage.getItem('exchangeUserId') || 
-                      (() => {
-                          const tempId = 'user_' + Math.random().toString(36).substr(2, 9);
-                          localStorage.setItem('exchangeUserId', tempId);
-                          return tempId;
-                      })();
+        import { supabase } from './js/supabaseClient.js';
 
-        // Function to update exchange history
+        // Initialize user data
+        const userId = localStorage.getItem('currentUserId') || 'demo-user';
+        let exchangeHistory = JSON.parse(localStorage.getItem('exchangeHistory') || '[]');
+
+        // Update exchange history display
         function updateExchangeHistory() {
             const historyBody = document.getElementById('exchangeHistoryBody');
             historyBody.innerHTML = '';
             
-            exchangeHistory.forEach(exchange => {
-                if (exchange.userId === userId) {
+            exchangeHistory
+                .filter(exchange => exchange.userId === userId)
+                .forEach(exchange => {
                     const row = document.createElement('tr');
                     const typeClass = exchange.type ? `type-${exchange.type}` : '';
                     row.className = typeClass;
 
-                    let codeTypeLabel = getCodeTypeLabel(exchange);
+                    // Get code type label
+                    const codeTypeLabel = getCodeTypeLabel(exchange);
                     const codeType = codeTypeLabel ? 
                         `<span class="code-type ${typeClass}">${codeTypeLabel}</span>` : '';
 
@@ -383,22 +380,16 @@
                         <td><span class="status-badge">${exchange.status}</span></td>
                     `;
                     historyBody.appendChild(row);
-                }
-            });
+                });
         }
 
         function getCodeTypeLabel(exchange) {
             if (exchange.type === 'single' || exchange.type === 'bulk') {
-                let codeType = exchange.codeType || '';
-                if (!codeType || codeType === '' || codeType.toLowerCase() === 'normal reward') {
-                    return 'Reward';
-                } else if (codeType.toLowerCase() === 'referral bonus') {
-                    return 'Referral Bonus';
-                } else if (codeType.toLowerCase() === 'weekly salary') {
-                    return 'Weekly Salary';
-                } else if (codeType.toLowerCase() === 'monthly salary') {
-                    return 'Monthly Salary';
-                }
+                const codeType = exchange.codeType || '';
+                if (!codeType || codeType.toLowerCase() === 'normal reward') return 'Reward';
+                if (codeType.toLowerCase() === 'referral bonus') return 'Referral Bonus';
+                if (codeType.toLowerCase() === 'weekly salary') return 'Weekly Salary';
+                if (codeType.toLowerCase() === 'monthly salary') return 'Monthly Salary';
                 return codeType;
             }
             
@@ -411,54 +402,132 @@
             return typeMap[exchange.type] || exchange.type;
         }
 
+        function showStatus(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type}`;
+            statusMessage.style.display = 'block';
+            setTimeout(() => statusMessage.style.display = 'none', 5000);
+        }
+
+        function showSuccessModal(amount, codeType, message) {
+            const modal = document.getElementById('successModal');
+            const userName = localStorage.getItem('currentUserName') || localStorage.getItem('currentUser') || 'User';
+            
+            document.getElementById('redeemedAmount').textContent = `${amount} KSH`;
+            document.getElementById('successMessage').innerHTML = `${message}<br><strong>Awarded to:</strong> ${userName}`;
+            
+            const typeIndicator = document.querySelector('.code-type-indicator');
+            const codeTypeLabel = getCodeTypeLabel({ type: codeType });
+            typeIndicator.innerHTML = `<span class="code-type type-${codeType}">${codeTypeLabel}</span>`;
+
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => modal.classList.add('show'));
+        }
+
+        window.closeSuccessModal = function() {
+            const modal = document.getElementById('successModal');
+            modal.classList.remove('show');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
         async function redeemCode(code) {
+            if (!code) {
+                showStatus('Please enter an exchange code', 'error');
+                return;
+            }
+
+            const normalizedCode = code.replace(/^RC-/, '');
+            
+            // Check if code was already redeemed
+            if (exchangeHistory.some(ex => 
+                (ex.code === code || ex.code === normalizedCode) && ex.userId === userId
+            )) {
+                showStatus('This code has already been redeemed', 'error');
+                return;
+            }
+
             try {
-                if (!code) {
-                    showStatus('Please enter an exchange code', 'error');
-                    return;
-                }
-
-                // Check if code already redeemed
-                const codeNormalized = code.replace(/^RC-/, '');
-                if (exchangeHistory.find(ex => (ex.code === code || ex.code === codeNormalized) && ex.userId === userId)) {
-                    showStatus('This code has already been redeemed', 'error');
-                    return;
-                }
-
-                // Check code in Supabase
+                // Check Supabase for the code
                 const { data: dbCode, error } = await supabase
                     .from('reward_codes')
                     .select('*')
-                    .or(`code.eq."${code}",code.eq."RC-${code}"`)
+                    .or(`code.eq.${code},code.eq.RC-${code}`)
                     .maybeSingle();
 
                 if (error) throw error;
-
                 if (!dbCode) {
                     showStatus('Invalid code', 'error');
                     return;
                 }
 
-                if (dbCode.used || (dbCode.expiry && new Date(dbCode.expiry) < new Date())) {
-                    showStatus('Invalid or expired code', 'error');
+                if (dbCode.used && dbCode.type !== 'random') {
+                    showStatus('This code has already been used', 'error');
                     return;
                 }
 
-                // Process code redemption based on type
-                const redeemResult = await processCodeRedemption(dbCode);
-                if (!redeemResult.success) {
-                    showStatus(redeemResult.message, 'error');
+                if (dbCode.expiry && new Date(dbCode.expiry) < new Date()) {
+                    showStatus('This code has expired', 'error');
                     return;
                 }
 
-                // Update user wallet
-                await updateUserWallet(redeemResult.amount);
+                let amount = dbCode.amount;
+                let updateObj = { used: true };
+
+                // Handle different code types
+                if (dbCode.type === 'user' && dbCode.assignedTo && dbCode.assignedTo !== userId) {
+                    showStatus('This code is assigned to another user', 'error');
+                    return;
+                }
+
+                if (dbCode.type === 'random') {
+                    const redeemedArr = dbCode.redeemed || [];
+                    if (redeemedArr.length >= dbCode.users) {
+                        showStatus('This code has reached its maximum number of uses', 'error');
+                        return;
+                    }
+
+                    // Calculate random amount
+                    const usedAmount = redeemedArr.reduce((sum, r) => sum + r.amount, 0);
+                    const remainingPool = dbCode.pool - usedAmount;
+                    const remainingUsers = dbCode.users - redeemedArr.length;
+
+                    amount = remainingUsers === 1 ? remainingPool :
+                        Math.floor(Math.random() * (
+                            Math.min(dbCode.max, remainingPool - (dbCode.min * (remainingUsers - 1))) - 
+                            dbCode.min + 1
+                        )) + dbCode.min;
+
+                    redeemedArr.push({ 
+                        user: userId, 
+                        amount: amount, 
+                        time: new Date().toISOString() 
+                    });
+
+                    updateObj = { 
+                        redeemed: redeemedArr,
+                        used: redeemedArr.length >= dbCode.users 
+                    };
+                }
+
+                // Update code in database
+                const { error: updateError } = await supabase
+                    .from('reward_codes')
+                    .update(updateObj)
+                    .eq('id', dbCode.id);
+
+                if (updateError) throw updateError;
+
+                // Update user's wallet
+                let wallet = parseFloat(localStorage.getItem(`userWallet_${userId}`) || '0');
+                wallet += parseFloat(amount);
+                localStorage.setItem(`userWallet_${userId}`, wallet);
 
                 // Add to exchange history
                 const exchange = {
                     userId,
                     code,
-                    amount: redeemResult.amount,
+                    amount,
                     date: new Date().toISOString(),
                     status: 'Redeemed',
                     type: dbCode.type
@@ -467,8 +536,12 @@
                 localStorage.setItem('exchangeHistory', JSON.stringify(exchangeHistory));
 
                 // Show success message
+                let successMessage = dbCode.type === 'random' ?
+                    `Successfully redeemed ${amount} KSH from pool of ${dbCode.pool} KSH!` :
+                    `Successfully redeemed ${amount} KSH!`;
+
                 document.getElementById('exchangeCode').value = '';
-                showSuccessModal(redeemResult.amount, dbCode.type, redeemResult.message);
+                showSuccessModal(amount, dbCode.type, successMessage);
                 updateExchangeHistory();
 
             } catch (error) {
@@ -477,131 +550,21 @@
             }
         }
 
-        async function processCodeRedemption(code) {
-            let amount = code.amount;
-            let message = '';
-
-            if (code.type === 'user' && code.assignedTo !== userId) {
-                return { success: false, message: 'This code is assigned to another user' };
-            }
-
-            if (code.type === 'random') {
-                const redeemed = code.redeemed || [];
-                if (redeemed.length >= code.users) {
-                    return { success: false, message: 'This code has reached its maximum number of uses' };
-                }
-
-                const usedAmount = redeemed.reduce((sum, r) => sum + r.amount, 0);
-                const remainingPool = code.pool - usedAmount;
-                const remainingUsers = code.users - redeemed.length;
-
-                amount = remainingUsers === 1 ? remainingPool :
-                    Math.floor(Math.random() * (Math.min(code.max, remainingPool - (code.min * (remainingUsers - 1))) - code.min + 1)) + code.min;
-
-                message = `Successfully redeemed ${amount} KSH from pool of ${code.pool} KSH!`;
-                if (remainingUsers > 1) {
-                    message += `\n${remainingUsers - 1} redemptions remaining.`;
-                }
-            } else {
-                message = `Successfully redeemed ${amount} KSH!`;
-            }
-
-            // Update code status in Supabase
-            const updateData = {
-                used: code.type !== 'random' || (code.redeemed || []).length + 1 >= code.users,
-                redeemed: [...(code.redeemed || []), {
-                    user: userId,
-                    amount: amount,
-                    time: new Date().toISOString()
-                }]
-            };
-
-            const { error } = await supabase
-                .from('reward_codes')
-                .update(updateData)
-                .eq('id', code.id);
-
-            if (error) throw error;
-
-            return { success: true, amount, message };
-        }
-
-        async function updateUserWallet(amount) {
-            let wallet = parseFloat(localStorage.getItem('userWallet_' + userId) || '0');
-            wallet += parseFloat(amount);
-            localStorage.setItem('userWallet_' + userId, wallet);
-
-            // Optional: Update wallet in Supabase if you're storing it there
-            try {
-                await supabase
-                    .from('users')
-                    .update({ wallet })
-                    .eq('id', userId);
-            } catch (error) {
-                console.error('Error updating wallet in database:', error);
-            }
-        }
-
-        function showStatus(message, type) {
-            const statusMessage = document.getElementById('statusMessage');
-            statusMessage.textContent = message;
-            statusMessage.className = 'status-message ' + type;
-            statusMessage.style.display = 'block';
-            setTimeout(() => {
-                statusMessage.style.display = 'none';
-            }, 5000);
-        }
-
-        function showSuccessModal(amount, codeType, message) {
-            const modal = document.getElementById('successModal');
-            const amountEl = document.getElementById('redeemedAmount');
-            const messageEl = document.getElementById('successMessage');
-            const typeIndicator = document.querySelector('.code-type-indicator');
-
-            const userName = localStorage.getItem('currentUserName') || 
-                           localStorage.getItem('currentUser') || 
-                           'User';
-
-            amountEl.textContent = amount + ' KSH';
-            messageEl.innerHTML = message + '<br><strong>Awarded to:</strong> ' + userName;
-            typeIndicator.innerHTML = `<span class="code-type type-${codeType}">${getCodeTypeLabel({type: codeType})}</span>`;
-
-            modal.style.display = 'flex';
-            requestAnimationFrame(() => {
-                modal.classList.add('show');
-            });
-        }
-
-        function closeSuccessModal() {
-            const modal = document.getElementById('successModal');
-            modal.classList.remove('show');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-
         // Event Listeners
         document.getElementById('redeemButton').addEventListener('click', () => {
             const code = document.getElementById('exchangeCode').value.trim();
             redeemCode(code);
         });
 
-        // Add Enter key support for the input field
-        document.getElementById('exchangeCode').addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                const code = event.target.value.trim();
+        document.getElementById('exchangeCode').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const code = e.target.value.trim();
                 redeemCode(code);
             }
         });
 
-        // Initialize exchange history
+        // Initial history render
         updateExchangeHistory();
-
-        // Make functions available globally
-        window.showSuccessModal = showSuccessModal;
-        window.closeSuccessModal = closeSuccessModal;
-        window.showStatus = showStatus;
     </script>
 </body>
 </html>
