@@ -1,17 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exchange - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Load Supabase with createClient available globally -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Initialize Supabase client globally
-        window.supabaseClient = supabase.createClient(
-            'https://yoqtahdctzponqkmgkzn.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
-        );
+        // Wait for Supabase to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Supabase client globally
+            try {
+                window.supabaseClient = supabase.createClient(
+                    'https://yoqtahdctzponqkmgkzn.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
+                );
+            } catch (error) {
+                console.error('Error initializing Supabase:', error);
+            }
+        });
     </script>
     <style>
         /* Common styles */
@@ -324,10 +332,26 @@
     </div>
 
     <script type="module">
-        // Use the globally initialized Supabase client
-        const supabase = window.supabaseClient;
+        // Initialize exchange history from localStorage and setup supabase when ready
+        let supabase;
         
-        // Initialize exchange history from localStorage
+        // Wait for Supabase client to be initialized
+        function waitForSupabase() {
+            return new Promise((resolve) => {
+                const check = () => {
+                    if (window.supabaseClient) {
+                        supabase = window.supabaseClient;
+                        resolve();
+                    } else {
+                        setTimeout(check, 100);
+                    }
+                };
+                check();
+            });
+        }
+        
+        // Wait for Supabase to be ready before continuing
+        await waitForSupabase();
         let exchangeHistory = JSON.parse(localStorage.getItem('exchangeHistory') || '[]');
         // Generate a temporary user ID if none exists
         const userId = localStorage.getItem('exchangeUserId') || 
