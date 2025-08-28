@@ -498,6 +498,25 @@
             <button type="submit" class="login-btn">Login</button>
         </form>
 
+        <!-- Password Reset Modal -->
+        <div id="forgotPasswordModal" class="password-reset-modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Reset Password</h2>
+                <form id="forgotPasswordForm">
+                    <div class="form-group">
+                        <label for="forgotPasswordEmail">Email Address</label>
+                        <input type="email" id="forgotPasswordEmail" required>
+                    </div>
+                    <div class="error-message" id="forgotPasswordError"></div>
+                    <button type="submit" class="reset-btn">Reset Password</button>
+                    <button type="button" class="close-btn close-modal">Cancel</button>
+                </form>
+                <div id="forgotPasswordSuccess" class="success-message" style="display: none;">
+                    Password reset email has been sent. Please check your inbox for further instructions.
+                </div>
+            </div>
+        </div>
+
         <div class="fingerprint-section">
             <p id="fingerprintPromptText">Or use biometric login</p>
             <button type="button" id="fingerprintBtn" class="fingerprint-btn" title="Login with fingerprint" style="display:none;">
@@ -524,246 +543,6 @@
         </div>
     </div>
 
-    <script src="js/login.js" defer>
-
-        // Show fingerprint as first option if enabled for user
-        const usernameInput = document.getElementById('username');
-        const fingerprintBtn = document.getElementById('fingerprintBtn');
-        const fingerprintPromptText = document.getElementById('fingerprintPromptText');
-        let fingerprintEmail = null;
-
-        // Initialize Supabase on page load
-        window.addEventListener('load', async function() {
-            window.supabase = initSupabase();
-            if (!window.supabase) {
-                document.getElementById('errorMessage').textContent = 'Failed to initialize authentication service';
-                document.getElementById('errorMessage').style.display = 'block';
-                return;
-            }
-            
-            // Test connection
-            try {
-                const { data, error } = await window.supabase
-                    .from('profiles')
-                    .select('count')
-                    .limit(1);
-                
-                if (error) {
-                    console.error('Supabase connection test failed:', error);
-                    document.getElementById('errorMessage').textContent = 'Database connection error: ' + error.message;
-                    document.getElementById('errorMessage').style.display = 'block';
-                } else {
-                    console.log('Supabase connection successful');
-                }
-            } catch (err) {
-                console.error('Connection test error:', err);
-            }
-
-            // Check existing session
-            const { data: { session }, error } = await window.supabase.auth.getSession();
-            if (session && !error) {
-                window.location.href = 'profile.html';
-            }
-
-            // Check for new registration data
-            const newRegistrationData = sessionStorage.getItem('newRegistration');
-            if (newRegistrationData) {
-                try {
-                    const registrationData = JSON.parse(newRegistrationData);
-                    const timestamp = registrationData.timestamp;
-                    const currentTime = new Date().getTime();
-                    
-                    // Auto-fill if registration was within the last 5 minutes
-                    if (currentTime - timestamp < 5 * 60 * 1000) {
-                        if (registrationData.email) {
-                            document.getElementById('username').value = registrationData.email;
-                        }
-                    }
-                    sessionStorage.removeItem('newRegistration');
-                } catch (error) {
-                    console.error('Error processing registration data:', error);
-                }
-            }
-        });
-
-        // Handle username input for fingerprint login
-        usernameInput.addEventListener('blur', async function() {
-            const entered = usernameInput.value.trim();
-            if (!entered) return;
-
-            try {
-                const { data: profile, error } = await window.supabase
-                    .from('profiles')
-                    .select('fingerprint_credential_id, email')
-                    .or(`email.eq.${entered},username.eq.${entered}`)
-                    .single();
-
-                if (profile?.fingerprint_credential_id) {
-                    fingerprintBtn.style.display = 'inline-block';
-                    fingerprintPromptText.textContent = 'Login with fingerprint';
-                    fingerprintEmail = profile.email;
-                    fingerprintBtn.dataset.credential = profile.fingerprint_credential_id;
-                } else {
-                    fingerprintBtn.style.display = 'none';
-                    fingerprintPromptText.textContent = 'Or use biometric login';
-                    fingerprintEmail = null;
-                    fingerprintBtn.dataset.credential = '';
-                }
-            } catch (e) {
-                console.error('Error checking fingerprint credentials:', e);
-            }
-        });
-
-        // Handle biometric authentication
-        async function authenticateWithBiometrics() {
-            try {
-                if (!window.PublicKeyCredential || !fingerprintEmail) {
-                    throw new Error('WebAuthn not supported or user not selected');
-                }
-
-                const credIdBase64 = fingerprintBtn.dataset.credential;
-                if (!credIdBase64) throw new Error('No fingerprint credential registered');
-
-                const credId = Uint8Array.from(atob(credIdBase64), c => c.charCodeAt(0));
-                const challenge = new Uint8Array(32);
-                crypto.getRandomValues(challenge);
-
-                const credential = await navigator.credentials.get({
-                    publicKey: {
-                        challenge: challenge,
-                        allowCredentials: [{
-                            id: credId,
-                            type: 'public-key',
-                            transports: ['internal']
-                        }],
-                        userVerification: 'preferred',
-                        timeout: 60000
-                    }
-                });
-
-                if (credential) {
-                    const { data, error } = await window.supabase.auth.signInWithPassword({
-                        email: fingerprintEmail,
-                        password: btoa(String.fromCharCode.apply(null, credential.rawId))
-                    });
-
-                    if (error) throw error;
-                    window.location.href = 'profile.html';
-                }
-            } catch (error) {
-                console.error('Biometric authentication failed:', error);
-                document.getElementById('errorMessage').textContent = 
-                    'Biometric authentication failed. Please try again or use password.';
-                document.getElementById('errorMessage').style.display = 'block';
-            }
-        }
-
-        // Add fingerprint button click handler
-        fingerprintBtn.addEventListener('click', authenticateWithBiometrics);
-
-        // Handle social login
-        async function handleSocialLogin(provider) {
-            try {
-                if (!window.supabase) {
-                    throw new Error('Authentication service not initialized');
-                }
-
-                console.log(`Attempting ${provider} login...`);
-                const { data, error } = await window.supabase.auth.signInWithOAuth({
-                    provider: provider,
-                    options: {
-                        redirectTo: `${window.location.origin}/profile.html`,
-                        scopes: provider === 'google' ? 'email profile' : '',
-                        queryParams: provider === 'google' ? {
-                            access_type: 'offline',
-                            prompt: 'consent'
-                        } : undefined
-                    }
-                });
-
-                if (error) throw error;
-
-            } catch (error) {
-                console.error('Social login error:', error);
-                document.getElementById('errorMessage').textContent = 
-                    'Failed to login with ' + provider + '. Please try again.';
-                document.getElementById('errorMessage').style.display = 'block';
-            }
-        }
-
-        // Handle form submission
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const usernameOrEmail = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-            const remember = document.getElementById('remember').checked;
-
-            const loginBtn = document.querySelector('.login-btn');
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Logging in...';
-            document.getElementById('errorMessage').style.display = 'none';
-
-            try {
-                const isEmail = usernameOrEmail.includes('@');
-                let email = usernameOrEmail;
-
-                if (!isEmail) {
-                    const { data: profile, error: profileError } = await window.supabase
-                        .from('profiles')
-                        .select('email')
-                        .eq('username', usernameOrEmail)
-                        .single();
-
-                    if (profileError || !profile) {
-                        throw new Error('Username not found');
-                    }
-                    email = profile.email;
-                }
-
-                const { data: authData, error: authError } = await window.supabase.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-
-                if (authError) throw authError;
-
-                if (!authData.user || !authData.session) {
-                    throw new Error('Login failed');
-                }
-
-                const { data: userProfile, error: userError } = await window.supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', authData.user.id)
-                    .single();
-
-                if (userError) {
-                    console.error('Error fetching user profile:', userError);
-                    throw new Error('Failed to fetch user profile');
-                }
-
-                // Store user data
-                localStorage.setItem('userProfile', JSON.stringify(userProfile));
-
-                if (remember) {
-                    localStorage.setItem('supabase.auth.token', authData.session.access_token);
-                }
-
-                window.location.href = 'profile.html';
-
-            } catch (error) {
-                console.error('Login error:', error);
-                document.getElementById('errorMessage').textContent = 
-                    error.message === 'Invalid login credentials'
-                        ? 'Invalid username or password'
-                        : error.message;
-                document.getElementById('errorMessage').style.display = 'block';
-            } finally {
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'Login';
-            }
-        });
-    </script>
+    <script src="js/login.js" defer></script>
 </body>
 </html>
