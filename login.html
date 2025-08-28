@@ -2,11 +2,9 @@
 <html lang="en">
 <head>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/password-reset.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https://cdnjs.cloudflare.com">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net chrome-extension:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data: https:">
     <title>Login - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -339,6 +337,30 @@
             animation: pulse 2s infinite;
         }
 
+        .spinner {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .resend-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            text-decoration: underline;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        .resend-btn:hover {
+            color: var(--secondary-color);
+        }
+
         @keyframes pulse {
             0% {
                 transform: scale(1);
@@ -495,8 +517,13 @@
                 <a href="#" class="forgot-password" id="forgotPasswordLink">Forgot Password?</a>
             </div>
 
-            <button type="submit" class="login-btn">Login</button>
+            <button type="submit" class="login-btn">
+                <span class="spinner" id="loadingSpinner" style="display: none;">↻</span>
+                Login
+            </button>
         </form>
+
+        <div id="successMessage" style="display:none; color: var(--success-color); text-align:center; margin-top:1rem; font-weight:600; font-size:1.1rem;"></div>
 
         <!-- Password Reset Modal -->
         <div id="forgotPasswordModal" class="password-reset-modal" style="display: none;">
@@ -543,6 +570,8 @@
         </div>
     </div>
 
-    <script src="js/login.js" defer></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/login.js"></script>
 </body>
 </html>
