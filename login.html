@@ -1,15 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-        <script>
-            const { createClient } = widow.supabase;    
-            const supabase = supabase.createClient(
-                'https://yoqtahdctzponqkmgkzn.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
-            );
-        </script>
-    <script src="js/supabaseClient.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script src="js/config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - AfricaBased</title>
@@ -44,7 +37,7 @@
             color: var(--text-color);
             line-height: 1.6;
             min-height: 100vh;
-            background-image: url('invest.jpg');
+            background-image: url('assets/images/invest.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -147,11 +140,29 @@
             background: rgba(255, 255, 255, 0.1);
         }
 
-        .form-group i {
+        .form-group i.fa-lock {
+            position: absolute;
+            left: 1rem;
+            top: 2.7rem;
+            color: var(--text-color-secondary);
+        }
+
+        .form-group i.toggle-password {
             position: absolute;
             right: 1rem;
             top: 2.7rem;
             color: var(--text-color-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .form-group i.toggle-password:hover {
+            color: var(--accent-color);
+        }
+
+        .form-group input[type="password"],
+        .form-group input[type="text"] {
+            padding-left: 2.5rem;
         }
 
         .login-btn {
@@ -169,6 +180,11 @@
         .login-btn:hover {
             background: #3db1a8;
             transform: translateY(-2px);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
 
         .remember-forgot {
@@ -190,21 +206,18 @@
             accent-color: var(--accent-color);
         }
 
-        .forgot-password {
-            color: var(--accent-color);
-            text-decoration: none;
-            transition: var(--transition);
-        }
-
-        .forgot-password:hover {
-            color: var(--text-color);
-        }
-
         .error-message {
-            color: var(--error-color);
+            color: var(--danger-color);
             text-align: center;
             margin-top: 1rem;
             display: none;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
         }
 
         .register-link {
@@ -277,6 +290,20 @@
             transform: translateY(-3px);
         }
 
+        .fingerprint-section {
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .fingerprint-section p {
+            color: var(--text-color-secondary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
         .fingerprint-btn {
             background: none;
             border: none;
@@ -314,25 +341,20 @@
             }
         }
 
-        .fingerprint-section {
-            text-align: center;
-            margin: 1rem 0;
-            padding: 1rem 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 2rem;
+                margin: 1rem;
+            }
 
-        .fingerprint-section p {
-            color: var(--text-color-secondary);
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-        }
+            .login-header h1 {
+                font-size: 1.75rem;
+            }
 
-        .error-message {
-            color: var(--danger-color);
-            text-align: center;
-            margin-top: 1rem;
-            display: none;
+            .social-login p::before,
+            .social-login p::after {
+                width: 25%;
+            }
         }
     </style>
 </head>
@@ -355,6 +377,7 @@
                 <label for="password">Password</label>
                 <input type="password" id="password" required>
                 <i class="fas fa-lock"></i>
+                <i class="fas fa-eye-slash toggle-password" id="togglePassword"></i>
             </div>
 
             <div class="remember-forgot">
@@ -374,25 +397,38 @@
             </button>
         </div>
 
-        <div class="error-message" id="errorMessage">
-            Invalid username or password
-        </div>
+        <div class="error-message" id="errorMessage"></div>
 
         <div class="register-link">
-            Don't have an account? <a href="register.html">Register here</a>
+            Don't have an account? <a href="index.html">Register here</a>
         </div>
 
         <div class="social-login">
             <p>Or continue with</p>
             <div class="social-icons">
-                <a href="#"><i class="fab fa-google"></i></a>
-                <a href="#"><i class="fab fa-facebook-f"></i></a>
-                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#" onclick="handleSocialLogin('google')" title="Login with Google">
+                    <i class="fab fa-google"></i>
+                </a>
+                <a href="#" onclick="handleSocialLogin('twitter')" title="Login with Twitter">
+                    <i class="fab fa-twitter"></i>
+                </a>
             </div>
         </div>
     </div>
 
     <script>
+        // Password visibility toggle
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle the eye icon
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
 
         // Show fingerprint as first option if enabled for user
         const usernameInput = document.getElementById('username');
@@ -400,91 +436,215 @@
         const fingerprintPromptText = document.getElementById('fingerprintPromptText');
         let fingerprintEmail = null;
 
-        usernameInput.addEventListener('blur', function() {
+        // Initialize Supabase on page load
+        window.addEventListener('load', async function() {
+            window.supabase = initSupabase();
+            if (!window.supabase) {
+                document.getElementById('errorMessage').textContent = 'Failed to initialize authentication service';
+                document.getElementById('errorMessage').style.display = 'block';
+                return;
+            }
+
+            // Check existing session
+            const { data: { session }, error } = await window.supabase.auth.getSession();
+            if (session && !error) {
+                window.location.href = 'profile.html';
+            }
+
+            // Check for new registration data
+            const newRegistrationData = sessionStorage.getItem('newRegistration');
+            if (newRegistrationData) {
+                try {
+                    const registrationData = JSON.parse(newRegistrationData);
+                    const timestamp = registrationData.timestamp;
+                    const currentTime = new Date().getTime();
+                    
+                    // Auto-fill if registration was within the last 5 minutes
+                    if (currentTime - timestamp < 5 * 60 * 1000) {
+                        if (registrationData.email) {
+                            document.getElementById('username').value = registrationData.email;
+                        }
+                    }
+                    sessionStorage.removeItem('newRegistration');
+                } catch (error) {
+                    console.error('Error processing registration data:', error);
+                }
+            }
+        });
+
+        // Handle username input for fingerprint login
+        usernameInput.addEventListener('blur', async function() {
             const entered = usernameInput.value.trim();
             if (!entered) return;
-            // Fetch fingerprint credential from Supabase
-            (async () => {
-                try {
-                    const module = await import('./src/js/services/user-service.js');
-                    // Try to get user by email or username
-                    let userResp = await module.UserService.getUserProfileByEmailOrUsername(entered);
-                    if (userResp.success && userResp.data && userResp.data.fingerprint_credential_id) {
-                        fingerprintBtn.style.display = 'inline-block';
-                        fingerprintPromptText.textContent = 'Login with fingerprint';
-                        fingerprintEmail = entered;
-                        fingerprintBtn.dataset.credential = userResp.data.fingerprint_credential_id;
-                    } else {
-                        fingerprintBtn.style.display = 'none';
-                        fingerprintPromptText.textContent = 'Or use biometric login';
-                        fingerprintEmail = null;
-                        fingerprintBtn.dataset.credential = '';
-                    }
-                } catch (e) {
+
+            try {
+                const { data: profile, error } = await window.supabase
+                    .from('profiles')
+                    .select('fingerprint_credential_id, email')
+                    .or(`email.eq.${entered},username.eq.${entered}`)
+                    .single();
+
+                if (profile?.fingerprint_credential_id) {
+                    fingerprintBtn.style.display = 'inline-block';
+                    fingerprintPromptText.textContent = 'Login with fingerprint';
+                    fingerprintEmail = profile.email;
+                    fingerprintBtn.dataset.credential = profile.fingerprint_credential_id;
+                } else {
                     fingerprintBtn.style.display = 'none';
                     fingerprintPromptText.textContent = 'Or use biometric login';
                     fingerprintEmail = null;
                     fingerprintBtn.dataset.credential = '';
                 }
-            })();
+            } catch (e) {
+                console.error('Error checking fingerprint credentials:', e);
+            }
         });
 
+        // Handle biometric authentication
         async function authenticateWithBiometrics() {
             try {
                 if (!window.PublicKeyCredential || !fingerprintEmail) {
                     throw new Error('WebAuthn not supported or user not selected');
                 }
+
                 const credIdBase64 = fingerprintBtn.dataset.credential;
-                if (!credIdBase64) throw new Error('No fingerprint credential registered for this user');
-                // Convert base64 to Uint8Array
+                if (!credIdBase64) throw new Error('No fingerprint credential registered');
+
                 const credId = Uint8Array.from(atob(credIdBase64), c => c.charCodeAt(0));
+                const challenge = new Uint8Array(32);
+                crypto.getRandomValues(challenge);
+
                 const credential = await navigator.credentials.get({
                     publicKey: {
-                        challenge: new Uint8Array([1,2,3,4]),
-                        rpId: window.location.hostname,
-                        allowCredentials: [{ id: credId, type: 'public-key', transports: ['internal'] }],
-                        userVerification: 'required',
+                        challenge: challenge,
+                        allowCredentials: [{
+                            id: credId,
+                            type: 'public-key',
+                            transports: ['internal']
+                        }],
+                        userVerification: 'preferred',
                         timeout: 60000
                     }
                 });
+
                 if (credential) {
-                    // Only allow login for the correct user
-                    localStorage.setItem('loggedIn', 'true');
-                    localStorage.setItem('currentUser', fingerprintEmail);
-                    window.location.href = 'home.html';
+                    const { data, error } = await window.supabase.auth.signInWithPassword({
+                        email: fingerprintEmail,
+                        password: btoa(String.fromCharCode.apply(null, credential.rawId))
+                    });
+
+                    if (error) throw error;
+                    window.location.href = 'profile.html';
                 }
             } catch (error) {
                 console.error('Biometric authentication failed:', error);
-                document.getElementById('errorMessage').textContent = 'Biometric authentication failed. Please try again or use password.';
+                document.getElementById('errorMessage').textContent = 
+                    'Biometric authentication failed. Please try again or use password.';
                 document.getElementById('errorMessage').style.display = 'block';
             }
         }
+
+        // Add fingerprint button click handler
         fingerprintBtn.addEventListener('click', authenticateWithBiometrics);
 
-        // For development/testing - remove this in production
-        function setTestUser() {
-            localStorage.setItem('loggedIn', 'true');
-            localStorage.setItem('currentUser', 'TestUser');
-        }
-        // Automatically set test user - remove in production
-        setTestUser();
+        // Handle social login
+        async function handleSocialLogin(provider) {
+            try {
+                if (!window.supabase) {
+                    throw new Error('Authentication service not initialized');
+                }
 
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+                const { data, error } = await window.supabase.auth.signInWithOAuth({
+                    provider: provider,
+                    options: {
+                        redirectTo: `${window.location.origin}/profile.html`,
+                        scopes: provider === 'google' ? 'email profile' : ''
+                    }
+                });
+
+                if (error) throw error;
+
+            } catch (error) {
+                console.error('Social login error:', error);
+                document.getElementById('errorMessage').textContent = 
+                    'Failed to login with ' + provider + '. Please try again.';
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const username = document.getElementById('username').value;
+            const usernameOrEmail = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
 
-            // For testing - any non-empty username/password works
-            if (username && password) {
-                localStorage.setItem('loggedIn', 'true');
-                localStorage.setItem('currentUser', username);
-                window.location.href = 'home.html';
-            } else {
+            const loginBtn = document.querySelector('.login-btn');
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+            document.getElementById('errorMessage').style.display = 'none';
+
+            try {
+                const isEmail = usernameOrEmail.includes('@');
+                let email = usernameOrEmail;
+
+                if (!isEmail) {
+                    const { data: profile, error: profileError } = await window.supabase
+                        .from('profiles')
+                        .select('email')
+                        .eq('username', usernameOrEmail)
+                        .single();
+
+                    if (profileError || !profile) {
+                        throw new Error('Username not found');
+                    }
+                    email = profile.email;
+                }
+
+                const { data: authData, error: authError } = await window.supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (authError) throw authError;
+
+                if (!authData.user || !authData.session) {
+                    throw new Error('Login failed');
+                }
+
+                const { data: userProfile, error: userError } = await window.supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', authData.user.id)
+                    .single();
+
+                if (userError) {
+                    console.error('Error fetching user profile:', userError);
+                    throw new Error('Failed to fetch user profile');
+                }
+
+                // Store user data
+                localStorage.setItem('userProfile', JSON.stringify(userProfile));
+
+                if (remember) {
+                    localStorage.setItem('supabase.auth.token', authData.session.access_token);
+                }
+
+                window.location.href = 'profile.html';
+
+            } catch (error) {
+                console.error('Login error:', error);
+                document.getElementById('errorMessage').textContent = 
+                    error.message === 'Invalid login credentials'
+                        ? 'Invalid username or password'
+                        : error.message;
                 document.getElementById('errorMessage').style.display = 'block';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
             }
         });
     </script>
 </body>
 </html>
-
