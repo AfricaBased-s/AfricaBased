@@ -23,36 +23,56 @@
 
         // Wait for supabase client to be initialized
         window.addEventListener('load', () => {
-            // Add a small delay to ensure Supabase is fully initialized
+            // Add a delay to ensure Supabase is fully initialized
             setTimeout(async () => {
                 try {
-                    // Wait for window.supabase to be available
-                    if (!window.supabase) {
-                        console.error('Supabase client not initialized');
-                        return redirectToLogin();
+                    // Check for stored session first
+                    const storedUser = localStorage.getItem('user');
+                    if (storedUser) {
+                        console.log('Found stored user session');
+                        return; // Allow access if we have a stored session
                     }
 
-                    // Check authentication state
-                    const { data: { session }, error } = await window.supabase.auth.getSession();
+                    // Wait for window.supabase with multiple attempts
+                    let attempts = 0;
+                    const maxAttempts = 3;
                     
-                    if (error) {
-                        console.error('Auth error:', error.message);
-                        return redirectToLogin();
-                    }
+                    const checkSupabase = async () => {
+                        if (!window.supabase) {
+                            if (attempts < maxAttempts) {
+                                attempts++;
+                                console.log(`Waiting for Supabase (attempt ${attempts}/${maxAttempts})`);
+                                setTimeout(checkSupabase, 1000);
+                                return;
+                            }
+                            console.error('Supabase client not initialized after multiple attempts');
+                            return redirectToLogin();
+                        }
 
-                    if (!session || !session.user) {
-                        console.log('No active session found');
-                        return redirectToLogin();
-                    }
+                        // Check authentication state
+                        const { data: { session }, error } = await window.supabase.auth.getSession();
+                        
+                        if (error) {
+                            console.error('Auth error:', error.message);
+                            return redirectToLogin();
+                        }
 
-                    // If we get here, we're authenticated
-                    console.log('Authentication successful');
+                        if (!session || !session.user) {
+                            console.log('No active session found');
+                            return redirectToLogin();
+                        }
+
+                        // If we get here, we're authenticated
+                        console.log('Authentication successful');
+                    };
+
+                    checkSupabase();
                     
                 } catch (err) {
                     console.error('Failed to check auth state:', err);
                     redirectToLogin();
                 }
-            }, 500); // 500ms delay
+            }, 1000); // 1 second delay
         });
     </script>
     <style>
