@@ -5,6 +5,7 @@
     <script src="js/config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https://cdnjs.cloudflare.com">
     <title>Login - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -37,7 +38,7 @@
             color: var(--text-color);
             line-height: 1.6;
             min-height: 100vh;
-            background-image: url('assets/images/invest.jpg');
+            background-image: url('./images/invest.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -416,19 +417,7 @@
         </div>
     </div>
 
-    <script>
-        // Password visibility toggle
-        const togglePassword = document.getElementById('togglePassword');
-        const passwordInput = document.getElementById('password');
-
-        togglePassword.addEventListener('click', function() {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            
-            // Toggle the eye icon
-            this.classList.toggle('fa-eye');
-            this.classList.toggle('fa-eye-slash');
-        });
+    <script src="js/login.js" defer>
 
         // Show fingerprint as first option if enabled for user
         const usernameInput = document.getElementById('username');
