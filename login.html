@@ -444,6 +444,24 @@
                 document.getElementById('errorMessage').style.display = 'block';
                 return;
             }
+            
+            // Test connection
+            try {
+                const { data, error } = await window.supabase
+                    .from('profiles')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    console.error('Supabase connection test failed:', error);
+                    document.getElementById('errorMessage').textContent = 'Database connection error: ' + error.message;
+                    document.getElementById('errorMessage').style.display = 'block';
+                } else {
+                    console.log('Supabase connection successful');
+                }
+            } catch (err) {
+                console.error('Connection test error:', err);
+            }
 
             // Check existing session
             const { data: { session }, error } = await window.supabase.auth.getSession();
@@ -554,11 +572,16 @@
                     throw new Error('Authentication service not initialized');
                 }
 
+                console.log(`Attempting ${provider} login...`);
                 const { data, error } = await window.supabase.auth.signInWithOAuth({
                     provider: provider,
                     options: {
                         redirectTo: `${window.location.origin}/profile.html`,
-                        scopes: provider === 'google' ? 'email profile' : ''
+                        scopes: provider === 'google' ? 'email profile' : '',
+                        queryParams: provider === 'google' ? {
+                            access_type: 'offline',
+                            prompt: 'consent'
+                        } : undefined
                     }
                 });
 
