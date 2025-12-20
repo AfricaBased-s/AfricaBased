@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <script type="module" src="/supabaseClient.js"></script>
+    <!-- Optional runtime env: copy env.example.js to env.js and set your keys there -->
+    <script src="env.js"></script>
+    <script type="module" src="bootstrap.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://esm.sh chrome-extension:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data: https:">
     <title>Login - AfricaBased</title>
@@ -497,8 +499,8 @@
 
         <form class="login-form" id="loginForm">
             <div class="form-group">
-                <label for="phone">Phone Number</label>
-                <input type="text" id="phone" name="phone" required placeholder="e.g. +254700000000 or 0700000000">
+                    <label for="phone">Email, Phone or Username</label>
+                    <input type="text" id="phone" name="phone" required placeholder="Email, phone (e.g. +254700000000) or username">
                 <i class="fas fa-phone"></i>
             </div>
 
@@ -555,19 +557,36 @@
     const successMessage = document.getElementById('successMessage');
     const loadingSpinner = document.getElementById('loadingSpinner');
 
+    // Auto-login flow: if registration just happened, the register page stores pendingLogin in sessionStorage
+    (async function tryAutoLoginFromRegistration(){
+        try {
+            const raw = sessionStorage.getItem('pendingLogin');
+            if (!raw) return;
+            const pending = JSON.parse(raw);
+            // Prefill fields (pending may contain email or phone)
+            if (pending.phone) document.getElementById('phone').value = pending.phone;
+            else if (pending.email) document.getElementById('phone').value = pending.email;
+            if (pending.password) document.getElementById('password').value = pending.password;
+            // Remove pending to avoid repeated attempts
+            sessionStorage.removeItem('pendingLogin');
+            // submit form automatically
+            loginForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        } catch (e) {
+            console.warn('Auto-login failed', e);
+        }
+    })();
+
     loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         errorMessage.style.display = 'none';
         successMessage.style.display = 'none';
         loadingSpinner.style.display = 'inline-block';
 
-        const phone = document.getElementById('phone').value.trim();
+        const identifier = document.getElementById('phone').value.trim();
         const password = document.getElementById('password').value;
 
-        // Validate phone (Kenyan formats: +2547XXXXXXXX, 07XXXXXXXX, 01XXXXXXXX)
-        const phoneRegex = /^(\+2547\d{8}|07\d{8}|01\d{8})$/;
-        if (!phoneRegex.test(phone)) {
-            errorMessage.textContent = 'Please enter a valid Kenyan phone number (e.g. +254700000000, 0700000000, 0100000000)';
+        if (!identifier) {
+            errorMessage.textContent = 'Please enter your email, phone or username';
             errorMessage.style.display = 'block';
             loadingSpinner.style.display = 'none';
             return;
@@ -578,23 +597,53 @@
             loadingSpinner.style.display = 'none';
             return;
         }
-
         try {
-            // Query user by phone in Supabase
-            let { data: users, error } = await window.supabase
-                .from('users')
-                .select('email')
-                .eq('phone', phone)
-                .limit(1);
+            // Determine identifier type: email / phone / username
+            const isEmail = identifier.indexOf('@') !== -1;
+            const phoneRegex = /^(\+?\d{8,15})$/; // permissive international phone-like pattern
+            const isPhone = phoneRegex.test(identifier.replace(/\s+/g, ''));
+            let email = null;
 
-            if (error || !users || users.length === 0) {
-                errorMessage.textContent = 'No account found with that phone number.';
+            if (isEmail) {
+                email = identifier;
+            } else if (isPhone) {
+                // Prefer users table, fall back to profiles
+                try {
+                    const { data: uData, error: uErr } = await window.supabase
+                        .from('users')
+                        .select('email')
+                        .eq('phone', identifier)
+                        .limit(1);
+                    if (!uErr && uData && uData.length) email = uData[0].email;
+                } catch (errLookup) { console.warn('users lookup failed for phone', errLookup); }
+                if (!email) {
+                    try {
+                        const { data: pData, error: pErr } = await window.supabase
+                            .from('profiles')
+                            .select('email')
+                            .eq('phone', identifier)
+                            .limit(1);
+                        if (!pErr && pData && pData.length) email = pData[0].email;
+                    } catch (errProfiles) { console.warn('profiles lookup failed for phone', errProfiles); }
+                }
+            } else {
+                // Treat as username: lookup profiles.username -> email
+                try {
+                    const { data: pData, error: pErr } = await window.supabase
+                        .from('profiles')
+                        .select('email')
+                        .eq('username', identifier)
+                        .limit(1);
+                    if (!pErr && pData && pData.length) email = pData[0].email;
+                } catch (errUser) { console.warn('profiles lookup failed for username', errUser); }
+            }
+
+            if (!email) {
+                errorMessage.textContent = 'No account found matching the supplied identifier.';
                 errorMessage.style.display = 'block';
                 loadingSpinner.style.display = 'none';
                 return;
             }
-
-            const email = users[0].email;
             // Now sign in with email and password
             const { error: signInError } = await window.supabase.auth.signInWithPassword({
                 email: email,

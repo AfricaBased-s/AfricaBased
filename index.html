@@ -7,6 +7,10 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net chrome-extension:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com">
     <title>Register - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Optional runtime env: copy env.example.js to env.js and set your keys there -->
+    <script src="env.js"></script>
+    <!-- Bootstrap Supabase early so other modules can rely on it -->
+    <script type="module" src="bootstrap.js"></script>
     <style>
         :root {
             --primary-color: #1a2238;
@@ -415,12 +419,31 @@
         <div class="login-link">
             Already have an account? <a href="login.html">Login here</a>
         </div>
+        <!-- Confirmation modal (shown before performing server registration) -->
+        <div id="confirmModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal" id="confirmClose">&times;</span>
+                <h2 style="margin-top:0;">Confirm your details</h2>
+                <p>Please confirm that the following details are correct before creating your account.</p>
+                <div style="margin:1rem 0;">
+                    <div><strong>Username:</strong> <span id="confirmUsername"></span></div>
+                    <div><strong>Phone:</strong> <span id="confirmPhone"></span></div>
+                    <div><strong>Email:</strong> <span id="confirmEmail"></span></div>
+                </div>
+                <div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:1rem;">
+                    <button id="editDetailsBtn" style="padding:10px 14px;border-radius:8px;border:1px solid #ccc;background:#fff;">Edit</button>
+                    <button id="confirmRegisterBtn" style="padding:10px 14px;border-radius:8px;background:linear-gradient(45deg,var(--accent-color),var(--secondary-color));color:#fff;border:none;">Confirm & Register</button>
+                </div>
+            </div>
+        </div>
+
     <div id="successMessage" style="display:none; color: var(--success-color); text-align:center; margin-top:1rem; font-weight:600; font-size:1.1rem;">Registration successful! Please check your email to verify your account. Redirecting to login...</div>
     <div id="errorMessage" style="display:none; color: var(--error-color); text-align:center; margin-top:1rem; font-weight:600; font-size:1.1rem;"></div>
     </div>
 
-    <script type="module" src="/supabaseClient.js"></script>
+    <script type="module" src="supabaseClient.js"></script>
     <script type="module" src="js/register.js"></script>
+    <div id="regDebug" style="position:fixed;right:12px;bottom:12px;padding:8px 12px;background:#222;color:#fff;border-radius:6px;font-size:12px;z-index:9999;opacity:0.9;display:none">Supabase: unknown</div>
 </body>
 </html>
 

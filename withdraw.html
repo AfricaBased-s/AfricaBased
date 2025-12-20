@@ -629,7 +629,7 @@
         async function ensureSupabase() {
             if (sup) return sup;
             try {
-                const mod = await import('/supabaseClient.js');
+                const mod = await import('./supabaseClient.js');
                 sup = mod.getSupabaseClient ? mod.getSupabaseClient() : (mod.supabase || mod.default || window.supabase);
                 if (sup && typeof window !== 'undefined') window.supabase = sup;
                 return sup;
@@ -722,123 +722,84 @@
             showPaymentMethodModal(amount);
         }
 
-            function processWithdrawal() {
-                const amountInput = document.getElementById('withdrawAmount');
-                const originalAmount = parseFloat(amountInput.value);
-                const totalAmount = window.totalWithdrawalAmount;
-                // Update withdrawable account balance
-                let accountBalance = parseFloat(localStorage.getItem('accountBalance') || '0');
-                const newBalance = accountBalance - totalAmount;
-                localStorage.setItem('accountBalance', newBalance);
-                document.getElementById('userAccountBalance').textContent = newBalance.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-                // Create withdrawal request for admin approval
-                const userData = JSON.parse(localStorage.getItem('userData')) || {};
-                const withdrawalRequest = {
-                    id: Date.now().toString(),
-                    amount: originalAmount,
-                    totalAmount: totalAmount,
-                    fee: totalAmount - originalAmount,
-                    method: document.getElementById('confirmMethod').textContent,
-                    recipientDetails: document.getElementById('confirmRecipient').textContent,
-                    status: 'Pending',
-                    date: new Date().toLocaleDateString(),
-                    time: new Date().toLocaleTimeString(),
-                    userId: userData.userId || userData.id,
-                    userEmail: userData.email,
-                    userName: userData.fullName || userData.username,
-                    adminApproved: false,
-                    adminComment: '',
-                    submittedAt: new Date().toISOString()
-                };
-                const withdrawalRequests = JSON.parse(localStorage.getItem('withdrawalRequests')) || [];
-                withdrawalRequests.push(withdrawalRequest);
-                localStorage.setItem('withdrawalRequests', JSON.stringify(withdrawalRequests));
-                showNotification('Withdrawal request submitted successfully!', 'success');
-                amountInput.value = '';
-                // Add to recent withdrawals with processing fee info
-                addToWithdrawalHistory(originalAmount, totalAmount);
-            }        function showNotification(message, type) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type}`;
-            notification.style.display = 'block';
+            // Notification helper
+            function showNotification(message, type) {
+                const notification = document.getElementById('notification');
+                if (!notification) return;
+                notification.textContent = message;
+                notification.className = `notification ${type}`;
+                notification.style.display = 'block';
 
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-        }
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 3000);
+            }
 
-        function addToWithdrawalHistory(originalAmount, totalAmount) {
-            const withdrawalList = document.querySelector('.withdrawal-list');
-            const now = new Date();
-            const date = now.toLocaleDateString('en-GB'); // Format: DD/MM/YYYY
-            const time = now.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-            }); // Format: HH:MM AM/PM
-            
-            // Get the selected payment method
-            const method = document.getElementById('confirmMethod').textContent;
-            const withdrawalItem = document.createElement('li');
-            withdrawalItem.className = 'withdrawal-item';
-            withdrawalItem.innerHTML = `
-                <div class="withdrawal-main-info">
-                    <div class="withdrawal-primary">
-                        <span class="withdrawal-amount">KSH ${originalAmount.toLocaleString()}</span>
-                        <span class="withdrawal-method">${method}</span>
+            function addToWithdrawalHistory(originalAmount, totalAmount, status = 'Pending', dateStr = null, timeStr = null) {
+                const withdrawalList = document.querySelector('.withdrawal-list');
+                if (!withdrawalList) return;
+                const now = new Date();
+                const date = dateStr || now.toLocaleDateString('en-GB'); // DD/MM/YYYY
+                const time = timeStr || now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                const method = document.getElementById('confirmMethod') ? document.getElementById('confirmMethod').textContent : 'N/A';
+
+                const withdrawalItem = document.createElement('li');
+                withdrawalItem.className = 'withdrawal-item';
+                withdrawalItem.innerHTML = `
+                    <div class="withdrawal-main-info">
+                        <div class="withdrawal-primary">
+                            <span class="withdrawal-amount">KSH ${originalAmount.toLocaleString()}</span>
+                            <span class="withdrawal-method">${method}</span>
+                        </div>
+                        <div class="withdrawal-secondary">
+                            <span class="withdrawal-datetime">
+                                <i class="fas fa-calendar"></i> ${date}
+                                <i class="fas fa-clock"></i> ${time}
+                            </span>
+                        </div>
                     </div>
-                    <div class="withdrawal-secondary">
-                        <span class="withdrawal-datetime">
-                            <i class="fas fa-calendar"></i> ${date}
-                            <i class="fas fa-clock"></i> ${time}
+                    <div class="withdrawal-status-container">
+                        <span class="withdrawal-total">Total: KSH ${totalAmount.toLocaleString()}</span>
+                        <span class="withdrawal-status status-pending">
+                            <i class="fas fa-circle-notch fa-spin"></i> ${status}
                         </span>
                     </div>
-                </div>
-                <div class="withdrawal-status-container">
-                    <span class="withdrawal-total">Total: KSH ${totalAmount.toLocaleString()}</span>
-                    <span class="withdrawal-status status-pending">
-                        <i class="fas fa-circle-notch fa-spin"></i> Pending
-                    </span>
-                </div>
-            `;
+                `;
 
-            withdrawalList.insertBefore(withdrawalItem, withdrawalList.firstChild);
-        }
-
-        // Add input validation for amount
-        document.getElementById('withdrawAmount').addEventListener('input', function(e) {
-            const amount = parseFloat(this.value);
-            const withdrawButton = document.querySelector('.withdraw-button');
-            
-            if (amount < 150 || amount > 200000 || isNaN(amount)) {
-                withdrawButton.disabled = true;
-            } else {
-                withdrawButton.disabled = false;
+                withdrawalList.insertBefore(withdrawalItem, withdrawalList.firstChild);
             }
-        });
 
-        // Function to load withdrawal history
-            async function processWithdrawal() {
-                const amountInput = document.getElementById('withdrawAmount');
-                const originalAmount = parseFloat(amountInput.value);
-                const totalAmount = window.totalWithdrawalAmount;
+            // Add input validation for amount
+            const withdrawAmountEl = document.getElementById('withdrawAmount');
+            if (withdrawAmountEl) {
+                withdrawAmountEl.addEventListener('input', function(e) {
+                    const amount = parseFloat(this.value);
+                    const withdrawButton = document.querySelector('.withdraw-button');
+                    if (!withdrawButton) return;
+                    if (amount < 150 || amount > 200000 || isNaN(amount)) {
+                        withdrawButton.disabled = true;
+                    } else {
+                        withdrawButton.disabled = false;
+                    }
+                });
+            }
 
-                // Try server submit
+            // Single, canonical processWithdrawal used by the confirmation handler
+            async function processWithdrawal(amount, method) {
+                const originalAmount = parseFloat(amount);
+                const totalAmount = window.totalWithdrawalAmount || (originalAmount + (originalAmount * 0.07));
+
+                // Attempt server submit if possible
                 await loadAuthSession();
                 if (sup && currentUserId) {
                     try {
-                        const recipient = document.getElementById('confirmRecipient').textContent;
-                        const method = document.getElementById('confirmMethod').textContent;
+                        const recipient = document.getElementById('confirmRecipient') ? document.getElementById('confirmRecipient').textContent : null;
                         const payload = {
                             user_id: currentUserId,
                             amount: originalAmount,
                             fee: (totalAmount - originalAmount),
-                            bank_name: method === 'Bank Transfer' ? (recipient.split(' - ')[0] || null) : null,
-                            bank_account: method === 'Bank Transfer' ? (recipient.split(' - ')[1] || null) : null,
+                            bank_name: method === 'Bank Transfer' ? (recipient ? (recipient.split(' - ')[0] || null) : null) : null,
+                            bank_account: method === 'Bank Transfer' ? (recipient ? (recipient.split(' - ')[1] || null) : null) : null,
                             status: 'pending',
                             metadata: { method, recipient }
                         };
@@ -849,12 +810,13 @@
                         let accountBalance = parseFloat(localStorage.getItem('accountBalance') || '0');
                         const newBalance = accountBalance - totalAmount;
                         try { localStorage.setItem('accountBalance', newBalance); } catch(e){}
-                        document.getElementById('userAccountBalance').textContent = newBalance.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 });
+                        const balEl = document.getElementById('userAccountBalance');
+                        if (balEl) balEl.textContent = newBalance.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 });
 
                         showNotification('Withdrawal request submitted successfully!', 'success');
-                        amountInput.value = '';
-                        addToWithdrawalHistory(originalAmount, totalAmount);
-                        // Reload withdrawal history
+                        if (withdrawAmountEl) withdrawAmountEl.value = '';
+                        addToWithdrawalHistory(originalAmount, totalAmount, 'Pending');
+                        // Reload withdrawal history from server
                         await loadWithdrawalHistory();
                         return;
                     } catch (e) {
@@ -868,15 +830,16 @@
                 const accountBalance = parseFloat(localStorage.getItem('accountBalance') || '0');
                 const newBalance = accountBalance - totalAmount;
                 try { localStorage.setItem('accountBalance', newBalance); } catch(e){}
-                document.getElementById('userAccountBalance').textContent = newBalance.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 });
+                const balEl = document.getElementById('userAccountBalance');
+                if (balEl) balEl.textContent = newBalance.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 });
                 const userDataLocal = JSON.parse(localStorage.getItem('userData')) || {};
                 const withdrawalRequest = {
                     id: Date.now().toString(),
                     amount: originalAmount,
                     totalAmount: totalAmount,
                     fee: totalAmount - originalAmount,
-                    method: document.getElementById('confirmMethod').textContent,
-                    recipientDetails: document.getElementById('confirmRecipient').textContent,
+                    method: method || (document.getElementById('confirmMethod') ? document.getElementById('confirmMethod').textContent : 'N/A'),
+                    recipientDetails: document.getElementById('confirmRecipient') ? document.getElementById('confirmRecipient').textContent : '',
                     status: 'Pending',
                     date: new Date().toLocaleDateString(),
                     time: new Date().toLocaleTimeString(),
@@ -891,8 +854,77 @@
                 withdrawalRequests.push(withdrawalRequest);
                 localStorage.setItem('withdrawalRequests', JSON.stringify(withdrawalRequests));
                 showNotification('Withdrawal request submitted locally!', 'success');
-                amountInput.value = '';
-                addToWithdrawalHistory(originalAmount, totalAmount);
+                if (withdrawAmountEl) withdrawAmountEl.value = '';
+                addToWithdrawalHistory(originalAmount, totalAmount, 'Pending', withdrawalRequest.date, withdrawalRequest.time);
+            }
+
+            // Function to load withdrawal history (server-first, fallback to local)
+            async function loadWithdrawalHistory() {
+                const withdrawalList = document.querySelector('.withdrawal-list');
+                if (!withdrawalList) return;
+                withdrawalList.innerHTML = '';
+
+                // Try server
+                await loadAuthSession();
+                let requests = [];
+                if (sup && currentUserId) {
+                    try {
+                        const serverData = await fetchWithdrawRequestsFromDb();
+                        if (serverData && Array.isArray(serverData) && serverData.length) {
+                            requests = serverData.map(r => ({
+                                id: r.id || (r.created_at ? r.created_at : Date.now()),
+                                amount: r.amount,
+                                totalAmount: (r.amount + (r.fee || 0)),
+                                status: r.status || 'pending',
+                                date: r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB') : new Date().toLocaleDateString(),
+                                time: r.created_at ? new Date(r.created_at).toLocaleTimeString() : new Date().toLocaleTimeString()
+                            }));
+                        }
+                    } catch (e) { console.warn('Failed to fetch server withdraw requests', e); }
+                }
+
+                // Fallback to local if empty
+                if (!requests.length) {
+                    const local = JSON.parse(localStorage.getItem('withdrawalRequests')) || [];
+                    requests = local.slice().reverse();
+                }
+
+                if (!requests.length) {
+                    withdrawalList.innerHTML = `
+                        <li class="no-withdrawals">
+                            <p>No withdrawal history available</p>
+                        </li>
+                    `;
+                    return;
+                }
+
+                requests.forEach(req => {
+                    const item = document.createElement('li');
+                    item.className = 'withdrawal-item';
+                    const amt = req.amount || 0;
+                    const total = req.totalAmount || (amt + (req.fee || 0));
+                    item.innerHTML = `
+                        <div class="withdrawal-main-info">
+                            <div class="withdrawal-primary">
+                                <span class="withdrawal-amount">KSH ${parseFloat(amt).toLocaleString()}</span>
+                                <span class="withdrawal-method">${req.method || ''}</span>
+                            </div>
+                            <div class="withdrawal-secondary">
+                                <span class="withdrawal-datetime">
+                                    <i class="fas fa-calendar"></i> ${req.date}
+                                    <i class="fas fa-clock"></i> ${req.time}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="withdrawal-status-container">
+                            <span class="withdrawal-total">Total: KSH ${parseFloat(total).toLocaleString()}</span>
+                            <span class="withdrawal-status ${req.status && req.status.toLowerCase() === 'completed' ? 'status-completed' : 'status-pending'}">
+                                ${req.status || 'Pending'}
+                            </span>
+                        </div>
+                    `;
+                    withdrawalList.appendChild(item);
+                });
             }
                 withdrawalList.appendChild(withdrawalItem);
             });
