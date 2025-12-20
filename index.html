@@ -1,16 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-        <script>
-            const supabase = supabase.createClient(
-                'https://yoqtahdctzponqkmgkzn.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
-            );
-        </script>
-    <script src="js/supabaseClient.js"></script>
     <meta charset="UTF-8">
+    <!-- Only one Supabase script needed, moved below -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net chrome-extension:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com">
     <title>Register - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -43,7 +37,7 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
-            background-image: url('africa-pattern.jpg');
+            background: var(--background-color);
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -144,7 +138,7 @@
 
         .social-login {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
             margin-bottom: 2rem;
         }
@@ -375,9 +369,7 @@
             <button class="social-btn twitter" id="twitterSignInBtn" style="background:#1da1f2;">
                 <i class="fab fa-twitter"></i> Twitter
             </button>
-            <button class="social-btn instagram" id="instagramSignInBtn" style="background:#e1306c;">
-                <i class="fab fa-instagram"></i> Instagram
-            </button>
+            <!-- Instagram is not supported by Supabase OAuth, button removed -->
         </div>
 
         <div class="divider">
@@ -387,28 +379,29 @@
         <form class="register-form" id="registerForm">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" required>
+                <input type="text" id="username" name="username" required>
                 <div class="error-message" id="usernameError"></div>
             </div>
-
+            <div class="form-group">
+                <label for="phone">Phone</label>
+                <input type="text" id="phone" name="phone" required placeholder="e.g. +254700000000 or 0700000000">
+                <div class="error-message" id="phoneError"></div>
+            </div>
             <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" required>
+                <input type="email" id="email" name="email" required>
                 <div class="error-message" id="emailError"></div>
             </div>
-
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" required>
+                <input type="password" id="password" name="password" required>
                 <div class="error-message" id="passwordError"></div>
             </div>
-
             <div class="form-group">
                 <label for="confirm-password">Confirm Password</label>
-                <input type="password" id="confirm-password" required>
+                <input type="password" id="confirm-password" name="confirm-password" required>
                 <div class="error-message" id="confirmPasswordError"></div>
             </div>
-
             <div class="terms-group">
                 <input type="checkbox" id="terms" required>
                 <label for="terms">I agree to the <a href="terms.html" target="_blank">Terms and Conditions</a></label>
@@ -416,144 +409,18 @@
             <div class="terms-group">
                 <!-- Fingerprint option will be shown after registration if supported -->
             </div>
-
             <button type="submit" class="register-btn">Create Account</button>
         </form>
 
         <div class="login-link">
             Already have an account? <a href="login.html">Login here</a>
         </div>
-    <div id="successMessage" style="display:none; color: var(--success-color); text-align:center; margin-top:1rem; font-weight:600; font-size:1.1rem;">Registration successful! Redirecting to login...</div>
+    <div id="successMessage" style="display:none; color: var(--success-color); text-align:center; margin-top:1rem; font-weight:600; font-size:1.1rem;">Registration successful! Please check your email to verify your account. Redirecting to login...</div>
+    <div id="errorMessage" style="display:none; color: var(--error-color); text-align:center; margin-top:1rem; font-weight:600; font-size:1.1rem;"></div>
     </div>
 
-    <script>
-        // Email validation regex
-        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-
-        // Form validation
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            let isValid = true;
-
-            // Reset error messages
-            document.querySelectorAll('.error-message').forEach(elem => {
-                elem.style.display = 'none';
-            });
-
-            finishRegistration();
-
-            function finishRegistration() {
-                // The rest of the registration logic goes here
-                const username = document.getElementById('username').value;
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirm-password').value;
-
-                // Validate email
-                if (!emailRegex.test(email)) {
-                    document.getElementById('emailError').textContent = 'Please enter a valid email address';
-                    document.getElementById('emailError').style.display = 'block';
-                    isValid = false;
-                    // Stop further validation if email is invalid
-                    return;
-                }
-
-                // Validate password
-                if (password.length < 8) {
-                    document.getElementById('passwordError').textContent = 'Password must be at least 8 characters long';
-                    document.getElementById('passwordError').style.display = 'block';
-                    isValid = false;
-                }
-
-                // Validate password match
-                if (password !== confirmPassword) {
-                    document.getElementById('confirmPasswordError').textContent = 'Passwords do not match';
-                    document.getElementById('confirmPasswordError').style.display = 'block';
-                    isValid = false;
-                }
-
-                if (isValid) {
-                    // Here you would typically make an API call to your backend
-                    const users = JSON.parse(localStorage.getItem('users') || '[]');
-                    // Check if username or email already exists
-                    if (users.some(u => u.username === username || u.email === email)) {
-                        document.getElementById('emailError').textContent = 'Username or email already exists';
-                        document.getElementById('emailError').style.display = 'block';
-                        return;
-                    }
-                    // Add new user
-                    users.push({ username, email, password });
-                    localStorage.setItem('users', JSON.stringify(users));
-                    document.getElementById('successMessage').style.display = 'block';
-                    setTimeout(function() {
-                        window.location.href = 'login.html';
-                    }, 4000);
-                }
-            }
-
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
-
-            // Validate email
-            if (!emailRegex.test(email)) {
-                document.getElementById('emailError').textContent = 'Please enter a valid email address';
-                document.getElementById('emailError').style.display = 'block';
-                isValid = false;
-                // Stop further validation if email is invalid
-                return;
-            }
-
-            // Validate password
-            if (password.length < 8) {
-                document.getElementById('passwordError').textContent = 'Password must be at least 8 characters long';
-                document.getElementById('passwordError').style.display = 'block';
-                isValid = false;
-            }
-
-            // Validate password match
-            if (password !== confirmPassword) {
-                document.getElementById('confirmPasswordError').textContent = 'Passwords do not match';
-                document.getElementById('confirmPasswordError').style.display = 'block';
-                isValid = false;
-            }
-
-            if (isValid) {
-                // Here you would typically make an API call to your backend
-                const users = JSON.parse(localStorage.getItem('users') || '[]');
-                
-                // Check if username or email already exists
-                if (users.some(u => u.username === username || u.email === email)) {
-                    document.getElementById('emailError').textContent = 'Username or email already exists';
-                    document.getElementById('emailError').style.display = 'block';
-                    return;
-                }
-
-                // Add new user
-                users.push({ username, email, password });
-                localStorage.setItem('users', JSON.stringify(users));
-
-                // Show success message and redirect after short delay
-                document.getElementById('successMessage').style.display = 'block';
-                setTimeout(function() {
-                    window.location.href = 'login.html';
-                }, 4000);
-            }
-        });
-
-        // Social login handlers
-        import('./js/supabaseClient.js').then(({ supabase }) => {
-            function handleOAuthSignIn(provider) {
-                supabase.auth.signInWithOAuth({ provider }).then(({ error }) => {
-                    if (error) alert(provider.charAt(0).toUpperCase() + provider.slice(1) + ' sign-in failed: ' + error.message);
-                });
-            }
-            document.getElementById('googleSignInBtn').addEventListener('click', () => handleOAuthSignIn('google'));
-            document.getElementById('twitterSignInBtn').addEventListener('click', () => handleOAuthSignIn('twitter'));
-            document.getElementById('instagramSignInBtn').addEventListener('click', () => handleOAuthSignIn('instagram'));
-        });
-    </script>
+    <script type="module" src="/supabaseClient.js"></script>
+    <script type="module" src="js/register.js"></script>
 </body>
 </html>
 

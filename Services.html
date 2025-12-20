@@ -3,18 +3,20 @@
 <head>
         <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
         <script>
-            const supabase = supabase.createClient(
-                'https://dcbxjekrwgblxpyfhyat.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjYnhqZWtyd2dibHhweWZoeWF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNDk5MjYsImV4cCI6MjA4MTYyNTkyNn0.5Y-REVsT3EzVtiHN6Sjfy8rIts4HRzOK82tHGBu1yyg'
-            );
+            // Removed hardcoded Supabase URL/anon key initialization.
+            if (!window.supabase && window.supabaseClient) window.supabase = window.supabaseClient;
+            if (!window.supabase) {
+                window.supabase = null;
+                console.warn('Supabase client not initialized. Call initSupabaseClient(url, anonKey) from a secure runtime.');
+            }
         </script>
-    <script src="js/supabaseClient.js"></script>
+    <script src="/supabaseClient.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WhatsApp Services - Africa Based</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script type="module">
-        import { supabase } from './js/supabaseClient.js';
+    import { supabase } from './supabaseClient.js';
         
         // Check authentication state
         async function checkAuth() {
@@ -613,9 +615,7 @@
                     btn.querySelector('.btn-title').textContent = managers[idx].name;
                     btn.querySelector('.btn-subtitle').textContent = managers[idx].category || '';
                     const catSpan = btn.querySelector('.btn-category');
-                    if (catSpan) catSpan.textContent = managers[idx].category || '';
-                    btn.style.display = '';
-                } else {
+                    if
                     btn.style.display = 'none';
                 }
             });
@@ -627,7 +627,5 @@
             }
         });
     </script>
-    </script>
 </body>
 </html>
-

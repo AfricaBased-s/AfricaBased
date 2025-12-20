@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <meta charset="UTF-8">
+    <script type="module" src="/supabaseClient.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net chrome-extension:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data: https:">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://esm.sh chrome-extension:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://esm.sh; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data: https:">
     <title>Login - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -497,9 +497,9 @@
 
         <form class="login-form" id="loginForm">
             <div class="form-group">
-                <label for="username">Username or Email</label>
-                <input type="text" id="username" required>
-                <i class="fas fa-user"></i>
+                <label for="phone">Phone Number</label>
+                <input type="text" id="phone" name="phone" required placeholder="e.g. +254700000000 or 0700000000">
+                <i class="fas fa-phone"></i>
             </div>
 
             <div class="form-group">
@@ -511,10 +511,11 @@
 
             <div class="remember-forgot">
                 <div class="remember-me">
-                    <input type="checkbox" id="remember" name="remember">
-                    <label for="remember">Remember me</label>
+                    <!-- Keep user logged in for 30 days when checked -->
+                    <input type="checkbox" id="remember30" name="remember30">
+                    <label for="remember30">Keep me logged in for 30 days</label>
                 </div>
-                <a href="#" class="forgot-password" id="forgotPasswordLink">Forgot Password?</a>
+                <!-- Forgot Password link removed -->
             </div>
 
             <button type="submit" class="login-btn">
@@ -525,32 +526,7 @@
 
         <div id="successMessage" style="display:none; color: var(--success-color); text-align:center; margin-top:1rem; font-weight:600; font-size:1.1rem;"></div>
 
-        <!-- Password Reset Modal -->
-        <div id="forgotPasswordModal" class="password-reset-modal" style="display: none;">
-            <div class="modal-content">
-                <h2>Reset Password</h2>
-                <form id="forgotPasswordForm">
-                    <div class="form-group">
-                        <label for="forgotPasswordEmail">Email Address</label>
-                        <input type="email" id="forgotPasswordEmail" required>
-                    </div>
-                    <div class="error-message" id="forgotPasswordError"></div>
-                    <button type="submit" class="reset-btn">Reset Password</button>
-                    <button type="button" class="close-btn close-modal">Cancel</button>
-                </form>
-                <div id="forgotPasswordSuccess" class="success-message" style="display: none;">
-                    Password reset email has been sent. Please check your inbox for further instructions.
-                </div>
-            </div>
-        </div>
-
-        <div class="fingerprint-section">
-            <p id="fingerprintPromptText">Or use biometric login</p>
-            <button type="button" id="fingerprintBtn" class="fingerprint-btn" title="Login with fingerprint" style="display:none;">
-                <i class="fas fa-fingerprint"></i>
-            </button>
-        </div>
-
+       
         <div class="error-message" id="errorMessage"></div>
 
         <div class="register-link">
@@ -570,8 +546,128 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/login.js"></script>
+    <script type="module">
+    // Ensure Supabase client is available globally (from supabaseClient.js)
+    // This script assumes supabaseClient.js attaches supabase to window.supabase
+    console.info('Login page: remember-me uses server-side `remembered_logins` table and a remember_token cookie when enabled. Ensure table exists with columns: user_id, phone, token, expires_at.');
+    const loginForm = document.getElementById('loginForm');
+    const errorMessage = document.getElementById('errorMessage');
+    const successMessage = document.getElementById('successMessage');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+
+    loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        errorMessage.style.display = 'none';
+        successMessage.style.display = 'none';
+        loadingSpinner.style.display = 'inline-block';
+
+        const phone = document.getElementById('phone').value.trim();
+        const password = document.getElementById('password').value;
+
+        // Validate phone (Kenyan formats: +2547XXXXXXXX, 07XXXXXXXX, 01XXXXXXXX)
+        const phoneRegex = /^(\+2547\d{8}|07\d{8}|01\d{8})$/;
+        if (!phoneRegex.test(phone)) {
+            errorMessage.textContent = 'Please enter a valid Kenyan phone number (e.g. +254700000000, 0700000000, 0100000000)';
+            errorMessage.style.display = 'block';
+            loadingSpinner.style.display = 'none';
+            return;
+        }
+        if (!password) {
+            errorMessage.textContent = 'Please enter your password';
+            errorMessage.style.display = 'block';
+            loadingSpinner.style.display = 'none';
+            return;
+        }
+
+        try {
+            // Query user by phone in Supabase
+            let { data: users, error } = await window.supabase
+                .from('users')
+                .select('email')
+                .eq('phone', phone)
+                .limit(1);
+
+            if (error || !users || users.length === 0) {
+                errorMessage.textContent = 'No account found with that phone number.';
+                errorMessage.style.display = 'block';
+                loadingSpinner.style.display = 'none';
+                return;
+            }
+
+            const email = users[0].email;
+            // Now sign in with email and password
+            const { error: signInError } = await window.supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (signInError) {
+                errorMessage.textContent = 'Invalid credentials. Please try again.';
+                errorMessage.style.display = 'block';
+                loadingSpinner.style.display = 'none';
+                return;
+            }
+
+            // Success
+            successMessage.textContent = 'Login successful! Redirecting...';
+            successMessage.style.display = 'block';
+            loadingSpinner.style.display = 'none';
+
+            try{
+                // Persist remember-me via Supabase table instead of storing full session in localStorage.
+                const keep = document.getElementById('remember30').checked;
+                // session-only marker in sessionStorage for UI use
+                const sessionMarker = { phone, loggedAt: Date.now() };
+                try { sessionStorage.setItem('userMarker', JSON.stringify(sessionMarker)); } catch(e){/* ignore */}
+
+                if (keep && window.supabase) {
+                    try {
+                        // Get current user id from Supabase auth
+                        const userResp = await window.supabase.auth.getUser();
+                        const user = userResp && userResp.data && userResp.data.user;
+                        const user_id = user ? user.id : null;
+
+                        // create a cryptographically strong token
+                        const token = (function(){
+                            const arr = new Uint8Array(32); window.crypto.getRandomValues(arr);
+                            return Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');
+                        })();
+
+                        const expires_at = new Date(Date.now() + 30*24*60*60*1000).toISOString();
+
+                        // Insert a remembered login row in Supabase (table: remembered_logins)
+                        // expected columns: user_id (uuid), phone (text), token (text), expires_at (timestamp)
+                        const { data: insertData, error: insertErr } = await window.supabase
+                            .from('remembered_logins')
+                            .insert([{ user_id: user_id, phone: phone, token: token, expires_at }]);
+
+                        if (insertErr) {
+                            console.warn('Failed to create remembered login in Supabase:', insertErr);
+                        } else {
+                            // Set a non-HttpOnly cookie containing the token so client can rehydrate later.
+                            // Cookie is SameSite=Lax, Secure flag recommended in production (only works on HTTPS).
+                            const cookieValue = encodeURIComponent(token);
+                            const maxAge = 30*24*60*60; // 30 days in seconds
+                            document.cookie = `remember_token=${cookieValue}; max-age=${maxAge}; path=/; samesite=Lax` + (location.protocol === 'https:' ? '; Secure' : '');
+                        }
+                    } catch (e) {
+                        console.warn('Remember-me storage failed:', e);
+                    }
+                } else {
+                    // Clear any previous remember_token cookie
+                    document.cookie = 'remember_token=; Max-Age=0; path=/; samesite=Lax';
+                }
+            }catch(e){ console.warn('Session persist error', e); }
+
+            setTimeout(() => {
+                window.location.href = 'home.html';
+            }, 1200);
+        } catch (err) {
+            errorMessage.textContent = 'An error occurred. Please try again.';
+            errorMessage.style.display = 'block';
+            loadingSpinner.style.display = 'none';
+        }
+    });
+    </script>
 </body>
 </html>

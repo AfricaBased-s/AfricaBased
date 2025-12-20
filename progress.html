@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Progress - AfricaBased</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root{
+            --bg:#0f172a; --card:rgba(26,34,56,0.95); --accent:#4ecdc4; --accent2:#ff6b6b; --text:#fff; --muted:rgba(255,255,255,0.7);
+        }
+        *{box-sizing:border-box}
+        body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#071028 0%,var(--bg) 100%);color:var(--text);padding:24px}
+        .container{max-width:980px;margin:0 auto}
+        .card{background:var(--card);padding:20px;border-radius:12px;margin-bottom:16px;box-shadow:0 8px 30px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.03)}
+        h1{font-size:22px;margin:0 0 8px}
+        .summary{display:flex;gap:16px;flex-wrap:wrap}
+        .metric{flex:1;min-width:180px;padding:16px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);}
+        .metric h3{margin:0;font-size:14px;color:var(--muted)}
+        .metric p{margin:8px 0 0;font-weight:700;font-size:20px}
+        .progress-wrap{margin-top:16px}
+        .progress-bar{height:18px;background:rgba(255,255,255,0.08);border-radius:10px;overflow:hidden}
+        .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width 400ms ease}
+        .encourage{margin-top:12px;color:var(--muted)}
+        .levels{display:flex;gap:8px;margin-top:14px}
+        .level{flex:1;padding:12px;border-radius:8px;text-align:center;background:rgba(255,255,255,0.02);}
+        .level.active{box-shadow:0 8px 20px rgba(78,205,196,0.08);border:1px solid rgba(78,205,196,0.12)}
+        .small{font-size:13px;color:var(--muted)}
+        .cta{display:inline-block;background:var(--accent);color:#021029;padding:8px 12px;border-radius:8px;margin-top:12px;text-decoration:none;font-weight:600}
+        footer{margin-top:26px;text-align:center;color:var(--muted);font-size:13px}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Your Progress</h1>
+            <div class="small">Track how close you are to the next membership level and what actions will get you there.</div>
+
+            <div id="main" class="progress-wrap">
+                <div class="card" id="referralCard">
+                    <div class="small">Your Referral Code</div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+                        <input id="referralCodeInput" readonly style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)" />
+                        <button id="copyReferralBtn" class="cta" style="background:var(--accent);color:#021029">Copy</button>
+                    </div>
+                    <div class="small" style="margin-top:8px">Share this code to invite users and earn commissions. The code will be included automatically in your referral link.</div>
+                </div>
+
+                <div class="card" id="promotionCard">
+                    <h3 style="margin:0 0 8px">Fixed Salary Promotion</h3>
+                    <div class="small">Earn a fixed monthly stipend when you reach the required referral performance and maintain activity.</div>
+                    <ul style="margin-top:10px;color:var(--muted);">
+                        <li>Requirement A: Minimum 50 active referrals</li>
+                        <li>Requirement B: Minimum KES 10,000 total commission earned</li>
+                        <li>Requirement C: Active investment in at least one product</li>
+                    </ul>
+                    <div style="margin-top:12px;display:flex;gap:12px;align-items:center">
+                        <div style="flex:1">
+                            <div class="small">Progress to promotion</div>
+                            <div class="progress-bar" style="margin-top:6px"><div id="promoFill" class="progress-fill"></div></div>
+                        </div>
+                        <div style="min-width:120px;text-align:right"><strong id="promoText">0%</strong></div>
+                    </div>
+                    <div id="promoMessage" class="encourage" style="margin-top:10px">Loading promotion status...</div>
+                    <a id="applyPromoBtn" class="cta" href="#" style="margin-top:8px">Apply for Promotion</a>
+                </div>
+                <div class="summary">
+                    <div class="metric">
+                        <h3>Total Referrals</h3>
+                        <p id="totalReferrals">0</p>
+                    </div>
+                    <div class="metric">
+                        <h3>Active Referrals</h3>
+                        <p id="activeReferrals">0</p>
+                    </div>
+                    <div class="metric">
+                        <h3>Total Commission</h3>
+                        <p id="totalCommission">KES 0</p>
+                    </div>
+                </div>
+
+                <div style="margin-top:18px">
+                    <div class="small">Membership Level</div>
+                    <div class="levels" id="levels">
+                        <div class="level" id="lvl-inactive">Inactive</div>
+                        <div class="level" id="lvl-active">Active</div>
+                        <div class="level" id="lvl-basic">Basic</div>
+                        <div class="level" id="lvl-premium">Premium</div>
+                        <div class="level" id="lvl-gold">Gold</div>
+                    </div>
+                </div>
+
+                <div style="margin-top:18px" class="card">
+                    <div class="small">Progress to next level</div>
+                    <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
+                        <div style="flex:1">
+                            <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+                        </div>
+                        <div style="min-width:140px;text-align:right"><strong id="progressText">0/5</strong></div>
+                    </div>
+                    <div id="encourage" class="encourage">Loading your progress...</div>
+                    <a id="actionBtn" class="cta" href="#">How to get there</a>
+                </div>
+
+            </div>
+        </div>
+        <footer>Progress page reads your local referrals and statistics summary (kept locally after sign-in)</footer>
+    </div>
+
+    <script>
+        // Determine membership level logic used in other pages - keep in sync with app logic
+        function determineMembershipLevel(activeReferralsCount, hasInvestment) {
+            if (!hasInvestment) return { level: 'Inactive', commission: 0, required: 0 };
+            if (activeReferralsCount >= 300) return { level: 'Gold', commission: 12, required: 300 };
+            if (activeReferralsCount >= 60) return { level: 'Premium', commission: 9, required: 60 };
+            if (activeReferralsCount >= 5) return { level: 'Basic', commission: 6, required: 5 };
+            return { level: 'Active', commission: 3, required: 5 };
+        }
+
+        // Read local stored data and compute progress
+        function getLocalData() {
+            let referrals = [];
+            try { referrals = JSON.parse(localStorage.getItem('referrals') || '[]'); } catch(e) { referrals = []; }
+            let summary = {};
+            try { summary = JSON.parse(localStorage.getItem('statisticsSummary') || '{}'); } catch(e) { summary = {}; }
+            return { referrals, summary };
+        }
+
+        function render() {
+            const { referrals, summary } = getLocalData();
+            const totalReferrals = referrals.length || 0;
+            const activeReferrals = referrals.filter(r => r.status === 'active').length || 0;
+            const totalCommission = (summary.totalIncome || summary.totalCommission || 0) || 0;
+            const hasInvestment = (summary.totalAssets && summary.totalAssets > 0) || false;
+
+            document.getElementById('totalReferrals').textContent = totalReferrals;
+            document.getElementById('activeReferrals').textContent = activeReferrals;
+            document.getElementById('totalCommission').textContent = new Intl.NumberFormat('en-KE',{style:'currency',currency:'KES'}).format(totalCommission);
+
+            const current = determineMembershipLevel(activeReferrals, hasInvestment);
+            const levels = ['Inactive','Active','Basic','Premium','Gold'];
+            levels.forEach(lvl => {
+                const el = document.getElementById('lvl-' + lvl.toLowerCase());
+                el.classList.remove('active');
+                if (lvl === current.level) el.classList.add('active');
+            });
+
+            // compute next target
+            let next = null;
+            if (current.level === 'Inactive') next = { next: 'Active', required: 1, progress: activeReferrals };
+            else if (current.level === 'Active') next = { next: 'Basic', required: 5, progress: activeReferrals };
+            else if (current.level === 'Basic') next = { next: 'Premium', required: 60, progress: activeReferrals };
+            else if (current.level === 'Premium') next = { next: 'Gold', required: 300, progress: activeReferrals };
+            else next = { next: null, required: 300, progress: activeReferrals };
+
+            const progressTextEl = document.getElementById('progressText');
+            const progressFillEl = document.getElementById('progressFill');
+            const encourageEl = document.getElementById('encourage');
+            const actionBtn = document.getElementById('actionBtn');
+
+            if (!next.next) {
+                progressTextEl.textContent = 'Max Level';
+                progressFillEl.style.width = '100%';
+                encourageEl.textContent = 'Amazing work — you are at the highest level! Keep engaging to maintain your status.';
+                actionBtn.textContent = 'View referrals';
+                actionBtn.href = 'referrals.html';
+            } else {
+                const progressRatio = Math.min(1, (next.progress / next.required));
+                progressFillEl.style.width = (progressRatio * 100) + '%';
+                progressTextEl.textContent = `${next.progress}/${next.required}`;
+                const remaining = Math.max(0, next.required - next.progress);
+                encourageEl.textContent = `You're ${remaining} ${remaining === 1 ? 'referral' : 'referrals'} away from becoming ${next.next}. Invite more users with your referral link.`;
+                actionBtn.textContent = 'Share referral link';
+                actionBtn.href = 'referrals.html';
+            }
+        }
+
+        // Expose a helper for dev/test
+        window.getProgressSummary = function() { return getLocalData(); };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            render();
+            // refresh every 10s in case some other page updated localStorage
+            setInterval(render, 10000);
+
+            // Wire referral code input and copy button
+            try {
+                const referralCode = localStorage.getItem('referralCode') || '';
+                const referralInput = document.getElementById('referralCodeInput');
+                const copyBtn = document.getElementById('copyReferralBtn');
+                if (referralInput) referralInput.value = referralCode || '—';
+                if (copyBtn) {
+                    copyBtn.addEventListener('click', () => {
+                        try {
+                            if (referralInput && referralInput.value) {
+                                referralInput.select();
+                                document.execCommand('copy');
+                                copyBtn.textContent = 'Copied!';
+                                setTimeout(() => copyBtn.textContent = 'Copy', 1600);
+                            }
+                        } catch (err) { console.warn('Copy failed', err); }
+                    });
+                }
+            } catch (err) { console.warn('Referral code wiring failed', err); }
+
+            // Promotion calculation
+            function updatePromotionUI() {
+                const { referrals, summary } = getLocalData();
+                const activeReferrals = referrals.filter(r => r.status === 'active').length || 0;
+                const totalCommission = (summary.totalIncome || summary.totalCommission || 0) || 0;
+                const hasInvestment = (summary.totalAssets && summary.totalAssets > 0) || false;
+
+                const reqActive = 50;
+                const reqCommission = 10000;
+                const reqInvestment = true;
+
+                const aProgress = Math.min(1, activeReferrals / reqActive);
+                const cProgress = Math.min(1, totalCommission / reqCommission);
+                const iProgress = hasInvestment ? 1 : 0;
+
+                // simple averaged progress
+                const overall = Math.round(((aProgress + cProgress + iProgress) / 3) * 100);
+                const promoFill = document.getElementById('promoFill');
+                const promoText = document.getElementById('promoText');
+                const promoMsg = document.getElementById('promoMessage');
+                const applyBtn = document.getElementById('applyPromoBtn');
+
+                if (promoFill) promoFill.style.width = overall + '%';
+                if (promoText) promoText.textContent = overall + '%';
+
+                let missing = [];
+                if (activeReferrals < reqActive) missing.push(`${reqActive - activeReferrals} active referrals`);
+                if (totalCommission < reqCommission) missing.push(`KES ${reqCommission - Math.floor(totalCommission)} more commission`);
+                if (!hasInvestment && reqInvestment) missing.push('an active investment');
+
+                if (missing.length === 0) {
+                    if (promoMsg) promoMsg.textContent = 'You meet all requirements — you can apply for the fixed salary promotion.';
+                    if (applyBtn) { applyBtn.href = 'apply-promotion.html'; applyBtn.textContent = 'Apply now'; }
+                } else {
+                    if (promoMsg) promoMsg.textContent = `Requirements remaining: ${missing.join(', ')}.`;
+                    if (applyBtn) { applyBtn.href = '#'; applyBtn.textContent = 'Not eligible yet'; }
+                }
+            }
+
+            updatePromotionUI();
+            // Re-check with render every 10s
+            setInterval(updatePromotionUI, 10000);
+
+            // Apply button behavior: when eligible, set promotionIntent flag and go to apply page
+            const applyBtn = document.getElementById('applyPromoBtn');
+            applyBtn.addEventListener('click', (e)=>{
+                const href = applyBtn.getAttribute('href');
+                if (!href || href === '#' ) { e.preventDefault(); return; }
+                // mark intent so apply page allows access
+                sessionStorage.setItem('promotionIntent','1');
+                // allow navigation; the apply page will clear or use this as needed
+            });
+        });
+    </script>
+</body>
+</html>

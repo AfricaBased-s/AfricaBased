@@ -6,7 +6,7 @@
     <title>Statistics Dashboard - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-    <script src="./js/supabaseClient.js"></script>
+    <script src="/supabaseClient.js"></script>
     <script>
         // Function to check if we're already on the login page
         function isLoginPage() {
@@ -294,7 +294,7 @@
                     </div>
                     <div class="stat-title">Wallet Balance</div>
                 </div>
-                <div class="stat-value">KSH 0.00</div>
+                <div class="stat-value" id="walletBalanceStat">KSH 0.00</div>
                 <div class="stat-change">Start your journey</div>
             </div>
 
@@ -305,7 +305,7 @@
                     </div>
                     <div class="stat-title">Account Balance</div>
                 </div>
-                <div class="stat-value">KSH 0.00</div>
+                <div class="stat-value" id="accountBalanceStat">KSH 0.00</div>
                 <div class="stat-change">Start your journey</div>
             </div>
 
@@ -316,8 +316,8 @@
                     </div>
                     <div class="stat-title">Total Assets</div>
                 </div>
-                <div class="stat-value">KSH 0.00</div>
-                <div class="stat-change">Start your journey</div>
+                <div class="stat-value" id="totalAssetsStat">KSH 0.00</div>
+                <div class="stat-change">Invested product only</div>
             </div>
 
             <div class="stat-card">
@@ -327,7 +327,7 @@
                     </div>
                     <div class="stat-title">Total Income</div>
                 </div>
-                <div class="stat-value">KSH 0.00</div>
+                <div class="stat-value" id="totalIncomeStat">KSH 0.00</div>
                 <div class="stat-change">Start your journey</div>
             </div>
 
@@ -338,7 +338,7 @@
                     </div>
                     <div class="stat-title">Today's Income</div>
                 </div>
-                <div class="stat-value">KSH 0.00</div>
+                <div class="stat-value" id="todayIncomeStat">KSH 0.00</div>
                 <div class="stat-change">Start your journey</div>
             </div>
 
@@ -347,15 +347,65 @@
                     <div class="stat-icon recharge-icon">
                         <i class="fas fa-sync-alt"></i>
                     </div>
-                    <div class="stat-title">Total Recharge</div>
+                    <div class="stat-title">Total Deposit</div>
                 </div>
-                <div class="stat-value">KSH 0.00</div>
-                <div class="stat-change">Start your journey</div>
+                <div class="stat-value" id="totalDepositStat">KSH 0.00</div>
+                <div class="stat-change">All deposits to wallet</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: linear-gradient(45deg, #ff6b6b, #ffd54f); color: #fff; box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);">
+                        <i class="fas fa-arrow-circle-up"></i>
+                    </div>
+                    <div class="stat-title">Total Withdrawal</div>
+                </div>
+                <div class="stat-value" id="totalWithdrawalStat">KSH 0.00</div>
+                <div class="stat-change">Withdrawals from account balance only</div>
+            </div>
+        </div>
+
+        <div style="margin-top:40px;">
+            <h2 style="color:var(--text-color);margin-bottom:16px;">Transaction History</h2>
+            <div style="overflow-x:auto;">
+                <table id="transactionHistoryTable" style="width:100%;background:var(--card-color);color:var(--text-color);border-radius:8px;box-shadow:var(--shadow);border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:var(--primary);color:#fff;">
+                            <th style="padding:10px 8px;">Date</th>
+                            <th style="padding:10px 8px;">Type</th>
+                            <th style="padding:10px 8px;">Amount</th>
+                            <th style="padding:10px 8px;">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionHistoryBody">
+                        <tr><td colspan="4" style="text-align:center;opacity:0.7;">Loading...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script>
+        // Transaction history state
+        let transactionHistory = [];
+
+        // Render transaction history table
+        function renderTransactionHistory() {
+            const tbody = document.getElementById('transactionHistoryBody');
+            if (!tbody) return;
+            if (!transactionHistory.length) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;opacity:0.7;">No transactions found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = transactionHistory.map(tx => `
+                <tr>
+                    <td style="padding:8px 6px;">${tx.date}</td>
+                    <td style="padding:8px 6px;text-transform:capitalize;">${tx.type}</td>
+                    <td style="padding:8px 6px;">${formatCurrency(tx.amount)}</td>
+                    <td style="padding:8px 6px;">${tx.description || ''}</td>
+                </tr>
+            `).join('');
+        }
         // Format currency
         function formatCurrency(amount) {
             return `KSH ${amount.toLocaleString('en-US', {
@@ -371,7 +421,10 @@
             totalAssets: 0,
             totalIncome: 0,
             todayIncome: 0,
-            totalRecharge: 0
+            totalDeposit: 0,
+            totalWithdrawal: 0,
+            investedProduct: 0,
+            todayDate: new Date().toISOString().split('T')[0]
         };
         
         // Show loading state
@@ -399,8 +452,9 @@
         // Update display for all statistics
         function updateDisplay() {
             try {
-                // Validate statistics object
+                // Validate statistics object (only numeric keys)
                 Object.entries(statistics).forEach(([key, value]) => {
+                    if (['todayDate'].includes(key)) return;
                     if (typeof value !== 'number' || isNaN(value)) {
                         statistics[key] = 0;
                         console.error(`Invalid value for ${key}, resetting to 0`);
@@ -408,45 +462,85 @@
                 });
 
                 // Update wallet balance
-                const walletValue = document.querySelector('.wallet-icon + .stat-title + .stat-value');
+                const walletValue = document.getElementById('walletBalanceStat');
                 if (walletValue) {
                     walletValue.textContent = formatCurrency(statistics.walletBalance);
                 }
+                // Update account balance
+                const accountValue = document.getElementById('accountBalanceStat');
+                if (accountValue) {
+                    accountValue.textContent = formatCurrency(statistics.accountBalance);
+                }
+                // Update total assets (invested product only)
+                const assetValue = document.getElementById('totalAssetsStat');
+                if (assetValue) {
+                    statistics.totalAssets = statistics.investedProduct;
+                    assetValue.textContent = formatCurrency(statistics.totalAssets);
+                }
+                // Update total income
+                const incomeValue = document.getElementById('totalIncomeStat');
+                if (incomeValue) {
+                    incomeValue.textContent = formatCurrency(statistics.totalIncome);
+                }
+                // Update today's income
+                const todayValue = document.getElementById('todayIncomeStat');
+                if (todayValue) {
+                    todayValue.textContent = formatCurrency(statistics.todayIncome);
+                }
+                // Update total deposit
+                const depositValue = document.getElementById('totalDepositStat');
+                if (depositValue) {
+                    depositValue.textContent = formatCurrency(statistics.totalDeposit);
+                }
+                // Update total withdrawal
+                const withdrawalValue = document.getElementById('totalWithdrawalStat');
+                if (withdrawalValue) {
+                    withdrawalValue.textContent = formatCurrency(statistics.totalWithdrawal);
+                }
 
-            // Update account balance
-            const accountValue = document.querySelector('.balance-icon + .stat-title + .stat-value');
-            if (accountValue) {
-                accountValue.textContent = formatCurrency(statistics.accountBalance);
-            }
-
-            // Update total assets (wallet + account balance)
-            const assetValue = document.querySelector('.asset-icon + .stat-title + .stat-value');
-            if (assetValue) {
-                statistics.totalAssets = statistics.walletBalance + statistics.accountBalance;
-                assetValue.textContent = formatCurrency(statistics.totalAssets);
-            }
-
-            // Update total income
-            const incomeValue = document.querySelector('.income-icon + .stat-title + .stat-value');
-            if (incomeValue) {
-                incomeValue.textContent = formatCurrency(statistics.totalIncome);
-            }
-
-            // Update today's income
-            const todayValue = document.querySelector('.today-icon + .stat-title + .stat-value');
-            if (todayValue) {
-                todayValue.textContent = formatCurrency(statistics.todayIncome);
-            }
-
-            // Update total recharge
-            const rechargeValue = document.querySelector('.recharge-icon + .stat-title + .stat-value');
-            if (rechargeValue) {
-                rechargeValue.textContent = formatCurrency(statistics.totalRecharge);
+                // Persist summary stats and transaction history to localStorage so they survive reloads
+                try {
+                    localStorage.setItem('transactionHistory', JSON.stringify(transactionHistory));
+                    localStorage.setItem('statisticsSummary', JSON.stringify({
+                        walletBalance: statistics.walletBalance,
+                        accountBalance: statistics.accountBalance,
+                        totalAssets: statistics.totalAssets,
+                        totalIncome: statistics.totalIncome,
+                        todayIncome: statistics.todayIncome,
+                        totalDeposit: statistics.totalDeposit,
+                        totalWithdrawal: statistics.totalWithdrawal,
+                        investedProduct: statistics.investedProduct,
+                        todayDate: statistics.todayDate
+                    }));
+                } catch (err) {
+                    console.warn('Failed to persist statistics to localStorage', err);
+                }
+            } catch (err) {
+                console.error('Failed to update display', err);
             }
         }
 
         // Handle different transaction types
         async function handleTransaction(transaction) {
+            // Check if date changed (midnight passed), reset today's income if so
+            const nowDate = new Date().toISOString().split('T')[0];
+            if (statistics.todayDate !== nowDate) {
+                statistics.todayDate = nowDate;
+                statistics.todayIncome = 0;
+            }
+            // Record transaction in history
+            if (transaction && typeof transaction === 'object') {
+                const tx = {
+                    date: (transaction.created_at ? new Date(transaction.created_at) : new Date()).toLocaleString(),
+                    type: transaction.type || 'unknown',
+                    amount: parseFloat(transaction.amount) || 0,
+                    description: transaction.description || transaction.note || transaction.details || ''
+                };
+                transactionHistory.unshift(tx);
+                // Limit to last 100 transactions for performance
+                if (transactionHistory.length > 100) transactionHistory.length = 100;
+                renderTransactionHistory();
+            }
             if (!transaction || typeof transaction !== 'object') {
                 console.error('Invalid transaction data received:', transaction);
                 return;
@@ -464,19 +558,28 @@
             switch (transaction.type) {
                 case 'deposit':
                     statistics.walletBalance += amount;
-                    statistics.totalRecharge += amount;
+                    statistics.totalDeposit += amount;
                     break;
                 case 'withdrawal':
-                    statistics.walletBalance -= amount;
+                    // Only count withdrawals from account balance
+                    if (transaction.from_account === 'account' || transaction.source === 'account' || transaction.accountType === 'account') {
+                        statistics.accountBalance -= amount;
+                        statistics.totalWithdrawal += amount;
+                    } else {
+                        statistics.walletBalance -= amount;
+                    }
                     break;
                 case 'income':
                 case 'reward':
                 case 'bonus':
                     statistics.accountBalance += amount;
                     statistics.totalIncome += amount;
-                    if (transactionDate === today) {
+                    if (transactionDate === statistics.todayDate) {
                         statistics.todayIncome += amount;
                     }
+                    break;
+                case 'invested':
+                    statistics.investedProduct += amount;
                     break;
                 case 'exchange':
                     // For exchange from wallet to account balance
@@ -493,11 +596,71 @@
                     break;
             }
 
+            // Ensure withdrawable account balance is persisted for other pages (withdraw.html reads 'accountBalance')
+            try {
+                // normalize to number and persist
+                const acct = parseFloat(statistics.accountBalance) || 0;
+                localStorage.setItem('accountBalance', acct);
+            } catch (e) {
+                console.warn('Failed to persist accountBalance to localStorage', e);
+            }
+
+            // Persist the transaction and update display
+            try {
+                // Ensure transactionHistory stores simple serializable objects
+                const storedTx = {
+                    date: (transaction.created_at ? new Date(transaction.created_at) : new Date()).toLocaleString(),
+                    type: transaction.type || 'unknown',
+                    amount: parseFloat(transaction.amount) || 0,
+                    description: transaction.description || transaction.note || transaction.details || ''
+                };
+                transactionHistory.unshift(storedTx);
+                if (transactionHistory.length > 100) transactionHistory.length = 100;
+                // Save immediately to localStorage
+                try { localStorage.setItem('transactionHistory', JSON.stringify(transactionHistory)); } catch (e) { console.warn('Could not write transactions to localStorage', e); }
+            } catch (err) {
+                console.warn('Failed to persist transaction', err);
+            }
+
             updateDisplay();
         }
 
         // Initialize real-time subscription for updates
+        // Recalculate today's income from all transactions (for page load or midnight reset)
+        function recalculateTodayIncome() {
+            const today = new Date().toISOString().split('T')[0];
+            statistics.todayIncome = transactionHistory
+                .filter(tx => ['income','reward','bonus'].includes(tx.type) && tx.date && new Date(tx.date).toISOString().split('T')[0] === today)
+                .reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
+        }
+
         async function initializeRealtime(retryCount = 0) {
+            // Fetch all transactions for the user on load
+            async function fetchAllTransactions(userId) {
+                try {
+                    const { data, error } = await window.supabase
+                        .from('transactions')
+                        .select('*')
+                        .eq('user_id', userId)
+                        .order('created_at', { ascending: false });
+                    if (error) {
+                        console.error('Error fetching transactions:', error.message);
+                        transactionHistory = [];
+                    } else {
+                        transactionHistory = (data || []).map(tx => ({
+                            date: tx.created_at ? new Date(tx.created_at).toLocaleString() : '',
+                            type: tx.type || 'unknown',
+                            amount: parseFloat(tx.amount) || 0,
+                            description: tx.description || tx.note || tx.details || ''
+                        }));
+                    }
+                    renderTransactionHistory();
+                } catch (err) {
+                    console.error('Failed to fetch transactions:', err);
+                    transactionHistory = [];
+                    renderTransactionHistory();
+                }
+            }
             const MAX_RETRIES = 3;
             showLoading();
             try {
@@ -512,6 +675,10 @@
                 }
 
                 // Fetch initial balances
+                // Fetch all transactions for the user
+                await fetchAllTransactions(session.user.id);
+                recalculateTodayIncome();
+                updateDisplay();
                 const { data: walletData, error: walletError } = await window.supabase
                     .from('user_wallet')
                     .select('balance')
@@ -538,6 +705,19 @@
                 if (accountError) {
                     console.error('Error fetching account balance:', accountError.message);
                 }
+
+                // Reset today's income at midnight
+                function scheduleMidnightReset() {
+                    const now = new Date();
+                    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
+                    setTimeout(() => {
+                        statistics.todayDate = new Date().toISOString().split('T')[0];
+                        recalculateTodayIncome();
+                        updateDisplay();
+                        scheduleMidnightReset();
+                    }, nextMidnight - now);
+                }
+                scheduleMidnightReset();
 
                 // Subscribe to transactions
                 const transactionChannel = window.supabase.channel('transaction_changes')
@@ -587,6 +767,39 @@
                 // Initial display update
                 updateDisplay();
 
+                // Expose a helper to record transactions from other parts of the app.
+                // Usage: window.recordTransaction({ type: 'deposit', amount: 100, description: '...' })
+                window.recordTransaction = async function(tx) {
+                    if (!tx || typeof tx !== 'object') throw new Error('Invalid transaction object');
+                    // Add created_at if missing
+                    const payload = Object.assign({ created_at: new Date().toISOString(), user_id: session.user.id }, tx);
+                    try {
+                        // Try to insert into Supabase transactions table if supabase is available
+                        if (window.supabase) {
+                            const { data: insertData, error: insertError } = await window.supabase
+                                .from('transactions')
+                                .insert([payload])
+                                .select()
+                                .single();
+                            if (insertError) {
+                                console.warn('Failed to insert transaction to supabase:', insertError.message);
+                            } else {
+                                // handle the confirmed transaction
+                                handleTransaction(insertData);
+                                return insertData;
+                            }
+                        }
+                        // If supabase not available or insert failed, still update local state
+                        handleTransaction(payload);
+                        return payload;
+                    } catch (err) {
+                        console.error('recordTransaction failed', err);
+                        // fallback: update local state
+                        handleTransaction(payload);
+                        return payload;
+                    }
+                };
+
                 // Clean up subscriptions on page unload
                 window.addEventListener('unload', () => {
                     transactionChannel.unsubscribe();
@@ -606,7 +819,48 @@
         }
 
         // Initialize when DOM is loaded
-        document.addEventListener('DOMContentLoaded', initializeRealtime);
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load statistics from localStorage if available
+            function updateStatsFromLocalStorage() {
+                try {
+                    // Load transaction history first (if present)
+                    const storedTx = JSON.parse(localStorage.getItem('transactionHistory') || 'null');
+                    if (Array.isArray(storedTx) && storedTx.length) {
+                        transactionHistory = storedTx.slice(0, 100);
+                    }
+
+                    // Load summary if available
+                    const summary = JSON.parse(localStorage.getItem('statisticsSummary') || 'null');
+                    if (summary && typeof summary === 'object') {
+                        statistics.walletBalance = parseFloat(summary.walletBalance) || statistics.walletBalance || 0;
+                        statistics.accountBalance = parseFloat(summary.accountBalance) || statistics.accountBalance || 0;
+                        statistics.totalAssets = parseFloat(summary.totalAssets) || statistics.totalAssets || 0;
+                        statistics.totalIncome = parseFloat(summary.totalIncome) || statistics.totalIncome || 0;
+                        statistics.todayIncome = parseFloat(summary.todayIncome) || statistics.todayIncome || 0;
+                        statistics.totalDeposit = parseFloat(summary.totalDeposit) || statistics.totalDeposit || 0;
+                        statistics.totalWithdrawal = parseFloat(summary.totalWithdrawal) || statistics.totalWithdrawal || 0;
+                        statistics.investedProduct = parseFloat(summary.investedProduct) || statistics.investedProduct || 0;
+                        statistics.todayDate = summary.todayDate || statistics.todayDate;
+                    } else {
+                        // fallback: compute from transactions if no summary
+                        const today = new Date().toISOString().split('T')[0];
+                        statistics.todayIncome = transactionHistory.filter(tx => ['income','reward','bonus'].includes(tx.type) && tx.date && tx.date.startsWith(today)).reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
+                        statistics.totalIncome = transactionHistory.filter(tx => ['income','reward','bonus'].includes(tx.type)).reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
+                    }
+                } catch (err) {
+                    console.warn('Could not load stats from localStorage', err);
+                }
+                renderTransactionHistory();
+                updateDisplay();
+            }
+            updateStatsFromLocalStorage();
+            // Listen for custom event to update stats in real time
+            window.addEventListener('incomeCollected', function() {
+                updateStatsFromLocalStorage();
+            });
+            // Continue with Supabase real-time initialization
+            initializeRealtime();
+        });
     </script>
 </body>
 </html>

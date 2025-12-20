@@ -6,7 +6,7 @@
     <title>Exchange - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script type="module">
-        import { supabase } from './js/supabaseClient.js';
+        import { supabase } from './supabaseClient.js';
         
         // check authentication state
         async function checkAuth() {
@@ -194,6 +194,7 @@
             width: 100%;
             height: 100%;
             background: rgba(15, 23, 42, 0.9);
+            -webkit-backdrop-filter: blur(8px);
             backdrop-filter: blur(8px);
             z-index: 1000;
             align-items: center;
@@ -380,12 +381,6 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
         
-        @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-            70% { transform: scale(0.9); opacity: 0.9; }
-            100% { transform: scale(1); opacity: 1; }
-        }
         .modal-button {
             padding: 1rem;
             border: none;
@@ -627,7 +622,7 @@
                 let dbError = null;
                 if (!adminCode && !redemptionCode) {
                     try {
-                        const module = await import('./js/supabaseClient.js');
+                        const module = await import('./supabaseClient.js');
                         const supabase = module.supabase;
                         const { data, error } = await supabase
                             .from('reward_codes')
@@ -686,7 +681,7 @@
                         dbCode.redeemed = [{ user: userId, amount: dbCode.amount, time: new Date().toISOString() }];
                     }
                     try {
-                        const module = await import('./js/supabaseClient.js');
+                        const module = await import('./supabaseClient.js');
                         const supabase = module.supabase;
                         await supabase.from('reward_codes').update(updateObj).eq('id', dbCode.id);
                     } catch (e) {
@@ -763,7 +758,17 @@
                 // Update user's account balance
                 let accountBalance = parseFloat(localStorage.getItem('userAccountBalance_' + userId) || '0');
                 accountBalance += parseFloat(amount);
+                // Persist to the key the UI reads: "userWallet_<userId>"
+                localStorage.setItem('userWallet_' + userId, accountBalance);
+                // Also keep legacy key in sync
                 localStorage.setItem('userAccountBalance_' + userId, accountBalance);
+                // If this is the current logged-in user, also update the shared withdrawable balance key
+                try{
+                    const currentUser = localStorage.getItem('currentUserId');
+                    if (!currentUser || currentUser === userId) {
+                        localStorage.setItem('accountBalance', accountBalance);
+                    }
+                }catch(e){console.warn('Failed to persist shared accountBalance', e);}
 
                 // Show success message based on code type
                 let successMessage = '';
@@ -849,6 +854,9 @@
         // Initial history render
         updateExchangeHistory();
     </script>
+    </div>
+</body>
+</html>
     </div>
 </body>
 </html>

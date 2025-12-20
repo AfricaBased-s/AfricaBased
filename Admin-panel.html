@@ -3,12 +3,11 @@
 <head>
             <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
             <script>
-                // Only declare supabase if not already declared
-                if (typeof supabase === 'undefined') {
-                    var supabase = supabase.createClient(
-                        'https://yoqtahdctzponqkmgkzn.supabase.co',
-                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
-                    );
+                // Removed hardcoded Supabase URL/anon key initialization.
+                if (!window.supabase && window.supabaseClient) window.supabase = window.supabaseClient;
+                if (!window.supabase) {
+                    window.supabase = null;
+                    console.warn('Supabase client not initialized. Call initSupabaseClient(url, anonKey) from a secure runtime.');
                 }
             </script>
     <meta charset="UTF-8">
@@ -20,16 +19,12 @@
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
-    <script src="js/supabaseClient.js"></script>
+    <script type="module">
+    import { supabase } from './supabaseClient.js';
+        window.supabase = supabase;
+    </script>
     <script src="js/system-controls.js"></script>
     <script>
-        // Ensure Supabase client is available
-        if (!window.supabase) {
-            const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co'; // <-- Replace with your Supabase URL
-            const SUPABASE_ANON_KEY = 'YOUR_PUBLIC_ANON_KEY'; // <-- Replace with your anon key
-            window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
-
         // Super admin session check using Supabase
         document.addEventListener('DOMContentLoaded', async function() {
             // Get session info from localStorage (for email only)
@@ -80,11 +75,11 @@
                 for (let i = 0; i < steps.length; i++) {
                     syncProgress.style.width = ((i + 1) / steps.length * 100) + '%';
                     syncMessage.textContent = `Syncing ${steps[i]}...`;
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(function(resolve) { setTimeout(resolve, 500); });
                 }
 
                 syncMessage.textContent = 'All changes synchronized!';
-                setTimeout(() => {
+                setTimeout(function() {
                     syncStatus.style.display = 'none';
                 }, 2000);
 
@@ -797,4 +792,5 @@
         setInterval(renderAdminNotifications, 5000);
     </script>
 </body>
+</html>
 </html>

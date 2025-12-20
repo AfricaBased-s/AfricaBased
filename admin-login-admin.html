@@ -113,8 +113,8 @@
             const params = getQueryParams();
             if (params.token && params.expiry) {
                 // For demo: store the token and expiry in localStorage (in production, validate server-side)
-                localStorage.setItem('adminInviteToken', params.token);
-                localStorage.setItem('adminInviteExpiry', params.expiry);
+                sessionStorage.setItem('adminInviteToken', params.token);
+                sessionStorage.setItem('adminInviteExpiry', params.expiry);
                 // Optionally, redirect to clean URL (remove token/expiry from address bar)
                 // window.history.replaceState({}, document.title, window.location.pathname);
             }
@@ -178,10 +178,10 @@
                     verificationCode.toUpperCase() === currentSecurityCode) {
                     try {
                         const loginTime = new Date().getTime();
-                        localStorage.setItem('admin', 'true');
-                        localStorage.setItem('adminEmail', username);
-                        localStorage.setItem('lastLogin', loginTime.toString());
-                        localStorage.setItem('securityKey', securityKey);
+                        sessionStorage.setItem('admin', 'true');
+                        sessionStorage.setItem('adminEmail', username);
+                        sessionStorage.setItem('lastLogin', loginTime.toString());
+                        sessionStorage.setItem('securityKey', securityKey);
                         const stored = {
                             admin: localStorage.getItem('admin'),
                             adminEmail: localStorage.getItem('adminEmail'),
@@ -198,7 +198,7 @@
                                     lastLogin: loginTime,
                                     securityKey: securityKey
                                 };
-                                localStorage.setItem('adminData', JSON.stringify(adminData));
+                                sessionStorage.setItem('adminData', JSON.stringify(adminData));
                                 window.location.href = 'admin-panel.html';
                                 return;
                         } else {
@@ -273,7 +273,7 @@
                             localStorage.setItem('lastLogin', loginTime.toString());
                             localStorage.setItem('securityKey', securityKey);
                             if (dbAdmin.privileges) {
-                                localStorage.setItem('adminPrivileges', JSON.stringify(dbAdmin.privileges));
+                                sessionStorage.setItem('adminPrivileges', JSON.stringify(dbAdmin.privileges));
                             }
                             const adminData = {
                                 isLoggedIn: true,

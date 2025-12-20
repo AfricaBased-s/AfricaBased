@@ -4,10 +4,18 @@
   <meta charset="UTF-8">
   <title>AfricaBased - Home</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://esm.sh;">
+  <meta name="description" content="AfricaBased - Investment opportunities in Africa">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script type="module" src="js/supabaseClient.js"></script>
-  <script type="module" src="js/auth.js"></script>
+  <script type="module" async>
+  import { supabase } from './supabaseClient.js';
+    import { checkAuthState } from './js/auth.js';
+
+    // Initialize auth check
+    checkAuthState();
+
+    // Initial auth check has been moved to the main script section
+  </script>
     <style>
       /* Hide menu button when menu is open */
       .menu-button.hide {
@@ -199,47 +207,121 @@
       </button>
     </div>
   </nav>
+
+
   <script type="module">
-    import { supabase } from './js/supabaseClient.js';
+  import { supabase } from './supabaseClient.js';
     import { getCurrentUser, checkAuthState } from './js/auth.js';
+    
+    // Load the home content script for testimonials and opportunities
+    const script = document.createElement('script');
+    script.src = 'js/home-content.js';
+    document.head.appendChild(script);
 
     async function setUserProfile() {
-      await checkAuthState();
-      const user = await getCurrentUser();
-      const img = document.getElementById('profileImageTop');
-      const welcome = document.getElementById('userWelcome');
-      if (user) {
-        let name = user.user_metadata?.name || user.email || 'User';
-        welcome.textContent = `Welcome, ${name}`;
-        if (img) {
-          img.src = user.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=4ecdc4&color=fff&size=80';
+      try {
+        // Get the current session directly - this has the most up-to-date email
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const img = document.getElementById('profileImageTop');
+        const welcome = document.getElementById('userWelcome');
+
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          window.location.href = 'login.html';
+          return;
         }
-      } else {
-        welcome.textContent = '';
+
+        if (!session?.user?.email) {
+          console.log('No active session found');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        const currentEmail = session.user.email;
+        console.log('Current session email:', currentEmail);
+
+        // Update the welcome message immediately with the session email
+        welcome.textContent = `Welcome, ${currentEmail}`;
+
+        if (img) {
+          // First set default avatar with current email
+          img.src = 'https://ui-avatars.com/api/?name=' + 
+                   encodeURIComponent(currentEmail) + 
+                   '&background=4ecdc4&color=fff&size=80';
+        }
+
+        // Ensure profile is in sync with current session
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            user_id: session.user.id,
+            email: currentEmail,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', session.user.id);
+
+        if (profileError) {
+          console.error('Error syncing profile:', profileError);
+        }
+
+        // Now try to get the custom avatar if it exists
+        if (img) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('avatar_url')
+            .eq('user_id', session.user.id)
+            .single();
+
+          if (profile?.avatar_url) {
+            img.src = profile.avatar_url;
+          }
+        }
+      } catch (error) {
+        console.error('Profile sync error:', error);
+        const welcome = document.getElementById('userWelcome');
+        const img = document.getElementById('profileImageTop');
+        if (welcome) welcome.textContent = '';
         if (img) img.src = 'https://ui-avatars.com/api/?name=User&background=4ecdc4&color=fff&size=80';
       }
     }
+
     document.addEventListener('DOMContentLoaded', setUserProfile);
     window.addEventListener('storage', setUserProfile);
 
-    // Dynamic product loading from Supabase
+    // Dynamic product loading from localStorage
     async function renderProductGrid(category = 'all') {
       const productGrid = document.getElementById('productGrid');
       if (!productGrid) return;
-      let { data: products, error } = await supabase.from('products').select('*').eq('status', 'active');
-      if (error || !products) products = [];
-      let filtered = category === 'all' ? products : products.filter(p => p.category === category);
+
+      // Get opportunities from localStorage (admin panel managed)
+      const opportunities = JSON.parse(localStorage.getItem('africabased_opportunities') || '[]');
+      // Filter opportunities by category if needed
+      const filtered = category === 'all' ? opportunities : opportunities.filter(opp => opp.category === category);
+
       if (!filtered.length) {
-        productGrid.innerHTML = `<div style='color:#fff;text-align:center;font-size:1.2rem;'>No opportunities available.</div>`;
+        productGrid.innerHTML = `<div style='color:#fff;text-align:center;font-size:1.2rem;'>No opportunities available in this category.</div>`;
         return;
       }
-      productGrid.innerHTML = filtered.map(product => `
-        <div class="product-card${product.featured ? ' featured' : ''}" style="background:rgba(255,255,255,0.05); border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); backdrop-filter:blur(10px); position:relative;">
-          <img src="${product.image_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(product.title) + '&background=4ecdc4&color=fff&size=300'}" alt="${product.title}" class="product-image" style="width:100%;height:200px;object-fit:cover;border-radius:16px 16px 0 0;">
+
+      productGrid.innerHTML = filtered.map(opp => `
+        <div class="product-card${opp.featured ? ' featured' : ''}" 
+             style="background:rgba(255,255,255,0.05); border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,0.2); 
+                    border:1px solid rgba(255,255,255,0.1); backdrop-filter:blur(10px); position:relative; 
+                    transition: transform 0.3s, box-shadow 0.3s; cursor: pointer;"
+             onmouseover="this.style.transform='translateY(-5px)';this.style.boxShadow='0 12px 40px rgba(0,0,0,0.3)';"
+             onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 32px rgba(0,0,0,0.2)';">
+          <img src="${opp.image || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(opp.name) + '&background=4ecdc4&color=fff&size=300'}" 
+               alt="${opp.name}" 
+               class="product-image" 
+               style="width:100%;height:200px;object-fit:cover;border-radius:16px 16px 0 0;">
           <div class="product-info" style="padding:1.5rem;">
-            <div class="product-title" style="font-size:1.25rem; margin-bottom:0.5rem; color:var(--text);font-weight:600;">${product.title}</div>
-            <div class="product-description" style="color:rgba(255,255,255,0.7); font-size:0.9rem; margin-bottom:1rem;">${product.description}</div>
-            <div style="color:#ffd54f;font-size:1.1rem;font-weight:600;">KSH ${product.price ? Number(product.price).toLocaleString() : ''}</div>
+            <div class="product-title" style="font-size:1.25rem; margin-bottom:0.5rem; color:var(--text);font-weight:600;">${opp.name}</div>
+            <div class="product-description" style="color:rgba(255,255,255,0.7); font-size:0.9rem; margin-bottom:1rem;">${opp.description}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="color:#ffd54f;font-size:1.1rem;font-weight:600;">KSH ${opp.price ? Number(opp.price).toLocaleString() : '0'}</div>
+              <div style="color:rgba(255,255,255,0.6);font-size:0.9rem;">${opp.category}</div>
+            </div>
+            ${opp.featured ? '<div style="position:absolute;top:1rem;right:1rem;background:var(--accent);color:#fff;padding:0.25rem 0.75rem;border-radius:4px;font-size:0.8rem;">Featured</div>' : ''}
           </div>
         </div>
       `).join('');
@@ -248,9 +330,15 @@
     async function renderSectorButtons() {
       const sectorButtonsDiv = document.getElementById('sectorButtons');
       if (!sectorButtonsDiv) return;
-      let { data: sectors, error } = await supabase.from('products').select('category').eq('status', 'active');
-      if (error || !sectors) sectors = [];
-      const uniqueSectors = [...new Set(sectors.map(s => s.category).filter(Boolean))];
+
+      // Get sectors and opportunities from localStorage
+      const sectorsData = JSON.parse(localStorage.getItem('africabased_sectors') || '[]');
+      const opportunities = JSON.parse(localStorage.getItem('africabased_opportunities') || '[]');
+      // Get unique categories from both sectors and existing opportunities
+      const uniqueSectors = [...new Set([
+        ...sectorsData.map(s => s.name),
+        ...opportunities.map(opp => opp.category)
+      ].filter(Boolean))];
       let html = '<button class="category-btn active" data-category="all">All Opportunities</button>';
       uniqueSectors.forEach(s => {
         html += `<button class="category-btn" data-category="${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</button>`;
@@ -281,185 +369,345 @@
       <h1 style="font-size:2.5rem; font-weight:700; margin-bottom:1rem;">Welcome to AfricaBased</h1>
       <p style="font-size:1.15rem; color:rgba(255,255,255,0.85); max-width:600px; margin:0 auto 2rem auto;">Connecting Africa's best opportunities, services, and products in one place. Discover, invest, and grow with us.</p>
   <a href="profile.html" class="cta-button" style="display:inline-block; padding:1rem 2.5rem; font-size:1.1rem; font-weight:600; border-radius:8px; background:var(--accent-gradient); color:#fff; text-decoration:none; box-shadow:0 4px 16px rgba(78,205,196,0.18); transition:all 0.2s;">Get Started</a>
+  <a href="progress.html" id="viewProgressBtn" class="cta-button" style="display:inline-block; padding:1rem 2.5rem; font-size:1.1rem; font-weight:600; border-radius:8px; background:linear-gradient(45deg,#0b6e58,#d4a51b); color:#fff; text-decoration:none; box-shadow:0 6px 18px rgba(11,110,88,0.12); margin-left:12px;">View Progress</a>
     </section>
         <section class="products-section" style="padding: 4rem 0;">
       <div class="section-header" style="text-align:center; margin-bottom:3rem;">
         <h2 style="font-size:2.5rem; margin-bottom:1rem; background:var(--accent-gradient); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">Investment Opportunities</h2>
         <p style="color:rgba(255,255,255,0.7); font-size:1.1rem;">Explore top investment opportunities across Africa. Filter by sector and discover new ways to grow.</p>
       </div>
-      <div class="product-categories" id="sectorButtons"></div>
-      <div class="product-grid" id="productGrid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:2rem; padding:2rem 0;"></div>
+      <div class="product-categories" id="sectorButtons" style="display:flex; flex-wrap:wrap; gap:1rem; justify-content:center; margin-bottom:2rem;"></div>
+      <div class="product-grid" id="productGrid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:2rem; padding:2rem 0; margin:0 auto; max-width:1200px;"></div>
     </section>
     <section class="testimonials-section" style="padding: 6rem 5%; background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.1));">
       <div class="section-header" style="text-align:center; margin-bottom:4rem;">
         <h2 style="font-size:2.5rem; margin-bottom:1rem; background:var(--accent-gradient); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; display:inline-block;">What Our Clients Say</h2>
         <p style="color:rgba(255,255,255,0.7); font-size:1.1rem; max-width:600px; margin:0 auto;">Hear from investors who have experienced success with AfricaBased</p>
       </div>
-      <div class="testimonials-slider" style="width:100%; max-width:1200px; margin:0 auto; padding:2rem 0;">
-        <div class="swiper-slide" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:2rem; box-shadow:0 8px 32px rgba(0,0,0,0.2); margin-bottom:2rem;">
-          <div class="testimonial-content" style="text-align:center;">
-            <div class="testimonial-text" style="font-size:1.1rem; line-height:1.8; color:var(--text); margin-bottom:2rem; position:relative;">"AfricaBased helped me discover new investment opportunities and grow my portfolio. Highly recommended!"</div>
-            <div class="testimonial-author" style="display:flex; align-items:center; justify-content:center; gap:1rem; margin-top:2rem;">
-              <img src="https://ui-avatars.com/api/?name=Jane+Doe&background=4ecdc4&color=fff&size=80" alt="Jane Doe" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid var(--accent);" />
-              <div class="author-info" style="text-align:left;">
-                <h4 style="color:var(--text); margin:0; font-size:1.1rem;">Jane Doe</h4>
-                <p style="color:rgba(255,255,255,0.7); font-size:0.9rem; margin:0;">Investor, Kenya</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="swiper-slide" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:2rem; box-shadow:0 8px 32px rgba(0,0,0,0.2); margin-bottom:2rem;">
-          <div class="testimonial-content" style="text-align:center;">
-            <div class="testimonial-text" style="font-size:1.1rem; line-height:1.8; color:var(--text); margin-bottom:2rem; position:relative;">"The platform is easy to use and the support team is fantastic. I feel confident investing with AfricaBased."</div>
-            <div class="testimonial-author" style="display:flex; align-items:center; justify-content:center; gap:1rem; margin-top:2rem;">
-              <img src="https://ui-avatars.com/api/?name=Samuel+Oduor&background=ff6b6b&color=fff&size=80" alt="Samuel Oduor" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid var(--accent);" />
-              <div class="author-info" style="text-align:left;">
-                <h4 style="color:var(--text); margin:0; font-size:1.1rem;">Samuel Oduor</h4>
-                <p style="color:rgba(255,255,255,0.7); font-size:0.9rem; margin:0;">Entrepreneur, Nigeria</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="swiper-slide" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:2rem; box-shadow:0 8px 32px rgba(0,0,0,0.2); margin-bottom:2rem;">
-          <div class="testimonial-content" style="text-align:center;">
-            <div class="testimonial-text" style="font-size:1.1rem; line-height:1.8; color:var(--text); margin-bottom:2rem; position:relative;">"AfricaBased connects me with the right opportunities and makes investing simple and secure."</div>
-            <div class="testimonial-author" style="display:flex; align-items:center; justify-content:center; gap:1rem; margin-top:2rem;">
-              <img src="https://ui-avatars.com/api/?name=Fatima+Mbaye&background=4ecdc4&color=fff&size=80" alt="Fatima Mbaye" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid var(--accent);" />
-              <div class="author-info" style="text-align:left;">
-                <h4 style="color:var(--text); margin:0; font-size:1.1rem;">Fatima Mbaye</h4>
-                <p style="color:rgba(255,255,255,0.7); font-size:0.9rem; margin:0;">Business Owner, Senegal</p>
-              </div>
-            </div>
-          </div>
+      <div id="testimonialsSlider" class="testimonials-slider" style="width:100%; max-width:1200px; margin:0 auto; padding:2rem 0;">
+        <!-- Testimonials will be loaded here -->
+      </div>
+      <script type="module" src="js/testimonials.js"></script>
+      <!-- Testimonials container -->
+      <div class="swiper-container">
+        <div class="swiper-wrapper">
+          <!-- Testimonials will be loaded here by testimonials.js -->
         </div>
       </div>
     </section>
 
   </main>
+  <script type="module" src="js/home.js"></script>
   <script>
-    function renderSectorButtons() {
-  const sectorButtonsDiv = document.getElementById('sectorButtons');
-  if (!sectorButtonsDiv) return;
-  // Get sectors from admin settings (localStorage.sectors)
-  const sectorsData = JSON.parse(localStorage.getItem('sectors') || '[]');
-  let html = '<button class="category-btn active" data-category="all">All Opportunities</button>';
-  if (sectorsData.length) {
-    sectorsData.forEach(s => {
-      html += `<button class="category-btn" data-category="${s.name}">${s.name}</button>`;
+    // Wait for DOM to load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load sectors from localStorage
+        const sectors = JSON.parse(localStorage.getItem('africabased_sectors') || '[]');
+        const sectorButtons = document.getElementById('sectorButtons');
+        const productGrid = document.getElementById('productGrid');
+        
+        // Render sector buttons
+        if (sectorButtons) {
+            let buttonsHtml = '<button class="category-btn active" data-category="all">All Sectors</button>';
+            sectors.forEach(sector => {
+                buttonsHtml += `<button class="category-btn" data-category="${sector.name}">${sector.name}</button>`;
+            });
+            sectorButtons.innerHTML = buttonsHtml;
+            
+            // Add click handlers
+            sectorButtons.querySelectorAll('.category-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    sectorButtons.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    // Filter products
+                    renderProducts(this.dataset.category);
+                });
+            });
+        }
+        
+        // Function to render products
+        function renderProducts(category = 'all') {
+            if (!productGrid) return;
+            
+            // Get opportunities from localStorage
+            const opportunities = JSON.parse(localStorage.getItem('africabased_opportunities') || '[]');
+            const filtered = category === 'all' ? opportunities : opportunities.filter(opp => opp.category === category);
+            
+            if (filtered.length === 0) {
+                productGrid.innerHTML = '<div style="text-align: center; grid-column: 1/-1; color: #fff;">No opportunities available in this category.</div>';
+                return;
+            }
+            
+            const productsHtml = filtered.map(opp => `
+                <div class="product-card" style="background:rgba(255,255,255,0.05); border-radius:16px; overflow:hidden; transition: transform 0.3s;">
+                    <img src="${opp.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(opp.name)}&background=4ecdc4&color=fff&size=300`}" 
+                         alt="${opp.name}" 
+                         style="width:100%; height:200px; object-fit:cover;">
+                    <div style="padding:1.5rem;">
+                        <h3 style="margin:0 0 1rem; color:#4ecdc4;">${opp.name}</h3>
+                        <p style="margin:0 0 1rem; color:rgba(255,255,255,0.8);">${opp.description}</p>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="color:#ff6b6b;">KSH ${opp.price?.toLocaleString() || 'Contact for price'}</span>
+                            <button onclick="window.location.href='products.html'" class="invest-btn">Invest Now</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            productGrid.innerHTML = productsHtml;
+        }
+        
+        // Initial render
+        renderProducts('all');
+        
+        // Render testimonials
+        const testimonialsList = document.querySelector('.swiper-wrapper');
+        if (testimonialsList) {
+            const testimonials = JSON.parse(localStorage.getItem('africabased_testimonials') || '[]');
+            if (testimonials.length > 0) {
+                const testimonialsHtml = testimonials.map(testimonial => `
+                    <div class="swiper-slide">
+                        <div style="background:rgba(255,255,255,0.05); border-radius:16px; padding:2rem; margin:1rem;">
+                            <div style="display:flex; align-items:center; margin-bottom:1rem;">
+                                <img src="${testimonial.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(testimonial.name)}`}" 
+                                     alt="${testimonial.name}"
+                                     style="width:60px; height:60px; border-radius:50%; margin-right:1rem;">
+                                <div>
+                                    <h4 style="margin:0; color:#4ecdc4;">${testimonial.name}</h4>
+                                    <p style="margin:0; color:rgba(255,255,255,0.6);">${testimonial.role} - ${testimonial.location}</p>
+                                </div>
+                            </div>
+                            <p style="margin:0; color:rgba(255,255,255,0.8);">"${testimonial.text}"</p>
+                        </div>
+                    </div>
+                `).join('');
+                testimonialsList.innerHTML = testimonialsHtml;
+            } else {
+                testimonialsList.innerHTML = '<div class="swiper-slide"><div style="text-align:center; color:#fff;">No testimonials available yet.</div></div>';
+            }
+        }
     });
-  } else {
-    // Fallback: infer sectors from products if admin settings not set
-    const products = JSON.parse(localStorage.getItem('investmentProducts') || '[]');
-    const sectors = [...new Set(products.map(p => p.category))];
-    sectors.forEach(s => {
-      html += `<button class="category-btn" data-category="${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</button>`;
+    
+    // Listen for changes in localStorage
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'africabased_sectors' || e.key === 'africabased_opportunities' || e.key === 'africabased_testimonials') {
+            // Reload the page to refresh content
+            window.location.reload();
+        }
     });
-  }
-  sectorButtonsDiv.innerHTML = html;
-  sectorButtonsDiv.querySelectorAll('.category-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      sectorButtonsDiv.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      renderProductGrid(this.getAttribute('data-category'));
-    });
-  });
-}
-
-const defaultProducts = [
-  {
-    id: 1,
-    name: "Solar Farm Project",
-    description: "Large-scale solar energy installation in South Africa. High ROI potential with government incentives.",
-    image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800",
-    category: "energy",
-    featured: true
-  },
-  {
-    id: 2,
-    name: "Sustainable Agriculture Project",
-    description: "Large-scale organic farming initiative in Kenya. Focus on export crops with established buyers.",
-    image: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800",
-    category: "agriculture",
-    featured: true
-  },
-  {
-    id: 3,
-    name: "Tech Innovation Hub",
-    description: "Investment in Nigeria's fastest-growing tech hub. Supporting startups in fintech and e-commerce.",
-    image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800",
-    category: "technology",
-    featured: false
-  },
-  {
-    id: 4,
-    name: "Luxury Eco-Resort Development",
-    description: "Sustainable luxury resort project in Tanzania. Premium beachfront location with strong tourism growth.",
-    image: "https://images.unsplash.com/photo-1582610116397-edb318620f90?w=800",
-    category: "real-estate",
-    featured: true
-  }
-];
-
-function renderProductGrid(category = 'all') {
-  const adminProducts = JSON.parse(localStorage.getItem('investmentProducts') || '[]');
-  // Always show default products, admin cannot remove/change them
-  let products = [...defaultProducts, ...adminProducts];
-  const productGrid = document.getElementById('productGrid');
-  if (!productGrid) return;
-  let filtered = category === 'all' ? products : products.filter(p => p.category === category);
-  if (!filtered.length) {
-    productGrid.innerHTML = `<div style='color:#fff;text-align:center;font-size:1.2rem;'>No opportunities available.</div>`;
-    return;
-  }
-  productGrid.innerHTML = filtered.map(product => `
-    <div class="product-card${product.featured ? ' featured' : ''}" style="background:rgba(255,255,255,0.05); border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); backdrop-filter:blur(10px); position:relative;">
-      <img src="${product.image || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(product.name) + '&background=4ecdc4&color=fff&size=300'}" alt="${product.name}" class="product-image" style="width:100%;height:200px;object-fit:cover;border-radius:16px 16px 0 0;">
-      <div class="product-info" style="padding:1.5rem;">
-        <div class="product-title" style="font-size:1.25rem; margin-bottom:0.5rem; color:var(--text);font-weight:600;">${product.name}</div>
-        <div class="product-description" style="color:rgba(255,255,255,0.7); font-size:0.9rem; margin-bottom:1rem;">${product.description}</div>
-      </div>
-    </div>
-  `).join('');
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  renderSectorButtons();
-  renderProductGrid('all');
-  window.addEventListener('storage', function(e) {
-    if (e.key === 'investmentProducts' || e.key === 'sectors') {
-      renderSectorButtons();
-      renderProductGrid('all');
-    }
-  });
-  var menuButton = document.getElementById('menuButton');
-  var navLinks = document.querySelector('.nav-links');
-  function setMenuState(open) {
-    if (open) {
-      navLinks.classList.add('show');
-      menuButton.classList.add('hide');
-    } else {
-      navLinks.classList.remove('show');
-      menuButton.classList.remove('hide');
-    }
-  }
-  setMenuState(false);
-  if (menuButton && navLinks) {
-    menuButton.addEventListener('click', function(e) {
-      e.stopPropagation();
-      setMenuState(true);
-    });
-    navLinks.addEventListener('click', function(e) {
-      if (e.target.tagName === 'A') {
-        setMenuState(false);
-      }
-    });
-    document.addEventListener('click', function(e) {
-      if (!navLinks.contains(e.target) && e.target !== menuButton) {
-        setMenuState(false);
-      }
-    });
-  }
-});
   </script>
+  <script>
+      // Default opportunities data
+      window.defaultOpportunities = [
+        {
+          id: 1,
+          name: "Solar Farm Project",
+          description: "Large-scale solar energy installation in South Africa. High ROI potential with government incentives.",
+          image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800",
+          category: "energy",
+          featured: true
+        },
+        {
+          id: 2,
+          name: "Sustainable Agriculture Project",
+          description: "Large-scale organic farming initiative in Kenya. Focus on export crops with established buyers.",
+          image: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800",
+          category: "agriculture",
+          featured: true
+        },
+        {
+          id: 3,
+          name: "Tech Innovation Hub",
+          description: "Investment in Nigeria's fastest-growing tech hub. Supporting startups in fintech and e-commerce.",
+          image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800",
+          category: "technology",
+          featured: false
+        },
+        {
+          id: 4,
+          name: "Luxury Eco-Resort Development",
+          description: "Sustainable luxury resort project in Tanzania. Premium beachfront location with strong tourism growth.",
+          image: "https://images.unsplash.com/photo-1582610116397-edb318620f90?w=800",
+          category: "real-estate",
+          featured: true
+        }
+      ];
+
+      // Helper function to safely get data from localStorage
+      function getLocalStorageData(key, defaultValue) {
+        try {
+          var data = localStorage.getItem(key);
+          return data ? JSON.parse(data) : defaultValue;
+        } catch (e) {
+          console.error('Error reading from localStorage:', e);
+          return defaultValue;
+        }
+      }
+
+      // Render sector buttons
+      function renderSectorButtons() {
+        var sectorButtonsDiv = document.getElementById('sectorButtons');
+        if (!sectorButtonsDiv) return;
+        
+        var sectorsData = getLocalStorageData('sectors', []);
+        var html = '<button class="category-btn active" data-category="all">All Opportunities</button>';
+        
+        if (sectorsData.length) {
+          sectorsData.forEach(function(s) {
+            html += '<button class="category-btn" data-category="' + s.name + '">' + s.name + '</button>';
+          });
+        } else {
+          var opportunities = getLocalStorageData('opportunities', []);
+          var sectors = opportunities.map(function(p) { return p.category; })
+                                  .filter(function(c) { return c !== null && c !== undefined; })
+                                  .filter(function(c, i, self) { return self.indexOf(c) === i; });
+          
+          sectors.forEach(function(s) {
+            html += '<button class="category-btn" data-category="' + s + '">' + 
+                   s.charAt(0).toUpperCase() + s.slice(1) + '</button>';
+          });
+        }
+        
+        sectorButtonsDiv.innerHTML = html;
+        
+        var buttons = sectorButtonsDiv.getElementsByClassName('category-btn');
+        Array.prototype.forEach.call(buttons, function(button) {
+          button.addEventListener('click', function() {
+            Array.prototype.forEach.call(buttons, function(b) {
+              b.classList.remove('active');
+            });
+            this.classList.add('active');
+            renderProductGrid(this.getAttribute('data-category'));
+          });
+        });
+      }
+
+      // Render product grid
+      function renderProductGrid(category) {
+        category = category || 'all';
+        
+        var adminOpportunities = getLocalStorageData('opportunities', []);
+        var opportunities = window.defaultOpportunities.concat(adminOpportunities);
+        var productGrid = document.getElementById('productGrid');
+        if (!productGrid) return;
+
+        // Default category info (image, title, description)
+        var defaultCategoryInfo = {
+          'energy': {
+            image: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800',
+            title: 'Energy',
+            description: 'Explore investment opportunities in Africa\'s growing energy sector.'
+          },
+          'agriculture': {
+            image: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800',
+            title: 'Agriculture',
+            description: 'Invest in sustainable agriculture and food security projects.'
+          },
+          'technology': {
+            image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800',
+            title: 'Technology',
+            description: 'Support Africa\'s booming tech and innovation ecosystem.'
+          },
+          'real-estate': {
+            image: 'https://images.unsplash.com/photo-1582610116397-edb318620f90?w=800',
+            title: 'Real Estate',
+            description: 'Premium real estate and property development opportunities.'
+          }
+        };
+
+        var filtered = opportunities.filter(function(p) {
+          return category === 'all' || p.category === category;
+        });
+
+        if (!filtered.length) {
+          productGrid.innerHTML = '<div style="color:#fff;text-align:center;font-size:1.2rem;">' +
+                                'No opportunities available.</div>';
+          return;
+        }
+
+        var html = filtered.map(function(opportunity) {
+          var catInfo = defaultCategoryInfo[opportunity.category] || {};
+          var img = opportunity.image || catInfo.image || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(opportunity.name) + '&background=4ecdc4&color=fff&size=300');
+          var title = opportunity.name || catInfo.title || 'Opportunity';
+          var desc = opportunity.description || catInfo.description || '';
+          return (
+            '<div class="product-card' + (opportunity.featured ? ' featured' : '') + 
+            '" style="background:rgba(255,255,255,0.05);border-radius:16px;' +
+            'box-shadow:0 8px 32px rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);' +
+            'backdrop-filter:blur(10px);position:relative;">' +
+              '<img src="' + img + '" alt="' + title.replace(/>/g, '&gt;') + '" class="product-image" style="width:100%;height:200px;object-fit:cover;border-radius:16px 16px 0 0;">' +
+              '<div class="product-info" style="padding:1.5rem;">' +
+                '<div class="product-title" style="font-size:1.25rem;margin-bottom:0.5rem;' +
+                'color:var(--text);font-weight:600;">' + title.replace(/>/g, '&gt;') + '</div>' +
+                '<div class="product-description" style="color:rgba(255,255,255,0.7);' +
+                'font-size:0.9rem;margin-bottom:1rem;">' + desc.replace(/>/g, '&gt;') + '</div>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join('');
+
+        productGrid.innerHTML = html;
+      }
+
+      // Initialize when DOM is loaded
+      document.addEventListener('DOMContentLoaded', function() {
+        // Mobile menu functionality
+        var menuButton = document.getElementById('menuButton');
+        var navLinks = document.querySelector('.nav-links');
+        
+        function setMenuState(open) {
+          if (open) {
+            navLinks.classList.add('show');
+            menuButton.classList.add('hide');
+          } else {
+            navLinks.classList.remove('show');
+            menuButton.classList.remove('hide');
+          }
+        }
+
+        setMenuState(false);
+
+        if (menuButton && navLinks) {
+          menuButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            setMenuState(true);
+          });
+
+          navLinks.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A') {
+              setMenuState(false);
+            }
+          });
+
+          document.addEventListener('click', function(e) {
+            if (!navLinks.contains(e.target) && e.target !== menuButton) {
+              setMenuState(false);
+            }
+          });
+        }
+
+        // Initialize product grid and sector buttons
+        if (document.getElementById('sectorButtons')) {
+          renderSectorButtons();
+          renderProductGrid('all');
+        }
+
+        // Watch for changes in localStorage
+        window.addEventListener('storage', function(e) {
+          if (e.key === 'opportunities' || e.key === 'sectors') {
+            renderSectorButtons();
+            renderProductGrid('all');
+          }
+          if (e.key === 'testimonials' && typeof renderTestimonials === 'function') {
+            renderTestimonials();
+          }
+        });
+      });
+  </script>
+  <!-- External scripts -->
+  <script type="module" src="js/home.js"></script>
+  <script type="module" src="js/testimonials.js"></script>
 </body>
 </html>

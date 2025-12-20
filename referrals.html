@@ -3,18 +3,102 @@
 <head>
         <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
         <script>
-            const supabase = supabase.createClient(
-                'https://yoqtahdctzponqkmgkzn.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
-            );
+            // Removed hardcoded Supabase URL/anon key initialization.
+            if (!window.supabase && window.supabaseClient) window.supabase = window.supabaseClient;
+            if (!window.supabase) {
+                window.supabase = null;
+                console.warn('Supabase client not initialized. Call initSupabaseClient(url, anonKey) from a secure runtime.');
+            }
         </script>
-    <script src="js/supabaseClient.js"></script>
+    <script src="/supabaseClient.js"></script>
+    <style>
+        .info-item i {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .commission-tiers {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(78, 205, 196, 0.05);
+            border-radius: 12px;
+        }
+
+        .commission-tiers h3 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .tier-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .tier-item {
+            padding: 1.5rem;
+            background: var(--card-color);
+            border-radius: 8px;
+            text-align: center;
+            transition: var(--transition);
+            border: 1px solid rgba(78, 205, 196, 0.1);
+        }
+
+        .tier-item i {
+            font-size: 1.8rem;
+            margin-bottom: 0.8rem;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tier-item h4 {
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        .commission-rate {
+            display: block;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 0.5rem 0;
+        }
+
+        .tier-item p {
+            font-size: 0.9rem;
+            color: var(--text-color-secondary);
+        }
+
+        .tier-item[data-level="active"] { border-color: rgba(78, 205, 196, 0.2); }
+        .tier-item[data-level="basic"] { border-color: rgba(255, 213, 79, 0.2); }
+        .tier-item[data-level="premium"] { border-color: rgba(255, 107, 107, 0.2); }
+        .tier-item[data-level="gold"] { border-color: rgba(255, 184, 108, 0.2); }
+
+        .primary-btn {
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        .primary-btn:hover {
+            background: var(--primary-dark);
+        }
+    </style>
+    <script src="/supabaseClient.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Referrals - AfricaBased</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/referrals.css">
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script type="module" src="js/supabaseClient.js"></script>
+    <script type="module" src="/supabaseClient.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/sessionUtils.js"></script>
     <style>
@@ -22,17 +106,18 @@
             --primary-color: #1abc9c;
             --primary-dark: #159c88;
             --secondary-color: #22223b;
-            --accent-color: #f9ca24;
-            --background-color: linear-gradient(135deg, #232526 0%, #1abc9c 100%);
-            --card-color: rgba(34, 34, 59, 0.95);
-            --menu-bg: rgba(34, 34, 59, 0.98);
+            --accent-color: #ffd54f;
+            --background-color: #0f172a;
+            --card-color: rgba(26, 34, 56, 0.95);
+            --menu-bg: rgba(26, 34, 56, 0.98);
             --success-color: #27AE60;
             --warning-color: #F39C12;
             --danger-color: #E74C3C;
             --text-color: #fff;
             --text-color-secondary: rgba(255, 255, 255, 0.7);
-            --shadow: 0 8px 32px rgba(26, 188, 156, 0.15);
+            --shadow: 0 8px 32px rgba(78, 205, 196, 0.15);
             --transition: all 0.3s cubic-bezier(.4,0,.2,1);
+            --gradient-accent: linear-gradient(45deg, #4ecdc4, #ff6b6b);
         }
 
         * {
@@ -50,6 +135,19 @@
             background-attachment: fixed;
             background-size: cover;
             background-repeat: no-repeat;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: var(--gradient-accent);
+            opacity: 0.1;
+            pointer-events: none;
         }
 
         .container {
@@ -82,6 +180,16 @@
             color: var(--accent-color);
         }
 
+        .referral-code {
+            font-size: 0.8em;
+            background: rgba(78, 205, 196, 0.1);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-left: 1rem;
+            border: 1px solid rgba(78, 205, 196, 0.2);
+            color: var(--primary-color);
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -95,10 +203,11 @@
             border-radius: 12px;
             text-align: center;
             box-shadow: var(--shadow);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(78, 205, 196, 0.1);
             transition: var(--transition);
             position: relative;
             overflow: hidden;
+            backdrop-filter: blur(10px);
         }
 
         .stat-card::before {
@@ -111,10 +220,19 @@
             background: linear-gradient(
                 90deg,
                 transparent,
-                rgba(255, 255, 255, 0.05),
+                rgba(78, 205, 196, 0.05),
                 transparent
             );
             transition: 0.5s;
+        }
+
+        .stat-card i {
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
         }
 
         .stat-card:hover {
@@ -174,16 +292,85 @@
             display: flex;
             gap: 1rem;
             margin-top: 1rem;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: rgba(78, 205, 196, 0.1);
+            border: 1px solid rgba(78, 205, 196, 0.2);
+            border-radius: 8px;
+            padding: 0.2rem;
+        }
+
+        .input-icon {
+            padding: 0.8rem;
+            color: var(--primary-color);
         }
 
         .referral-input {
             flex: 1;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: transparent;
+            border: none;
             padding: 0.8rem;
-            border-radius: 5px;
             color: var(--text-color);
             font-size: 0.9rem;
+            outline: none;
+        }
+
+        .share-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .share-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .share-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .share-btn.whatsapp { background: #25D366; }
+        .share-btn.telegram { background: #0088cc; }
+        .share-btn.twitter { background: #1DA1F2; }
+        .share-btn.facebook { background: #4267B2; }
+
+        .referral-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(78, 205, 196, 0.1);
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: var(--text-color-secondary);
+        }
+
+        .info-item i {
+            color: var(--primary-color);
+            font-size: 1.2rem;
         }
 
         .copy-btn {
@@ -224,10 +411,11 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: var(--shadow);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(78, 205, 196, 0.1);
             transition: var(--transition);
             position: relative;
             overflow: hidden;
+            backdrop-filter: blur(10px);
         }
 
         .referral-card::before {
@@ -240,7 +428,7 @@
             background: linear-gradient(
                 45deg,
                 transparent,
-                rgba(255, 255, 255, 0.03),
+                rgba(78, 205, 196, 0.05),
                 transparent
             );
             transform: translateX(-100%);
@@ -249,12 +437,32 @@
 
         .referral-card:hover {
             transform: translateY(-2px);
-            border-color: var(--primary-color);
-            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+            border-color: #4ecdc4;
+            box-shadow: 0 4px 20px rgba(78, 205, 196, 0.2);
         }
 
         .referral-card:hover::before {
             transform: translateX(100%);
+        }
+
+        .copy-btn {
+            background: var(--gradient-accent);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
         }
 
         .referral-info {
@@ -298,6 +506,79 @@
             font-weight: 600;
             color: var(--success-color);
         }
+
+        .level-progress-card {
+            background: var(--card-color);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(78, 205, 196, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .level-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .level-card {
+            background: rgba(78, 205, 196, 0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            transition: var(--transition);
+            border: 1px solid rgba(78, 205, 196, 0.1);
+            opacity: 0.7;
+            backdrop-filter: blur(5px);
+        }
+
+        .level-card.active {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.15), rgba(255, 107, 107, 0.15));
+            border-color: #4ecdc4;
+            opacity: 1;
+            box-shadow: 0 4px 20px rgba(78, 205, 196, 0.2);
+        }
+
+        .level-card.completed {
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.15), rgba(78, 205, 196, 0.15));
+            border-color: var(--success-color);
+            opacity: 1;
+            box-shadow: 0 4px 20px rgba(39, 174, 96, 0.2);
+        }
+
+        .level-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-color);
+        }
+
+        .level-card h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .level-card p {
+            font-size: 0.9rem;
+            color: var(--text-color-secondary);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -326,6 +607,47 @@
                 <h3 id="activeReferrals">0</h3>
                 <p>Active Referrals</p>
             </div>
+            <div class="stat-card">
+                <i class="fas fa-crown"></i>
+                <h3 id="membershipLevel">-</h3>
+                <p>Membership Level</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-users"></i>
+                <h3 id="nextLevelProgress">0/5</h3>
+                <p>Progress to Next Level</p>
+            </div>
+        </div>
+
+        <div class="level-progress-card">
+            <h2>Membership Levels</h2>
+            <div class="level-cards">
+                <div class="level-card" id="inactiveLevel">
+                    <div class="level-icon"><i class="fas fa-user-slash"></i></div>
+                    <h3>Inactive</h3>
+                    <p>No active investments</p>
+                </div>
+                <div class="level-card" id="activeLevel">
+                    <div class="level-icon"><i class="fas fa-user-check"></i></div>
+                    <h3>Active</h3>
+                    <p>Has invested in a product</p>
+                </div>
+                <div class="level-card" id="basicLevel">
+                    <div class="level-icon"><i class="fas fa-star"></i></div>
+                    <h3>Basic</h3>
+                    <p>5+ active referrals</p>
+                </div>
+                <div class="level-card" id="premiumLevel">
+                    <div class="level-icon"><i class="fas fa-gem"></i></div>
+                    <h3>Premium</h3>
+                    <p>60+ active referrals</p>
+                </div>
+                <div class="level-card" id="goldLevel">
+                    <div class="level-icon"><i class="fas fa-crown"></i></div>
+                    <h3>Gold</h3>
+                    <p>300+ active referrals</p>
+                </div>
+            </div>
         </div>
 
         <div class="referral-link-card">
@@ -335,6 +657,9 @@
                 <button class="copy-btn" onclick="copyReferralLink()">
                     <i class="fas fa-copy"></i> Copy
                 </button>
+            <div id="referralLinkDisplay" class="referral-link-display">
+                <a id="referralLinkAnchor" href="#" target="_blank" style="color:var(--primary-color);text-decoration:underline;word-break:break-all;display:inline-block;padding-top:4px;"></a>
+            </div>
             </div>
         </div>
 
@@ -344,7 +669,7 @@
     </div>
 
     <script type="module">
-        import { supabase } from './js/supabaseClient.js';
+    import { supabase } from './supabaseClient.js';
         import { checkAuthState, redirectToLogin } from './js/auth.js';
         import { getSession } from './js/sessionUtils.js';
 
@@ -361,34 +686,73 @@
 
         // Function to generate referral link
         async function generateReferralLink() {
-            // Always use the current domain
-            const baseUrl = window.location.origin;
-            // Get the current session to access the user ID
-            let userId = localStorage.getItem('currentUserId');
-            if (!userId) {
+            try {
+                const session = await getSession();
+                if (!session || !session.user) {
+                    throw new Error('No active session');
+                }
+
+                const userId = session.user.id;
+                // Get user details from the database
+                const { data: userData, error: userError } = await supabase
+                    .from('user_profiles')
+                    .select('username, referral_code')
+                    .eq('user_id', userId)
+                    .single();
+
+                if (userError) throw userError;
+
+                let referralCode = userData?.referral_code;
+
+                if (!referralCode) {
+                    // Generate a new referral code if none exists
+                    referralCode = `${userId.slice(0, 6)}${Math.random().toString(36).substring(2, 6)}`.toUpperCase();
+                    // Save the referral code to the user's profile
+                    const { error: updateError } = await supabase
+                        .from('user_profiles')
+                        .update({ referral_code: referralCode })
+                        .eq('user_id', userId);
+                    if (updateError) throw updateError;
+                }
+
+                // Use the current domain for the referral link
+                const baseUrl = window.location.origin;
+                const referralLink = `${baseUrl}/register.html?ref=${referralCode}`;
+
+                // Store in localStorage for quick access
                 try {
-                    const session = await getSession();
-                    userId = session && session.user && session.user.id ? session.user.id : '';
-                } catch (e) {
-                    userId = '';
+                    localStorage.setItem('referralCode', referralCode);
+                    localStorage.setItem('referralLink', referralLink);
+                } catch (err) {
+                    console.warn('Could not persist referral link/code to localStorage', err);
                 }
+
+                // Update the clickable link in the UI (ensure it's visible even if called before DOMContentLoaded)
+                setTimeout(() => {
+                    const anchor = document.getElementById('referralLinkAnchor');
+                    const input = document.getElementById('referralLink');
+                    if (anchor) {
+                        anchor.href = referralLink;
+                        anchor.textContent = referralLink;
+                        anchor.style.display = 'inline-block';
+                    }
+                    if (input) input.value = referralLink;
+                }, 0);
+
+                return referralLink;
+            } catch (error) {
+                console.error('Error generating referral link:', error);
+                const fallback = window.location.origin + '/register.html';
+                setTimeout(() => {
+                    const anchor = document.getElementById('referralLinkAnchor');
+                    if (anchor) {
+                        anchor.href = fallback;
+                        anchor.textContent = fallback;
+                        anchor.style.display = 'inline-block';
+                    }
+                }, 0);
+                return fallback;
             }
-            // Generate a secure, non-traceable code using a hash
-            function simpleHash(str) {
-                let hash = 0, i, chr;
-                if (str.length === 0) return hash.toString(36);
-                for (i = 0; i < str.length; i++) {
-                    chr   = str.charCodeAt(i);
-                    hash  = ((hash << 5) - hash) + chr;
-                    hash |= 0; // Convert to 32bit integer
-                }
-                // Add a random salt for extra obscurity (per session)
-                const salt = localStorage.getItem('refSalt') || (Math.random().toString(36).substring(2, 10));
-                localStorage.setItem('refSalt', salt);
-                return (Math.abs(hash).toString(36) + salt);
-            }
-            const uniqueCode = userId ? simpleHash(userId) : '';
-            return `${baseUrl}/register.html?ref=${encodeURIComponent(uniqueCode)}`;
         }
 
         // Function to copy referral link
@@ -400,8 +764,110 @@
             const copyBtn = document.querySelector('.copy-btn');
             copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
             setTimeout(() => {
-                copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy Link';
             }, 2000);
+        }
+
+        // Social sharing functions
+        function shareOnWhatsApp() {
+            const referralLink = document.getElementById('referralLink').value;
+            const text = encodeURIComponent(`Join me on AfricaBased and start investing! Use my referral link: ${referralLink}`);
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+        }
+
+        function shareOnTelegram() {
+            const referralLink = document.getElementById('referralLink').value;
+            const text = encodeURIComponent(`Join me on AfricaBased and start investing! Use my referral link: ${referralLink}`);
+            window.open(`https://t.me/share/url?url=${referralLink}&text=${text}`, '_blank');
+        }
+
+        function shareOnTwitter() {
+            const referralLink = document.getElementById('referralLink').value;
+            const text = encodeURIComponent(`Join me on AfricaBased and start investing! Use my referral link:`);
+            window.open(`https://twitter.com/intent/tweet?text=${text}&url=${referralLink}`, '_blank');
+        }
+
+        function shareOnFacebook() {
+            const referralLink = document.getElementById('referralLink').value;
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralLink)}`, '_blank');
+        }
+
+        // Function to determine membership level and commission rate
+        function determineMembershipLevel(activeReferralsCount, hasInvestment) {
+            if (!hasInvestment) return { level: 'Inactive', commission: 0 };
+            if (activeReferralsCount >= 300) return { level: 'Gold', commission: 12 };
+            if (activeReferralsCount >= 60) return { level: 'Premium', commission: 9 };
+            if (activeReferralsCount >= 5) return { level: 'Basic', commission: 6 };
+            return { level: 'Active', commission: 3 };
+        }
+
+        // Function to calculate daily commission
+        async function calculateDailyCommission(referralId, userLevel) {
+            try {
+                // Get referral's daily income
+                const { data: incomeData, error: incomeError } = await supabase
+                    .from('daily_earnings')
+                    .select('amount')
+                    .eq('user_id', referralId)
+                    .single();
+
+                if (incomeError) throw incomeError;
+
+                const dailyIncome = incomeData?.amount || 0;
+                const { commission } = determineMembershipLevel(userLevel);
+                
+                return (dailyIncome * commission) / 100;
+            } catch (error) {
+                console.error('Error calculating commission:', error);
+                return 0;
+            }
+        }
+
+        // Function to get next level requirements
+        function getNextLevelRequirements(currentLevel, activeReferralsCount) {
+            switch(currentLevel) {
+                case 'Inactive':
+                    return { required: 0, progress: 0, next: 'Active', message: 'Invest in any product' };
+                case 'Active':
+                    return { required: 5, progress: activeReferralsCount, next: 'Basic' };
+                case 'Basic':
+                    return { required: 60, progress: activeReferralsCount, next: 'Premium' };
+                case 'Premium':
+                    return { required: 300, progress: activeReferralsCount, next: 'Gold' };
+                case 'Gold':
+                    return { required: 300, progress: 300, next: null };
+                default:
+                    return { required: 0, progress: 0, next: null };
+            }
+        }
+
+        // Function to update level display
+        function updateLevelDisplay(level, activeReferralsCount) {
+            const nextLevel = getNextLevelRequirements(level, activeReferralsCount);
+            document.getElementById('membershipLevel').textContent = level;
+            
+            // Update progress display
+            if (nextLevel.next) {
+                document.getElementById('nextLevelProgress').textContent = 
+                    `${nextLevel.progress}/${nextLevel.required}`;
+            } else {
+                document.getElementById('nextLevelProgress').textContent = 'Max Level';
+            }
+
+            // Update level cards
+            const levels = ['inactive', 'active', 'basic', 'premium', 'gold'];
+            const currentLevelIndex = levels.indexOf(level.toLowerCase());
+
+            levels.forEach((lvl, index) => {
+                const card = document.getElementById(`${lvl}Level`);
+                card.classList.remove('active', 'completed');
+                
+                if (index === currentLevelIndex) {
+                    card.classList.add('active');
+                } else if (index < currentLevelIndex) {
+                    card.classList.add('completed');
+                }
+            });
         }
 
         // Function to load referrals
@@ -412,6 +878,15 @@
                     redirectToLogin();
                     return;
                 }
+
+                // Get user's investment status
+                const { data: investments, error: investmentError } = await supabase
+                    .from('investments')
+                    .select('id')
+                    .eq('user_id', session.user.id)
+                    .limit(1);
+
+                const hasInvestment = investments && investments.length > 0;
 
                 // Get referrals from Supabase
                 const { data: referrals, error } = await supabase
@@ -440,9 +915,39 @@
                 document.getElementById('totalCommission').textContent = formatCurrency(totalCommission);
                 document.getElementById('activeReferrals').textContent = activeReferrals;
 
-                // Display referral link
+                // Determine and update membership level
+                const { level: currentLevel, commission: currentCommission } = determineMembershipLevel(activeReferrals, hasInvestment);
+                updateLevelDisplay(currentLevel, activeReferrals);
+
+                // Update commission rates display
+                document.querySelectorAll('.tier-item').forEach(item => {
+                    const level = item.getAttribute('data-level');
+                    if (level === currentLevel.toLowerCase()) {
+                        item.style.transform = 'scale(1.05)';
+                        item.style.boxShadow = '0 8px 24px rgba(78, 205, 196, 0.2)';
+                        item.style.borderWidth = '2px';
+                    }
+                });
+
+                // Generate and display referral link
                 const referralLink = await generateReferralLink();
-                document.getElementById('referralLink').value = referralLink;
+                const referralLinkInput = document.getElementById('referralLink');
+                referralLinkInput.value = referralLink;
+
+                // Add click event to select all text when clicked
+                referralLinkInput.addEventListener('click', function() {
+                    this.select();
+                });
+
+                // Show referral code in the header
+                const referralCode = localStorage.getItem('referralCode');
+                if (referralCode) {
+                    const headerTitle = document.querySelector('.header h1');
+                    headerTitle.innerHTML = `Referral Program <span class="referral-code">Your Code: ${referralCode}</span>`;
+                }
+
+                // Persist referrals locally for offline/fallback usage
+                try { localStorage.setItem('referrals', JSON.stringify(referrals)); } catch (e) { console.warn('Could not persist referrals locally', e); }
 
                 // Display referrals list
                 referralsList.innerHTML = referrals.map(referral => `
@@ -463,10 +968,91 @@
                     </div>
                 `).join('');
             } catch (error) {
-                console.error('Error loading referrals:', error);
+                console.error('Error loading referrals from Supabase:', error);
+                // Fall back to localStorage data if available
+                try {
+                    const stored = JSON.parse(localStorage.getItem('referrals') || 'null');
+                    if (Array.isArray(stored)) {
+                        const referralsList = document.getElementById('referralsList');
+                        const referrals = stored;
+                        const totalReferrals = referrals.length;
+                        const totalCommission = referrals.reduce((sum, ref) => sum + (ref.commission_amount || 0), 0);
+                        const activeReferrals = referrals.filter(ref => ref.status === 'active').length;
+
+                        document.getElementById('totalReferrals').textContent = totalReferrals;
+                        document.getElementById('totalCommission').textContent = formatCurrency(totalCommission);
+                        document.getElementById('activeReferrals').textContent = activeReferrals;
+
+                        const hasInvestment = false; // unknown when offline
+                        const { level: currentLevel } = determineMembershipLevel(activeReferrals, hasInvestment);
+                        updateLevelDisplay(currentLevel, activeReferrals);
+
+                        referralsList.innerHTML = referrals.map(referral => `
+                            <div class="referral-card">
+                                <div class="referral-info">
+                                    <div class="referral-avatar">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="referral-details">
+                                        <h3>${(referral.referred_user && referral.referred_user.email) ? referral.referred_user.email.split('@')[0] : (referral.email || 'Unknown')}</h3>
+                                        <p>Joined ${referral.referred_user && referral.referred_user.created_at ? new Date(referral.referred_user.created_at).toLocaleDateString() : (referral.created_at ? new Date(referral.created_at).toLocaleDateString() : '')}</p>
+                                        <p class="status ${referral.status}">${referral.status || 'unknown'}</p>
+                                    </div>
+                                </div>
+                                <div class="commission">
+                                    ${formatCurrency(referral.commission_amount || 0)}
+                                </div>
+                            </div>
+                        `).join('');
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('No local referrals available or failed to parse', err);
+                }
+
                 alert('Failed to load referrals. Please try again.');
             }
         }
+
+        // Helper to add a referral (attempt server insert first, fallback to local)
+        window.recordReferral = async function(ref) {
+            try {
+                if (!ref || typeof ref !== 'object') throw new Error('Invalid referral object');
+                const session = await getSession();
+                if (!session || !session.user) throw new Error('No active session');
+
+                const payload = Object.assign({ referrer_id: session.user.id, created_at: new Date().toISOString() }, ref);
+                if (supabase) {
+                    const { data, error } = await supabase.from('referrals').insert([payload]).select().single();
+                    if (error) {
+                        console.warn('Failed to insert referral to supabase:', error.message);
+                    } else {
+                        // Update local storage and UI
+                        try {
+                            const existing = JSON.parse(localStorage.getItem('referrals') || '[]');
+                            existing.unshift(data);
+                            localStorage.setItem('referrals', JSON.stringify(existing.slice(0, 500)));
+                        } catch (e) { console.warn('Failed to persist inserted referral locally', e); }
+                        // reload UI
+                        loadReferrals();
+                        return data;
+                    }
+                }
+
+                // Fallback: update localStorage and UI
+                try {
+                    const existing = JSON.parse(localStorage.getItem('referrals') || '[]');
+                    const fallback = Object.assign({ id: 'local-' + Date.now(), status: ref.status || 'pending', commission_amount: ref.commission_amount || 0, referred_user: ref.referred_user || null, created_at: new Date().toISOString() }, ref);
+                    existing.unshift(fallback);
+                    localStorage.setItem('referrals', JSON.stringify(existing.slice(0,500)));
+                } catch (e) { console.warn('Failed to persist fallback referral locally', e); }
+                loadReferrals();
+                return ref;
+            } catch (err) {
+                console.error('recordReferral failed', err);
+                throw err;
+            }
+        };
 
         // Load referrals when page loads
         document.addEventListener('DOMContentLoaded', loadReferrals);

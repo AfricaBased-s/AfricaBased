@@ -3,10 +3,13 @@
 <head>
         <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
         <script>
-            const supabase = supabase.createClient(
-                'https://yoqtahdctzponqkmgkzn.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
-            );
+            // Removed hardcoded Supabase URL/anon key.
+            // Use centralized client from js/supabaseClient.js or call initSupabaseClient(url, anonKey) securely.
+            if (!window.supabase && window.supabaseClient) window.supabase = window.supabaseClient;
+            if (!window.supabase) {
+                window.supabase = null;
+                console.warn('Supabase client not initialized. Call initSupabaseClient(url, anonKey) from a secure runtime.');
+            }
         </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -151,6 +154,20 @@
             color: #28a745;
             font-size: 32px;
             font-weight: bold;
+        }
+
+        .balance-message {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(255, 244, 222, 0.1);
+            border-radius: 4px;
+            display: none;
+        }
+
+        .balance-message.show {
+            display: block;
         }
 
         .withdraw-form {
@@ -555,8 +572,9 @@
 
         <div class="withdraw-box">
             <div class="balance-info">
-                <div class="balance-label">Available Balance</div>
-                <div class="balance-amount">KSH <span id="userBalance">25,000</span></div>
+                <div class="balance-label">Withdrawable Account Balance</div>
+                <div class="balance-amount">KSH <span id="userAccountBalance">0.00</span></div>
+                <div id="balanceMessage" class="balance-message">Your withdrawable balance is based on your account earnings (not deposits).</div>
             </div>
 
             <div id="notification" class="notification"></div>
@@ -603,40 +621,95 @@
     </div>
 
     <script>
-        function handleWithdraw(event) {
+        // Supabase integration helpers
+        let sup = window.supabase || null;
+        let currentSession = null;
+        let currentUserId = null;
+
+        async function ensureSupabase() {
+            if (sup) return sup;
+            try {
+                const mod = await import('/supabaseClient.js');
+                sup = mod.getSupabaseClient ? mod.getSupabaseClient() : (mod.supabase || mod.default || window.supabase);
+                if (sup && typeof window !== 'undefined') window.supabase = sup;
+                return sup;
+            } catch (e) {
+                console.warn('Could not initialize supabase client:', e);
+                return null;
+            }
+        }
+
+        async function loadAuthSession() {
+            await ensureSupabase();
+            if (!sup || !sup.auth) return null;
+            try {
+                const { data: { session }, error } = await sup.auth.getSession();
+                if (error) { console.warn('getSession error', error); return null; }
+                currentSession = session;
+                currentUserId = session && session.user ? session.user.id : null;
+                return session;
+            } catch (e) { console.warn('Auth session error', e); return null; }
+        }
+
+        async function fetchProfileBalance() {
+            if (!sup || !currentUserId) return null;
+            try {
+                const { data, error } = await sup.from('profiles').select('account_balance').eq('user_id', currentUserId).single();
+                if (error) { console.warn('fetchProfileBalance error', error); return null; }
+                const bal = parseFloat((data && data.account_balance) || 0);
+                try { localStorage.setItem('accountBalance', bal); } catch (e){}
+                document.getElementById('userAccountBalance').textContent = bal.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 });
+                return bal;
+            } catch (e) { console.warn('fetchProfileBalance exception', e); return null; }
+        }
+
+        async function fetchWithdrawRequestsFromDb() {
+            if (!sup || !currentUserId) return null;
+            try {
+                const { data, error } = await sup.from('withdraw_requests').select('*').eq('user_id', currentUserId).order('created_at', { ascending: false }).limit(50);
+                if (error) { console.warn('fetchWithdrawRequestsFromDb error', error); return null; }
+                return data || [];
+            } catch (e) { console.warn('fetchWithdrawRequestsFromDb exception', e); return null; }
+        }
+
+        async function handleWithdraw(event) {
             event.preventDefault();
-            
+            const userData = JSON.parse(localStorage.getItem('userData')) || {};
+            let accountBalance = parseFloat(localStorage.getItem('accountBalance') || '0');
+            // Check if user is inactive
+            if (userData.membershipLevel === 'Inactive') {
+                showNotification('Inactive members cannot withdraw funds. Please activate your account first.', 'error');
+                return;
+            }
+            // Check if user has any withdrawable account balance
+            if (!accountBalance || accountBalance <= 0) {
+                showNotification('No funds available for withdrawal. Start earning to withdraw.', 'error');
+                return;
+            }
             const amountInput = document.getElementById('withdrawAmount');
             const amount = parseFloat(amountInput.value);
-            
             // Validation
             if (amount < 150) {
                 showNotification('Minimum withdrawal amount is KSH 150', 'error');
                 return;
             }
-            
             if (amount > 200000) {
                 showNotification('Maximum withdrawal amount is KSH 200,000', 'error');
                 return;
             }
-
-            // Check if amount + fee is greater than balance
-            const currentBalance = parseFloat(document.getElementById('userBalance').textContent.replace(/,/g, ''));
+            // Check if amount + fee is greater than account balance
             const processingFee = amount * 0.07;
             const totalWithdrawal = amount + processingFee;
-            if (totalWithdrawal > currentBalance) {
+            if (totalWithdrawal > accountBalance) {
                 showNotification('Insufficient balance', 'error');
                 return;
             }
-
             // Check payment methods and show selection modal
-            const userData = JSON.parse(localStorage.getItem('userData')) || {};
             const hasMpesa = userData.mpesa && userData.mpesa !== 'Not Set';
             const hasBank = userData.bankType && 
                           userData.bankType !== 'Not Set' && 
                           userData.accountNumber && 
                           userData.accountNumber !== 'Not Set';
-
             if (!hasMpesa && !hasBank) {
                 showNotification('Please set up your payment details in your profile first', 'error');
                 setTimeout(() => {
@@ -644,7 +717,6 @@
                 }, 2000);
                 return;
             }
-
             // Show payment method selection
             window.withdrawalAmount = amount;
             showPaymentMethodModal(amount);
@@ -654,24 +726,16 @@
                 const amountInput = document.getElementById('withdrawAmount');
                 const originalAmount = parseFloat(amountInput.value);
                 const totalAmount = window.totalWithdrawalAmount;
-
-                // Update user's balance
-                const userData = JSON.parse(localStorage.getItem('userData')) || {};
-                const currentBalance = parseFloat(document.getElementById('userBalance').textContent.replace(/,/g, ''));
-                const newBalance = currentBalance - totalAmount;
-                document.getElementById('userBalance').textContent = newBalance.toLocaleString(undefined, {
+                // Update withdrawable account balance
+                let accountBalance = parseFloat(localStorage.getItem('accountBalance') || '0');
+                const newBalance = accountBalance - totalAmount;
+                localStorage.setItem('accountBalance', newBalance);
+                document.getElementById('userAccountBalance').textContent = newBalance.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                 });
-
-                // Update localStorage balance
-                userData.balance = newBalance;
-                localStorage.setItem('userData', JSON.stringify(userData));
-
                 // Create withdrawal request for admin approval
-                // Determine withdrawal mode (manual or automatic)
-                // For now, default to 'manual'. You can set this dynamically based on user or admin settings.
-                const withdrawalMode = 'manual'; // or 'automatic' if automated
+                const userData = JSON.parse(localStorage.getItem('userData')) || {};
                 const withdrawalRequest = {
                     id: Date.now().toString(),
                     amount: originalAmount,
@@ -682,17 +746,18 @@
                     status: 'Pending',
                     date: new Date().toLocaleDateString(),
                     time: new Date().toLocaleTimeString(),
-                    mode: withdrawalMode
+                    userId: userData.userId || userData.id,
+                    userEmail: userData.email,
+                    userName: userData.fullName || userData.username,
+                    adminApproved: false,
+                    adminComment: '',
+                    submittedAt: new Date().toISOString()
                 };
-
-                // Save withdrawal request
                 const withdrawalRequests = JSON.parse(localStorage.getItem('withdrawalRequests')) || [];
                 withdrawalRequests.push(withdrawalRequest);
                 localStorage.setItem('withdrawalRequests', JSON.stringify(withdrawalRequests));
-
                 showNotification('Withdrawal request submitted successfully!', 'success');
                 amountInput.value = '';
-
                 // Add to recent withdrawals with processing fee info
                 addToWithdrawalHistory(originalAmount, totalAmount);
             }        function showNotification(message, type) {
@@ -757,45 +822,78 @@
         });
 
         // Function to load withdrawal history
-        function loadWithdrawalHistory() {
-            const withdrawalList = document.querySelector('.withdrawal-list');
-            const withdrawalRequests = JSON.parse(localStorage.getItem('withdrawalRequests')) || [];
-            
-            // Clear existing list
-            withdrawalList.innerHTML = '';
-            
-            // Add each withdrawal to the list
-            withdrawalRequests.forEach(withdrawal => {
-                const statusClass = withdrawal.status.toLowerCase();
-                const statusIcon = {
-                    'pending': 'fa-circle-notch fa-spin',
-                    'approved': 'fa-check',
-                    'success': 'fa-check-circle'
-                }[statusClass] || 'fa-circle-notch fa-spin';
+            async function processWithdrawal() {
+                const amountInput = document.getElementById('withdrawAmount');
+                const originalAmount = parseFloat(amountInput.value);
+                const totalAmount = window.totalWithdrawalAmount;
 
-                const withdrawalItem = document.createElement('li');
-                withdrawalItem.className = 'withdrawal-item';
-                withdrawalItem.innerHTML = `
-                    <div class="withdrawal-main-info">
-                        <div class="withdrawal-primary">
-                            <span class="withdrawal-amount">KSH ${withdrawal.amount.toLocaleString()}</span>
-                            <span class="withdrawal-method">${withdrawal.method}</span>
-                        </div>
-                        <div class="withdrawal-secondary">
-                            <span class="withdrawal-datetime">
-                                <i class="fas fa-calendar"></i> ${withdrawal.date}
-                                <i class="fas fa-clock"></i> ${withdrawal.time}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="withdrawal-status-container">
-                        <span class="withdrawal-total">Total: KSH ${withdrawal.totalAmount.toLocaleString()}</span>
-                        <span class="withdrawal-status status-${statusClass}">
-                            <i class="fas ${statusIcon}"></i> ${withdrawal.status}
-                            ${withdrawal.transactionId ? `<br><small>Transaction ID: ${withdrawal.transactionId}</small>` : ''}
-                        </span>
-                    </div>
-                `;
+                // Try server submit
+                await loadAuthSession();
+                if (sup && currentUserId) {
+                    try {
+                        const recipient = document.getElementById('confirmRecipient').textContent;
+                        const method = document.getElementById('confirmMethod').textContent;
+                        const payload = {
+                            user_id: currentUserId,
+                            amount: originalAmount,
+                            fee: (totalAmount - originalAmount),
+                            bank_name: method === 'Bank Transfer' ? (recipient.split(' - ')[0] || null) : null,
+                            bank_account: method === 'Bank Transfer' ? (recipient.split(' - ')[1] || null) : null,
+                            status: 'pending',
+                            metadata: { method, recipient }
+                        };
+                        const { data, error } = await sup.from('withdraw_requests').insert([payload]);
+                        if (error) throw error;
+
+                        // Optimistic UI update
+                        let accountBalance = parseFloat(localStorage.getItem('accountBalance') || '0');
+                        const newBalance = accountBalance - totalAmount;
+                        try { localStorage.setItem('accountBalance', newBalance); } catch(e){}
+                        document.getElementById('userAccountBalance').textContent = newBalance.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 });
+
+                        showNotification('Withdrawal request submitted successfully!', 'success');
+                        amountInput.value = '';
+                        addToWithdrawalHistory(originalAmount, totalAmount);
+                        // Reload withdrawal history
+                        await loadWithdrawalHistory();
+                        return;
+                    } catch (e) {
+                        console.warn('Supabase withdraw insert failed, falling back to local:', e);
+                        showNotification('Server submission failed, saved locally.', 'warning');
+                        // fall through to local fallback
+                    }
+                }
+
+                // Local fallback
+                const accountBalance = parseFloat(localStorage.getItem('accountBalance') || '0');
+                const newBalance = accountBalance - totalAmount;
+                try { localStorage.setItem('accountBalance', newBalance); } catch(e){}
+                document.getElementById('userAccountBalance').textContent = newBalance.toLocaleString(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 });
+                const userDataLocal = JSON.parse(localStorage.getItem('userData')) || {};
+                const withdrawalRequest = {
+                    id: Date.now().toString(),
+                    amount: originalAmount,
+                    totalAmount: totalAmount,
+                    fee: totalAmount - originalAmount,
+                    method: document.getElementById('confirmMethod').textContent,
+                    recipientDetails: document.getElementById('confirmRecipient').textContent,
+                    status: 'Pending',
+                    date: new Date().toLocaleDateString(),
+                    time: new Date().toLocaleTimeString(),
+                    userId: userDataLocal.userId || userDataLocal.id,
+                    userEmail: userDataLocal.email,
+                    userName: userDataLocal.fullName || userDataLocal.username,
+                    adminApproved: false,
+                    adminComment: '',
+                    submittedAt: new Date().toISOString()
+                };
+                const withdrawalRequests = JSON.parse(localStorage.getItem('withdrawalRequests')) || [];
+                withdrawalRequests.push(withdrawalRequest);
+                localStorage.setItem('withdrawalRequests', JSON.stringify(withdrawalRequests));
+                showNotification('Withdrawal request submitted locally!', 'success');
+                amountInput.value = '';
+                addToWithdrawalHistory(originalAmount, totalAmount);
+            }
                 withdrawalList.appendChild(withdrawalItem);
             });
 
@@ -811,21 +909,23 @@
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
-            // Load user data with test balance
-            let userData = JSON.parse(localStorage.getItem('userData')) || {};
-            
-            // Set test balance of KSH 50,000 if no balance exists
-            if (!userData.balance) {
-                userData.balance = 50000;
-                localStorage.setItem('userData', JSON.stringify(userData));
+            // Initialize withdrawable account balance if not set
+            function updateAccountBalanceDisplay() {
+                let accountBalance = localStorage.getItem('accountBalance');
+                if (accountBalance === null) {
+                    accountBalance = 0;
+                    localStorage.setItem('accountBalance', accountBalance);
+                }
+                document.getElementById('userAccountBalance').textContent = parseFloat(accountBalance).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
             }
-            
-            // Display the balance
-            document.getElementById('userBalance').textContent = userData.balance.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+            updateAccountBalanceDisplay();
+            // Listen for custom event to update balance in real time
+            window.addEventListener('incomeCollected', function() {
+                updateAccountBalanceDisplay();
             });
-            
             // Load withdrawal history
             loadWithdrawalHistory();
         });

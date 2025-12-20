@@ -3,12 +3,29 @@
 <head>
         <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
         <script>
-            // Only declare supabase if not already declared
-            if (typeof supabase === 'undefined') {
-                var supabase = supabase.createClient(
-                    'https://yoqtahdctzponqkmgkzn.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
-                );
+            // Only declare a safe placeholder for the Supabase client (do NOT embed URL/anon key here)
+            if (typeof window.supabaseClient === 'undefined') {
+                window.supabaseClient = null;
+                /**
+                 * Initialize the Supabase client securely at runtime.
+                 * DO NOT pass credentials in static HTML. Call this from a secure runtime
+                 * (server-injected config, environment variables, or a protected admin endpoint).
+                 *
+                 * Example (secure source):
+                 *   window.initSupabaseClient(SAFE_URL, SAFE_ANON_KEY);
+                 */
+                window.initSupabaseClient = function(url, anonKey) {
+                    if (!url || !anonKey) {
+                        console.warn('Supabase URL or anon key not provided. Call initSupabaseClient(url, anonKey) with secure credentials.');
+                        return;
+                    }
+                    if (window.supabaseClient) return;
+                    if (typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') {
+                        window.supabaseClient = window.supabase.createClient(url, anonKey);
+                    } else {
+                        console.warn('Supabase library not available.');
+                    }
+                };
             }
         </script>
     <meta charset="UTF-8">
@@ -17,65 +34,99 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Supabase client already initialized above -->
     <style>
+        :root {
+            --primary-bg: #2c3e50;
+            --secondary-bg: #34495e;
+            --accent-color: #3498db;
+            --accent-hover: #2980b9;
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --success-color: #2ecc71;
+            --warning-color: #f1c40f;
+            --error-color: #e74c3c;
+            --card-bg: #34495e;
+            --border-color: #3498db;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
-            background: #232526;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--primary-bg);
             margin: 0;
             padding: 0;
+            color: var(--text-primary);
         }
+        
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 40px auto;
-            background: #fff;
+            background: var(--secondary-bg);
             padding: 32px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border: 1px solid var(--border-color);
         }
+        
         h1 {
-            color: #2c3e50;
+            color: var(--accent-color);
             margin-bottom: 24px;
             text-align: center;
+            font-size: 2.2rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
+        
         .admin-table-panel {
             margin: 24px auto;
-            background: #232526;
+            background: var(--card-bg);
             border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+            box-shadow: 0 4px 16px rgba(52, 152, 219, 0.1);
             padding: 24px;
             max-height: 420px;
             overflow-y: auto;
+            border: 1px solid var(--border-color);
         }
+        
         .admin-table {
             width: 100%;
-            border-collapse: collapse;
-            background: #232526;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--card-bg);
         }
+        
         .admin-table th, .admin-table td {
-            border: 1px solid #ffd54f;
-            padding: 10px 14px;
-            color: #ffd54f;
+            border: 1px solid var(--border-color);
+            padding: 12px 16px;
+            color: var(--text-primary);
             text-align: center;
         }
+        
         .admin-table th {
-            background: #232526;
-            font-weight: 700;
+            background: var(--accent-color);
+            font-weight: 600;
             font-size: 1.05rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
+        
         .admin-table td button {
-            background: #ffd54f;
-            color: #232526;
+            background: var(--accent-color);
+            color: var(--text-primary);
             border: none;
-            border-radius: 5px;
-            padding: 6px 14px;
-            margin: 0 2px;
-            font-size: 0.98rem;
+            border-radius: 6px;
+            padding: 8px 16px;
+            margin: 0 4px;
+            font-size: 0.95rem;
             font-weight: 500;
             cursor: pointer;
-            transition: background 0.2s, color 0.2s;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
         }
+        
         .admin-table td button:hover {
-            background: #232526;
-            color: #ffd54f;
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
         }
         .add-admin-form {
             display: flex;
@@ -90,34 +141,70 @@
             flex-direction: column;
             align-items: flex-start;
             width: 100%;
-            margin-bottom: 8px;
+            margin-bottom: 16px;
         }
+        
         .form-row label {
-            color: #ffd54f;
+            color: var(--accent-color);
             font-weight: 600;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
+            font-size: 1.05rem;
         }
+        
         .form-row input[type="text"],
         .form-row input[type="password"],
         .form-row input[type="email"],
-        .form-row input[type="tel"] {
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
-            background: #232526;
-            color: #ffd54f;
+        .form-row input[type="tel"],
+        .form-row input[type="datetime-local"],
+        .form-row select {
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
             font-size: 1rem;
-            width: 220px;
+            width: 280px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
         }
+        
+        .form-row input:focus,
+        .form-row select:focus {
+            border-color: var(--accent-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
         .privileges-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            justify-content: flex-start;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 16px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
         }
+        
         .privileges-list label {
-            color: #ffd54f;
+            color: var(--text-primary);
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .privileges-list label:hover {
+            background: rgba(52, 152, 219, 0.1);
+        }
+        
+        .privileges-list input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-color);
         }
         .admin-link-result {
             margin-top: 18px;
@@ -151,25 +238,57 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             z-index: 1000;
+            backdrop-filter: blur(5px);
         }
+        
         .admin-modal-content {
-            background: #fff;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-            max-width: 400px;
+            background: var(--secondary-bg);
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(52, 152, 219, 0.2);
+            max-width: 450px;
             width: 100%;
             text-align: center;
+            border: 1px solid var(--border-color);
+            animation: modalFadeIn 0.3s ease;
         }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
         .admin-modal-content h2 {
-            margin-bottom: 16px;
-            color: #2c3e50;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+            font-size: 1.8rem;
+            font-weight: 600;
         }
+        
         .admin-modal-content p {
             margin-bottom: 24px;
-            color: #333;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+        
+        .admin-modal-content input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 20px;
         }
         .sync-status {
             display: none;
@@ -266,6 +385,14 @@
                     <label><input type="checkbox" value="notifications"> Notifications</label>
                     <label><input type="checkbox" value="finance"> Finance/Accounting</label>
                     <label><input type="checkbox" value="referral"> Referral/Commission</label>
+                    <label><input type="checkbox" value="investments"> Investment Management</label>
+                    <label><input type="checkbox" value="wallet"> Wallet Management</label>
+                    <label><input type="checkbox" value="manual_deposit"> Manual Deposit Approval</label>
+                    <label><input type="checkbox" value="auto_deposit"> Auto Deposit System</label>
+                    <label><input type="checkbox" value="transactions"> Transaction History</label>
+                    <label><input type="checkbox" value="reports"> Reports & Analytics</label>
+                    <label><input type="checkbox" value="security"> Security Settings</label>
+                    <label><input type="checkbox" value="system"> System Configuration</label>
                 </div>
             </div>
             <div class="form-row">

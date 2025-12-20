@@ -1,677 +1,872 @@
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script>
-      const supabase = supabase.createClient(
-        'https://yoqtahdctzponqkmgkzn.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvcXRhaGRjdHpwb25xa21na3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTkzNjMsImV4cCI6MjA3MTA3NTM2M30.D7qHpHtZsPYx8vyjA6eT0ukpZacALXosVErl3bMgJUk'
-      );
-    </script>
-<!-- User Management Table with Profile Picture -->
-<div style="margin: 24px 0 0 24px;">
-  <a href="Admin-panel.html" class="back-btn" style="background:#ffd54f;color:#232526;padding:8px 18px;border-radius:6px;text-decoration:none;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.10);transition:background 0.2s, color 0.2s;">&larr; Back to Admin Panel</a>
-  <button class="system-btn btn-reset" onclick="confirmSystemReset()" style="background:#ff9800;color:#000;padding:8px 18px;border-radius:6px;font-weight:600;">Reset</button>
-  <button class="system-btn btn-sync" onclick="syncChanges()" style="background:#2196f3;color:#fff;padding:8px 18px;border-radius:6px;font-weight:600;">Sync Changes</button>
-</div>
-<div class="dashboard-header">
-    <h2>User Management</h2>
-    <div class="search-filters">
-document.head.appendChild(script);
-autoTableScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js';
-document.head.appendChild(autoTableScript);
-  <input type="text" id="searchInput" class="search-input" placeholder="Search users...">
-        <select id="statusFilter" class="filter-select">
-            <option value="">All Status</option>
-            <option value="Active">Active</option>
-            <option value="Locked">Locked</option>
-        </select>
-        <div class="export-buttons">
-            <button onclick="exportToCSV()" class="export-btn">Export to CSV</button>
-            <button onclick="exportToPDF()" class="export-btn pdf-btn">Export to PDF</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - AfricaBased</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --accent: #4ecdc4;
+            --accent-gradient: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            --nav-bg: rgba(26,34,56,0.98);
+            --text: #fff;
+        }
+        
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #0f172a;
+            color: var(--text);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .user-table-panel {
+            margin: 24px auto;
+            max-width: 1200px;
+            background: var(--nav-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(78,205,196,0.10);
+            padding: 24px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .dashboard-header {
+            margin-bottom: 20px;
+        }
+
+        .search-filters {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .search-input, .filter-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--accent);
+            background: var(--nav-bg);
+            color: var(--text);
+        }
+
+        .export-buttons {
+            margin-left: auto;
+        }
+
+        .export-btn {
+            background: var(--accent-gradient);
+            color: var(--text);
+            background: #ffd54f;
+            color: #232526;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 18px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .back-btn {
+            background: #ffd54f;
+            color: #232526;
+            padding: 8px 18px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #232526;
+        }
+
+        .user-table th, .user-table td {
+            border: 1px solid #ffd54f;
+            padding: 10px 14px;
+            color: #ffd54f;
+            text-align: center;
+        }
+
+        .user-table th {
+            background: #232526;
+            font-weight: 700;
+            font-size: 1.05rem;
+            cursor: pointer;
+        }
+
+        .user-profile-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent);
+        }
+
+        .user-actions-dropdown {
+            background: var(--nav-bg);
+            color: var(--text);
+            border: 1px solid var(--accent);
+            border-radius: 5px;
+            padding: 6px 14px;
+            font-size: 0.98rem;
+            font-weight: 500;
+            cursor: pointer;
+            width: 200px;
+        }
+
+        .user-actions-dropdown option, .user-actions-dropdown optgroup {
+            background: var(--nav-bg);
+            color: var(--text);
+        }
+
+        .sync-status {
+            background: var(--nav-bg);
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px auto;
+            max-width: 600px;
+            display: none;
+        }
+
+        .sync-progress {
+            height: 4px;
+            background: rgba(26,34,56,0.5);
+            border-radius: 2px;
+            margin: 8px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background: var(--accent-gradient);
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        .pagination {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .pagination button {
+            background: var(--accent-gradient);
+            color: var(--text);
+            border: none;
+            border-radius: 6px;
+            padding: 8px 18px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .pagination button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(78,205,196,0.18);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15,23,42,0.8);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--nav-bg);
+            padding: 30px;
+            border-radius: 12px;
+            min-width: 300px;
+            box-shadow: 0 8px 32px rgba(78,205,196,0.15);
+        }
+
+        .modal input, .modal select {
+            width: 100%;
+            margin: 10px 0;
+            padding: 8px;
+            background: var(--nav-bg);
+            border: 1px solid var(--accent);
+            color: var(--text);
+            border-radius: 6px;
+        }
+
+        .modal button {
+            background: #ffd54f;
+            color: #232526;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <a href="Admin-panel.html" class="back-btn">← Back to Admin Panel</a>
+
+    <div class="dashboard-header">
+        <h2>User Management</h2>
+        <div class="search-filters">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search users...">
+            <select id="statusFilter" class="filter-select">
+                <option value="">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Locked">Locked</option>
+            </select>
+            <div class="export-buttons">
+                <button onclick="exportToCSV()" class="export-btn">Export to CSV</button>
+                <button onclick="exportToPDF()" class="export-btn">Export to PDF</button>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="userTablePanel" class="user-table-panel" style="display:block;">
-    <div class="table-container">
+    <div class="user-table-panel">
         <table class="user-table">
             <thead>
                 <tr>
                     <th onclick="sortTable('profile')">Profile</th>
-                <th>Username</th>
-                <th>User ID</th>
-                <th>Mpesa Number</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Amount Invested</th>
-                <th>Wallet Amount</th>
-                <th>Account Balance</th>
-                <th>Referrals</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="userTableBody"></tbody>
-    </table>
-</div>
-<style>
-.user-table-panel {
-    margin: 24px auto;
-    max-width: 1000px;
-    background: #232526;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.12);
-    padding: 24px;
-    max-height: 520px;
-    overflow-y: auto;
-}
-.user-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #232526;
-}
-.user-table th, .user-table td {
-    border: 1px solid #ffd54f;
-    padding: 10px 14px;
-    color: #ffd54f;
-    text-align: center;
-}
-.user-table th {
-    background: #232526;
-    font-weight: 700;
-    font-size: 1.05rem;
-}
-.user-actions-dropdown {
-    background: #232526;
-    color: #ffd54f;
-    border: 1px solid #ffd54f;
-    border-radius: 5px;
-    padding: 6px 14px;
-    font-size: 0.98rem;
-    font-weight: 500;
-    cursor: pointer;
-}
-.user-actions-dropdown option {
-    background: #232526;
-    color: #ffd54f;
-}
-.user-profile-img {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #ffd54f;
-    background: #232526;
-}
-.admin-modal {
-  position: fixed;
-  z-index: 9999;
-  left: 0; top: 0; width: 100vw; height: 100vh;
-  background: rgba(35,37,38,0.7);
-  display: flex; align-items: center; justify-content: center;
-}
-.admin-modal-content {
-  background: #232526;
-  color: #ffd54f;
-  border-radius: 12px;
-  padding: 32px 24px;
-  min-width: 320px;
-  max-width: 90vw;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
-  position: relative;
-}
-.admin-modal-close {
-  position: absolute;
-  top: 12px; right: 18px;
-  font-size: 2rem;
-  color: #ffd54f;
-  cursor: pointer;
-}
-.admin-modal-content button {
-  background: #ffd54f;
-  color: #232526;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 18px;
-  font-weight: 600;
-  margin-top: 18px;
-  cursor: pointer;
-}
-.admin-modal-content button:hover {
-  background: #232526;
-  color: #ffd54f;
-  border: 1px solid #ffd54f;
-}
-.admin-modal-content input, .admin-modal-content select {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #ffd54f;
-  background: #232526;
-  color: #ffd54f;
-  margin-bottom: 12px;
-  width: 100%;
-}
-.impersonation-banner {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  background: #ffd54f;
-  color: #232526;
-  padding: 16px 32px;
-  font-size: 1.15rem;
-  font-weight: 600;
-  z-index: 99999;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-}
-.impersonation-banner button {
-  margin-left: 24px;
-  background: #232526;
-  color: #ffd54f;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 18px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.impersonation-banner button:hover {
-  background: #ffd54f;
-  color: #232526;
-  border: 1px solid #232526;
-}
-</style>
-<script>
-import supabase from './js/supabaseClient.js';
-let users = [];
+                    <th onclick="sortTable('username')">Username</th>
+                    <th onclick="sortTable('id')">User ID</th>
+                    <th onclick="sortTable('mpesa')">Mpesa Number</th>
+                    <th onclick="sortTable('email')">Email</th>
+                    <th onclick="sortTable('invested')">Amount Invested</th>
+                    <th onclick="sortTable('wallet')">Wallet Amount</th>
+                    <th onclick="sortTable('balance')">Account Balance</th>
+                    <th onclick="sortTable('referrals')">Referrals</th>
+                    <th onclick="sortTable('status')">Status</th>
+                    <th onclick="sortTable('lastAction')">Last Action</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody"></tbody>
+        </table>
+    </div>
 
-async function fetchUsersFromDB() {
-  // Fetch profiles
-  const { data: profiles, error: profilesError } = await supabase
-    .from('profiles')
-    .select('*');
-  if (profilesError) {
-    console.error('Error fetching profiles:', profilesError.message);
-    return [];
-  }
-
-  // Fetch wallet balances
-  const { data: wallets, error: walletsError } = await supabase
-    .from('user_wallet')
-    .select('user_id, balance');
-  if (walletsError) {
-    console.error('Error fetching wallets:', walletsError.message);
-  }
-
-  // Fetch account balances
-  const { data: accounts, error: accountsError } = await supabase
-    .from('user_account')
-    .select('user_id, balance');
-  if (accountsError) {
-    console.error('Error fetching accounts:', accountsError.message);
-  }
-
-  // Fetch investments
-  const { data: investments, error: investmentsError } = await supabase
-    .from('user_products')
-    .select('user_id, amount');
-  if (investmentsError) {
-    console.error('Error fetching investments:', investmentsError.message);
-  }
-
-  // Aggregate data
-  return profiles.map(profile => {
-    const wallet = wallets?.find(w => w.user_id === profile.id)?.balance || 0;
-    const account = accounts?.find(a => a.user_id === profile.id)?.balance || 0;
-    const invested = investments?.filter(i => i.user_id === profile.id).reduce((sum, i) => sum + (i.amount || 0), 0) || 0;
-    return {
-      username: profile.username || profile.email,
-      id: profile.id,
-      mpesa: profile.mpesa || '-',
-      email: profile.email || '-',
-      phone: profile.phone || '-',
-      invested,
-      wallet,
-      balance: account,
-      referrals: profile.referrals || 0,
-      status: profile.status || 'Active',
-      profile: profile.avatar_url || 'https://via.placeholder.com/48?text=No+Img'
-    };
-  });
-}
-
-async function initializeUserTable() {
-  users = await fetchUsersFromDB();
-  renderUserTable(users);
-}
-
-document.addEventListener('DOMContentLoaded', initializeUserTable);
-function renderUserTable(displayUsers = users) {
-    const tbody = document.getElementById('userTableBody');
-    tbody.innerHTML = '';
+    <div id="pagination" class="pagination"></div>
     
-    if (displayUsers.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="12" style="text-align: center; padding: 20px;">
-                    No users found matching your search criteria
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    users.forEach((user, idx) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><img src='${user.profile || "https://via.placeholder.com/48?text=No+Img"}' class='user-profile-img' alt='Profile'></td>
-            <td>${user.username}</td>
-            <td>${user.id}</td>
-            <td>${user.mpesa}</td>
-            <td>${user.email || '-'}</td>
-            <td>${user.phone || '-'}</td>
-            <td>Ksh ${user.invested}</td>
-            <td>Ksh ${user.wallet}</td>
-            <td>Ksh ${user.balance}</td>
-            <td>${user.referrals}</td>
-            <td>${user.status}</td>
-            <td>
-                <select class='user-actions-dropdown' onchange='handleUserAction(this.value, ${idx})'>
-                    <option value=''>Select Action</option>
-                    <option value='impersonate'>Impersonate</option>
-                    <option value='delete'>Delete</option>
-                    <option value='lock'>Lock</option>
-                    <option value='unlock'>Unlock</option>
-                    <option value='resetPassword'>Reset Password</option>
-                    <option value='addProduct'>Add Product</option>
-                    <option value='removeProduct'>Remove Product</option>
-                    <optgroup label='Wallet'>
-                        <option value='creditWallet'>Credit Wallet</option>
-                        <option value='deductWallet'>Deduct Wallet</option>
-                    </optgroup>
-                    <optgroup label='Account'>
-                        <option value='deductAccount'>Deduct Account</option>
-                    </optgroup>
-                    <option value='changeRole'>Change Role</option>
-                    <optgroup label='Upgrade/Downgrade'>
-                        <option value='upgrade'>Upgrade</option>
-                        <option value='downgrade'>Downgrade</option>
-                    </optgroup>
-                    <optgroup label='Freeze'>
-                        <option value='freezeWithdrawal'>Freeze Withdrawal</option>
-                        <optgroup label='Services'>
-                            <option value='freezeWhatsApp'>Freeze WhatsApp Group</option>
-                            <option value='freezeManager'>Freeze Manager Access</option>
-                        </optgroup>
-                    </optgroup>
-                </select>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-// Search and filter functionality
-let currentPage = 1;
-const itemsPerPage = 10;
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div id="modalContent"></div>
+        </div>
+    </div>
 
-function searchAndFilterUsers() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const statusFilter = document.getElementById('statusFilter').value;
-    
-    return users.filter(user => {
-        const matchesSearch = Object.values(user).some(value => 
-            String(value).toLowerCase().includes(searchTerm)
-        );
-        const matchesStatus = !statusFilter || user.status === statusFilter;
-        return matchesSearch && matchesStatus;
-    });
-}
+    <div class="sync-status" id="syncStatus">
+        <div class="sync-progress">
+            <div class="progress-bar" id="syncProgress"></div>
+        </div>
+        <p id="syncMessage"></p>
+    </div>
 
-function updatePagination(filteredUsers) {
-    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-    const start = (currentPage - 1) * itemsPerPage;
-    const paginatedUsers = filteredUsers.slice(start, start + itemsPerPage);
-    
-    renderUserTable(paginatedUsers);
-    updatePaginationControls(totalPages);
-}
+    <script>
+        // Global variables
+        let users = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let sortDirection = 1;
+        let currentSortColumn = null;
 
-function updatePaginationControls(totalPages) {
-    const controls = document.getElementById('paginationControls');
-    controls.innerHTML = `
-        <button onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
-        <span>Page ${currentPage} of ${totalPages}</span>
-        <button onclick="changePage(1)" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
-    `;
-}
+        // Initialize with default users
+        const defaultUsers = [
+            {
+                username: 'premium.user',
+                id: 'PREM-001',
+                mpesa: '0712345678',
+                email: 'premium@africabased.com',
+                phone: '0712345678',
+                invested: 5000,
+                wallet: 2000,
+                balance: 7000,
+                referrals: 5,
+                status: 'Active',
+                lastAction: 'Wallet credited: +2000 on Aug 30',
+                actionHistory: ['Wallet credited: +2000', 'Account upgraded to Premium', 'Account created'],
+                profile: 'https://via.placeholder.com/48?text=Premium'
+            },
+            {
+                username: 'basic.user',
+                id: 'BASIC-001',
+                mpesa: '0723456789',
+                email: 'basic@africabased.com',
+                phone: '0723456789',
+                invested: 1000,
+                wallet: 500,
+                balance: 1500,
+                referrals: 2,
+                status: 'Active',
+                lastAction: 'Investment added: +1000 on Aug 30',
+                actionHistory: ['Investment added: +1000', 'Account created'],
+                profile: 'https://via.placeholder.com/48?text=Basic'
+            }
+        ];
 
-function changePage(delta) {
-    currentPage += delta;
-    const filteredUsers = searchAndFilterUsers();
-    updatePagination(filteredUsers);
-}
+        // Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            users = defaultUsers;
+            renderUserTable();
+            setupEventListeners();
+        });
 
-function sortTable(column) {
-    users.sort((a, b) => {
-        if (a[column] < b[column]) return -1;
-        if (a[column] > b[column]) return 1;
-        return 0;
-    });
-    const filteredUsers = searchAndFilterUsers();
-    updatePagination(filteredUsers);
-}
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', filterUsers);
+            document.getElementById('statusFilter').addEventListener('change', filterUsers);
+        }
 
-function exportToCSV() {
-    const filteredUsers = searchAndFilterUsers();
-    const headers = Object.keys(users[0]).join(',');
-    const rows = filteredUsers.map(user => Object.values(user).join(','));
-    const csv = [headers, ...rows].join('\\n');
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'users-export.csv';
-    a.click();
-}
+        function filterUsers() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
 
-// Update event listeners
-document.getElementById('searchInput').addEventListener('input', () => {
-    currentPage = 1;
-    const filteredUsers = searchAndFilterUsers();
-    updatePagination(filteredUsers);
-});
+            const filtered = users.filter(user => {
+                const matchesSearch = Object.values(user).some(value => 
+                    String(value).toLowerCase().includes(searchTerm)
+                );
+                const matchesStatus = !statusFilter || user.status === statusFilter;
+                return matchesSearch && matchesStatus;
+            });
 
-document.getElementById('statusFilter').addEventListener('change', () => {
-    currentPage = 1;
-    const filteredUsers = searchAndFilterUsers();
-    updatePagination(filteredUsers);
-});
+            renderUserTable(filtered);
+        }
 
-// Modal HTML
-const modalHtml = `
-<div id="adminModal" class="admin-modal" style="display:none;">
-  <div class="admin-modal-content">
-    <span class="admin-modal-close" onclick="closeAdminModal()">&times;</span>
-    <div id="adminModalBody"></div>
-  </div>
-</div>
-<style>
-.admin-modal {
-  position: fixed;
-  z-index: 9999;
-  left: 0; top: 0; width: 100vw; height: 100vh;
-  background: rgba(35,37,38,0.7);
-  display: flex; align-items: center; justify-content: center;
-}
-.admin-modal-content {
-  background: #232526;
-  color: #ffd54f;
-  border-radius: 12px;
-  padding: 32px 24px;
-  min-width: 320px;
-  max-width: 90vw;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
-  position: relative;
-}
-.admin-modal-close {
-  position: absolute;
-  top: 12px; right: 18px;
-  font-size: 2rem;
-  color: #ffd54f;
-  cursor: pointer;
-}
-.admin-modal-content button {
-  background: #ffd54f;
-  color: #232526;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 18px;
-  font-weight: 600;
-  margin-top: 18px;
-  cursor: pointer;
-}
-.admin-modal-content button:hover {
-  background: #232526;
-  color: #ffd54f;
-  border: 1px solid #ffd54f;
-}
-.admin-modal-content input, .admin-modal-content select {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #ffd54f;
-  background: #232526;
-  color: #ffd54f;
-  margin-bottom: 12px;
-  width: 100%;
-}
-</style>
-`;
-document.body.insertAdjacentHTML('beforeend', modalHtml);
+        function renderUserTable(displayUsers = users) {
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = '';
 
-function openAdminModal(contentHtml) {
-  document.getElementById('adminModalBody').innerHTML = contentHtml;
-  document.getElementById('adminModal').style.display = 'flex';
-}
-function closeAdminModal() {
-  document.getElementById('adminModal').style.display = 'none';
-}
+            const start = (currentPage - 1) * itemsPerPage;
+            const paginatedUsers = displayUsers.slice(start, start + itemsPerPage);
 
-function handleUserAction(action, idx) {
-  var user = users[idx];
-  switch(action) {
-    case 'impersonate':
-      isImpersonating = true;
-      impersonatedUser = user;
-      impersonationStartTime = Date.now();
-      showImpersonationBanner(user);
-      window.location.href = 'home.html?user=' + user.id + '&impersonate=1&start=' + impersonationStartTime;
-      break;
-    case 'viewProducts':
-      window.location.href = 'My-products.html?user=' + user.id + '&impersonate=1';
-      break;
-    case 'viewProfile':
-      window.location.href = 'profile.html?user=' + user.id + '&impersonate=1';
-      break;
-    case 'goHome':
-      window.location.href = 'home.html?user=' + user.id + '&impersonate=1';
-      break;
-    case 'delete':
-      openAdminModal('<h3>Delete User</h3><p>Are you sure you want to delete <strong>' + user.username + '</strong>?</p><button onclick="confirmDeleteUser(' + idx + ')">Delete</button>');
-      break;
-    case 'lock':
-      user.status = 'Locked';
-      renderUserTable();
-      break;
-    case 'unlock':
-      user.status = 'Active';
-      renderUserTable();
-      break;
-    case 'resetPassword':
-      openAdminModal('<h3>Reset Password</h3><p>Set a new password for <strong>' + user.username + '</strong>:</p><input type="password" id="newPassword"><button onclick="confirmResetPassword(' + idx + ')">Reset</button>');
-      break;
-    case 'addProduct':
-      window.location.href = 'My-products.html?user=' + user.id + '&action=add';
-      break;
-    case 'removeProduct':
-      window.location.href = 'My-products.html?user=' + user.id + '&action=remove';
-      break;
-    case 'creditWallet':
-      openAdminModal('<h3>Credit Wallet</h3><p>Enter amount to credit to <strong>' + user.username + '</strong>:</p><input type="number" id="creditAmount"><button onclick="confirmCreditWallet(' + idx + ')">Credit</button>');
-      break;
-    case 'deductWallet':
-      openAdminModal('<h3>Deduct Wallet</h3><p>Enter amount to deduct from <strong>' + user.username + '</strong>:</p><input type="number" id="deductAmount"><button onclick="confirmDeductWallet(' + idx + ')">Deduct</button>');
-      break;
-    case 'deductAccount':
-      openAdminModal('<h3>Deduct Account</h3><p>Enter amount to deduct from account for <strong>' + user.username + '</strong>:</p><input type="number" id="deductAccAmount"><button onclick="confirmDeductAccount(' + idx + ')">Deduct</button>');
-      break;
-    case 'changeRole':
-      openAdminModal('<h3>Change Role</h3><p>Select new role for <strong>' + user.username + '</strong>:</p><select id="newRole"><option value="user">User</option><option value="admin">Admin</option><option value="manager">Manager</option></select><button onclick="confirmChangeRole(' + idx + ')">Change</button>');
-      break;
-    case 'upgrade':
-      openAdminModal('<h3>Upgrade User</h3><p>Upgrade <strong>' + user.username + '</strong> to premium?</p><button onclick="confirmUpgrade(' + idx + ')">Upgrade</button>');
-      break;
-    case 'downgrade':
-      openAdminModal('<h3>Downgrade User</h3><p>Downgrade <strong>' + user.username + '</strong> to basic?</p><button onclick="confirmDowngrade(' + idx + ')">Downgrade</button>');
-      break;
-    case 'freezeWithdrawal':
-      openAdminModal('<h3>Freeze Withdrawal</h3><p>Freeze withdrawal for <strong>' + user.username + '</strong>?</p><button onclick="confirmFreezeWithdrawal(' + idx + ')">Freeze</button>');
-      break;
-    case 'freezeWhatsApp':
-      openAdminModal('<h3>Freeze WhatsApp Group</h3><p>Freeze WhatsApp group access for <strong>' + user.username + '</strong>?</p><button onclick="confirmFreezeWhatsApp(' + idx + ')">Freeze</button>');
-      break;
-    case 'freezeManager':
-      openAdminModal('<h3>Freeze Manager Access</h3><p>Freeze manager access for <strong>' + user.username + '</strong>?</p><button onclick="confirmFreezeManager(' + idx + ')">Freeze</button>');
-      break;
-  }
-}
+            if (paginatedUsers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="11" style="text-align: center; padding: 20px;">
+                            No users found
+                        </td>
+                        <td>
+                            <select class='user-actions-dropdown' disabled>
+                                <option value=''>Select Action</option>
+                                <option value='impersonate'>Impersonate</option>
+                                <option value='delete'>Delete</option>
+                                <option value='lock'>Lock</option>
+                                <option value='unlock'>Unlock</option>
+                                <option value='resetPassword'>Reset Password</option>
+                                <option value='addProduct'>Add Product</option>
+                                <option value='removeProduct'>Remove Product</option>
+                                <optgroup label='Wallet'>
+                                    <option value='creditWallet'>Credit Wallet</option>
+                                    <option value='deductWallet'>Deduct Wallet</option>
+                                </optgroup>
+                                <optgroup label='Account'>
+                                    <option value='deductAccount'>Deduct Account</option>
+                                </optgroup>
+                                <option value='changeRole'>Change Role</option>
+                                <optgroup label='Upgrade/Downgrade'>
+                                    <option value='upgrade'>Upgrade</option>
+                                    <option value='downgrade'>Downgrade</option>
+                                </optgroup>
+                            </select>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
 
-function showImpersonationBanner(user) {
-  let banner = document.getElementById('impersonationBanner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'impersonationBanner';
-    banner.className = 'impersonation-banner';
-    document.body.prepend(banner);
-  }
-  banner.innerHTML = `<strong>Impersonating:</strong> ${user.username} (${user.id}) <button onclick='stopImpersonating()'>Stop Impersonating</button>`;
-  banner.style.display = 'block';
-}
+            paginatedUsers.forEach((user, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><img src='${user.profile}' class='user-profile-img' alt='Profile'></td>
+                    <td>${user.username}</td>
+                    <td>${user.id}</td>
+                    <td>${user.mpesa}</td>
+                    <td>${user.email}</td>
+                    <td>Ksh ${user.invested.toLocaleString()}</td>
+                    <td>Ksh ${user.wallet.toLocaleString()}</td>
+                    <td>Ksh ${user.balance.toLocaleString()}</td>
+                    <td>${user.referrals}</td>
+                    <td>${user.status}</td>
+                    <td>${user.lastAction}
+                        <button onclick="showActionHistory(${idx})" style="margin-left: 5px; padding: 2px 5px; background: #ffd54f; color: #232526; border: none; border-radius: 3px; cursor: pointer;">History</button>
+                    </td>
+                    <td>
+                        <select class='user-actions-dropdown' onchange='handleUserAction(this.value, ${idx})'>
+                            <option value=''>Select Action</option>
+                            <option value='impersonate'>Impersonate</option>
+                            <option value='delete'>Delete</option>
+                            <option value='lock'>Lock</option>
+                            <option value='unlock'>Unlock</option>
+                            <option value='resetPassword'>Reset Password</option>
+                            <option value='addProduct'>Add Product</option>
+                            <option value='removeProduct'>Remove Product</option>
+                            <optgroup label='Wallet'>
+                                <option value='creditWallet'>Credit Wallet</option>
+                                <option value='deductWallet'>Deduct Wallet</option>
+                            </optgroup>
+                            <optgroup label='Account'>
+                                <option value='deductAccount'>Deduct Account</option>
+                            </optgroup>
+                            <option value='changeRole'>Change Role</option>
+                            <optgroup label='Upgrade/Downgrade'>
+                                <option value='upgrade'>Upgrade</option>
+                                <option value='downgrade'>Downgrade</option>
+                            </optgroup>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
 
-function stopImpersonation() {
-  isImpersonating = false;
-  impersonatedUser = null;
-  let banner = document.getElementById('impersonationBanner');
-  if (banner) banner.style.display = 'none';
-  renderUserTable();
-}
+            updatePagination(displayUsers.length);
+        }
 
-// Modal action handlers
-function confirmDeleteUser(idx) {
-  users.splice(idx, 1);
-  renderUserTable();
-  closeAdminModal();
-}
-function confirmResetPassword(idx) {
-  var newPassword = document.getElementById('newPassword').value;
-  if (newPassword) {
-    alert('Password reset for ' + users[idx].username + ' to: ' + newPassword);
-    closeAdminModal();
-  }
-}
-function confirmCreditWallet(idx) {
-  var amount = Number(document.getElementById('creditAmount').value);
-  if (amount > 0) {
-    users[idx].wallet += amount;
-    renderUserTable();
-    closeAdminModal();
-  }
-}
-function confirmDeductWallet(idx) {
-  var amount = Number(document.getElementById('deductAmount').value);
-  if (amount > 0) {
-    users[idx].wallet = Math.max(0, users[idx].wallet - amount);
-    renderUserTable();
-    closeAdminModal();
-  }
-}
-function confirmDeductAccount(idx) {
-  var amount = Number(document.getElementById('deductAccAmount').value);
-  if (amount > 0) {
-    users[idx].balance = Math.max(0, users[idx].balance - amount);
-    renderUserTable();
-    closeAdminModal();
-  }
-}
-function confirmChangeRole(idx) {
-  var newRole = document.getElementById('newRole').value;
-  users[idx].role = newRole;
-  alert('Role changed for ' + users[idx].username + ' to: ' + newRole);
-  closeAdminModal();
-}
-function confirmUpgrade(idx) {
-  users[idx].tier = 'premium';
-  alert('User upgraded to premium: ' + users[idx].username);
-  closeAdminModal();
-}
-function confirmDowngrade(idx) {
-  users[idx].tier = 'basic';
-  alert('User downgraded to basic: ' + users[idx].username);
-  closeAdminModal();
-}
-function confirmFreezeWithdrawal(idx) {
-  users[idx].withdrawalFrozen = true;
-  alert('Withdrawal frozen for: ' + users[idx].username);
-  closeAdminModal();
-}
-function confirmFreezeWhatsApp(idx) {
-  users[idx].whatsappFrozen = true;
-  alert('WhatsApp group access frozen for: ' + users[idx].username);
-  closeAdminModal();
-}
-function confirmFreezeManager(idx) {
-  users[idx].managerFrozen = true;
-  alert('Manager access frozen for: ' + users[idx].username);
-  closeAdminModal();
-}
+        function updatePagination(totalItems) {
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const pagination = document.getElementById('pagination');
+            
+            pagination.innerHTML = `
+                <button onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+                <span>Page ${currentPage} of ${totalPages}</span>
+                <button onclick="changePage(1)" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+            `;
+        }
 
-// --- Reset and Sync Logic ---
-<!-- Removed stray script and broken code block -->
+        function changePage(delta) {
+            currentPage = currentPage + delta;
+            renderUserTable();
+        }
 
-function showResetConfirmModal() {
-  document.getElementById('resetConfirmModal').style.display = 'flex';
-}
+        function sortTable(column) {
+            if (currentSortColumn === column) {
+                sortDirection *= -1;
+            } else {
+                sortDirection = 1;
+                currentSortColumn = column;
+            }
 
-function hideResetConfirmModal() {
-  document.getElementById('resetConfirmModal').style.display = 'none';
-}
+            users.sort((a, b) => {
+                let valueA = a[column];
+                let valueB = b[column];
 
-async function handleResetSecurityKey() {
-  const key = document.getElementById('resetSecurityKey').value;
-  if (key === 'expectedKey') {
-    await logAdminAction('reset');
-  } else {
-    alert('Incorrect security key.');
-  }
-  document.getElementById('resetConfirmModal').style.display = 'none';
-}
-async function executeSystemReset() {
-  const key = document.getElementById('resetSecurityKey').value;
-  if (key === '1540568e') {
-    await logAdminAction('reset');
-    localStorage.clear();
-    sessionStorage.clear();
-    location.reload();
-  } else {
-    alert('Incorrect security key.');
-  }
-}
-async function syncChanges() {
-  try {
-    await logAdminAction('sync');
-    const syncStatus = document.getElementById('syncStatus');
-    const syncProgress = document.getElementById('syncProgress');
-    const syncMessage = document.getElementById('syncMessage');
-    syncStatus.style.display = 'block';
-    syncMessage.textContent = 'Synchronizing changes...';
-    const steps = ['users'];
-    for (let i = 0; i < steps.length; i++) {
-      syncProgress.style.width = ((i + 1) / steps.length * 100) + '%';
-      syncMessage.textContent = `Syncing ${steps[i]}...`;
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-    syncMessage.textContent = 'All changes synchronized!';
-    setTimeout(() => { syncStatus.style.display = 'none'; }, 2000);
-    if (typeof fetchUsersFromDB === 'function' && typeof renderUserTable === 'function') {
-      users = await fetchUsersFromDB();
-      renderUserTable(users);
-    }
-  } catch (error) {
-    alert('Failed to sync changes. Please try again.');
-  }
-}
-</script>
-<!-- Sync Status -->
-<div class="sync-status" id="syncStatus" style="display:none;background:#232526;padding:16px;border-radius:8px;margin:16px auto;max-width:600px;">
-  <div class="sync-progress" style="height:4px;background:#333;border-radius:2px;margin:8px 0;">
-    <div class="progress-bar" id="syncProgress" style="height:100%;width:0;background:#2196f3;border-radius:2px;transition:width 0.3s;"></div>
-  </div>
-  <p id="syncMessage"></p>
-</div>
+                if (typeof valueA === 'string') valueA = valueA.toLowerCase();
+                if (typeof valueB === 'string') valueB = valueB.toLowerCase();
+
+                if (valueA < valueB) return -1 * sortDirection;
+                if (valueA > valueB) return 1 * sortDirection;
+                return 0;
+            });
+
+            renderUserTable();
+        }
+
+        function addAction(idx, actionText) {
+            const user = users[idx];
+            const now = new Date();
+            const date = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const newAction = `${actionText} on ${date}`;
+            user.lastAction = newAction;
+            user.actionHistory = user.actionHistory || [];
+            user.actionHistory.unshift(newAction);
+            renderUserTable();
+        }
+
+        function showActionHistory(idx) {
+            const user = users[idx];
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modalContent');
+            
+            const historyHtml = user.actionHistory
+                .map(action => `<div style="margin: 5px 0; padding: 5px; border-bottom: 1px solid #ffd54f;">${action}</div>`)
+                .join('');
+
+            modalContent.innerHTML = `
+                <h3>${user.username}'s Action History</h3>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    ${historyHtml}
+                </div>
+                <button onclick="closeModal()">Close</button>
+            `;
+            modal.style.display = 'flex';
+        }
+
+        function handleUserAction(action, idx) {
+            const user = users[idx];
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modalContent');
+
+            switch(action) {
+                case 'impersonate':
+                    modalContent.innerHTML = `
+                        <h3>Impersonate User</h3>
+                        <p>You are about to impersonate user ${user.username}. This will give you full access to their account.</p>
+                        <p>Continue with impersonation?</p>
+                        <button onclick="startImpersonation(${idx})">Start Impersonation</button>
+                        <button onclick="closeModal()">Cancel</button>
+                    `;
+                    modal.style.display = 'flex';
+                    break;
+                case 'delete':
+                    modalContent.innerHTML = `
+                        <h3>Delete User</h3>
+                        <p>Are you sure you want to delete user ${user.username}?</p>
+                        <button onclick="confirmDelete(${idx})">Confirm Delete</button>
+                        <button onclick="closeModal()">Cancel</button>
+                    `;
+                    modal.style.display = 'flex';
+                    break;
+
+                case 'lock':
+                    users[idx].status = 'Locked';
+                    addAction(idx, 'Account locked');
+                    break;
+
+                case 'unlock':
+                    users[idx].status = 'Active';
+                    addAction(idx, 'Account unlocked');
+                    break;
+
+                case 'resetPassword':
+                    modalContent.innerHTML = `
+                        <h3>Reset Password</h3>
+                        <p>Enter new password for ${user.username}:</p>
+                        <input type="password" id="newPassword">
+                        <button onclick="confirmResetPassword(${idx})">Reset Password</button>
+                        <button onclick="closeModal()">Cancel</button>
+                    `;
+                    modal.style.display = 'flex';
+                    break;
+
+                case 'creditWallet':
+                    modalContent.innerHTML = `
+                        <h3>Credit Wallet</h3>
+                        <p>Enter amount to credit to ${user.username}'s wallet:</p>
+                        <input type="number" id="creditAmount" min="0">
+                        <button onclick="confirmCreditWallet(${idx})">Credit</button>
+                        <button onclick="closeModal()">Cancel</button>
+                    `;
+                    modal.style.display = 'flex';
+                    break;
+
+                case 'deductWallet':
+                    modalContent.innerHTML = `
+                        <h3>Deduct from Wallet</h3>
+                        <p>Enter amount to deduct from ${user.username}'s wallet:</p>
+                        <input type="number" id="deductAmount" min="0" max="${user.wallet}">
+                        <button onclick="confirmDeductWallet(${idx})">Deduct</button>
+                        <button onclick="closeModal()">Cancel</button>
+                    `;
+                    modal.style.display = 'flex';
+                    break;
+
+                case 'deductAccount':
+                    modalContent.innerHTML = `
+                        <h3>Deduct from Account Balance</h3>
+                        <p>Enter amount to deduct from ${user.username}'s account balance:</p>
+                        <input type="number" id="deductBalanceAmount" min="0" max="${user.balance}">
+                        <p>Reason for deduction:</p>
+                        <input type="text" id="deductionReason" placeholder="Enter reason for deduction">
+                        <button onclick="confirmDeductBalance(${idx})">Deduct Balance</button>
+                        <button onclick="closeModal()">Cancel</button>
+                    `;
+                    modal.style.display = 'flex';
+                    break;
+
+                case 'upgrade':
+                    const currentLevel = user.membershipLevel || 'Basic';
+                    modalContent.innerHTML = `
+                        <h3>Upgrade User Membership</h3>
+                        <p>Current level: ${currentLevel}</p>
+                        <select id="upgradeLevel" class="filter-select">
+                            <option value="Premium" ${currentLevel === 'Premium' ? 'disabled' : ''}>Premium</option>
+                            <option value="Gold" ${currentLevel === 'Gold' ? 'disabled' : ''}>Gold</option>
+                            <option value="Platinum" ${currentLevel === 'Platinum' ? 'disabled' : ''}>Platinum</option>
+                        </select>
+                        <p>Reason for upgrade:</p>
+                        <input type="text" id="upgradeReason" placeholder="Enter reason for upgrade">
+                        <button onclick="confirmUpgrade(${idx})">Confirm Upgrade</button>
+                        <button onclick="closeModal()">Cancel</button>
+                    `;
+                    modal.style.display = 'flex';
+                    break;
+
+                case 'downgrade':
+                    const userLevel = user.membershipLevel || 'Basic';
+                    modalContent.innerHTML = `
+                        <h3>Downgrade User Membership</h3>
+                        <p>Current level: ${userLevel}</p>
+                        <select id="downgradeLevel" class="filter-select">
+                            <option value="Inactive">Inactive</option>
+                            <option value="Basic">Basic</option>
+                            <option value="Premium" ${userLevel === 'Basic' ? 'disabled' : ''}>Premium</option>
+                            <option value="Gold" ${userLevel === 'Premium' ? 'disabled' : ''}>Gold</option>
+                        </select>
+                        <p>Reason for downgrade:</p>
+                        <input type="text" id="downgradeReason" placeholder="Enter reason for downgrade">
+                        <button onclick="confirmDowngrade(${idx})">Confirm Downgrade</button>
+                        <button onclick="closeModal()">Cancel</button>
+                    `;
+                    modal.style.display = 'flex';
+                    break;
+
+                case 'deductAccount':
+                    modalContent.innerHTML = `
+                        <h3>Deduct from Account Balance</h3>
+                        <p>Enter amount to deduct from ${user.username}'s account balance:</p>
+                        <input type="number" id="deductAccountAmount" min="0" max="${user.balance}">
+                        <p>Reason for deduction:</p>
+                        <input type="text" id="deductionReason" placeholder="Enter reason">
+                        <button onclick="confirmDeductAccount(${idx})">Deduct</button>
+                        <button onclick="closeModal()">Cancel</button>
+                    `;
+                    modal.style.display = 'flex';
+                    break;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function confirmDelete(idx) {
+            const username = users[idx].username;
+            users.splice(idx, 1);
+            renderUserTable();
+            closeModal();
+            alert(`User ${username} has been deleted`);
+        }
+
+        function confirmResetPassword(idx) {
+            const newPassword = document.getElementById('newPassword').value;
+            if (newPassword) {
+                // In a real application, you would hash the password and update it in the database
+                addAction(idx, 'Password reset');
+                alert(`Password reset successfully for ${users[idx].username}`);
+                closeModal();
+            }
+        }
+
+        function confirmCreditWallet(idx) {
+            const amount = Number(document.getElementById('creditAmount').value);
+            if (amount > 0) {
+                users[idx].wallet += amount;
+                addAction(idx, `Wallet credited: +${amount}`);
+                closeModal();
+            }
+        }
+
+        function confirmDeductWallet(idx) {
+            const amount = Number(document.getElementById('deductAmount').value);
+            if (amount > 0 && amount <= users[idx].wallet) {
+                users[idx].wallet -= amount;
+                addAction(idx, `Wallet deducted: -${amount}`);
+                closeModal();
+            }
+        }
+
+        function confirmDeductBalance(idx) {
+            const amount = Number(document.getElementById('deductBalanceAmount').value);
+            const reason = document.getElementById('deductionReason').value.trim();
+            
+            if (!reason) {
+                alert('Please provide a reason for the deduction');
+                return;
+            }
+
+            if (amount > 0 && amount <= users[idx].balance) {
+                users[idx].balance -= amount;
+                addAction(idx, `Account balance deducted: -${amount} (Reason: ${reason})`);
+                closeModal();
+                renderUserTable(); // Refresh the table to show updated balance
+            } else {
+                alert('Invalid amount or insufficient balance');
+            }
+        }
+
+        function confirmUpgrade(idx) {
+            const newLevel = document.getElementById('upgradeLevel').value;
+            const reason = document.getElementById('upgradeReason').value.trim();
+            
+            if (!reason) {
+                alert('Please provide a reason for the upgrade');
+                return;
+            }
+
+            const user = users[idx];
+            const oldLevel = user.membershipLevel || 'Basic';
+            user.membershipLevel = newLevel;
+            
+            // Update user benefits based on new level
+            switch(newLevel) {
+                case 'Premium':
+                    user.benefits = ['Priority Support', 'Reduced Fees'];
+                    break;
+                case 'Gold':
+                    user.benefits = ['Priority Support', 'Zero Fees', 'VIP Access'];
+                    break;
+                case 'Platinum':
+                    user.benefits = ['24/7 Support', 'Zero Fees', 'VIP Access', 'Exclusive Features'];
+                    break;
+            }
+
+            addAction(idx, `Membership upgraded: ${oldLevel} → ${newLevel} (Reason: ${reason})`);
+            closeModal();
+            renderUserTable();
+        }
+
+        function confirmDowngrade(idx) {
+            const newLevel = document.getElementById('downgradeLevel').value;
+            const reason = document.getElementById('downgradeReason').value.trim();
+            
+            if (!reason) {
+                alert('Please provide a reason for the downgrade');
+                return;
+            }
+
+            const user = users[idx];
+            const oldLevel = user.membershipLevel || 'Basic';
+            user.membershipLevel = newLevel;
+
+            if (newLevel === 'Inactive') {
+                user.status = 'Inactive';
+                user.benefits = [];
+            } else {
+                // Update benefits based on new level
+                switch(newLevel) {
+                    case 'Basic':
+                        user.benefits = ['Standard Support'];
+                        break;
+                    case 'Premium':
+                        user.benefits = ['Priority Support', 'Reduced Fees'];
+                        break;
+                    case 'Gold':
+                        user.benefits = ['Priority Support', 'Zero Fees', 'VIP Access'];
+                        break;
+                }
+            }
+
+            addAction(idx, `Membership downgraded: ${oldLevel} → ${newLevel} (Reason: ${reason})`);
+            closeModal();
+            renderUserTable();
+        }
+
+        function exportToCSV() {
+            const headers = ['Username', 'ID', 'Mpesa', 'Email', 'Phone', 'Invested', 'Wallet', 'Balance', 'Referrals', 'Status'];
+            const csvContent = [
+                headers.join(','),
+                ...users.map(user => [
+                    user.username,
+                    user.id,
+                    user.mpesa,
+                    user.email,
+                    user.phone,
+                    user.invested,
+                    user.wallet,
+                    user.balance,
+                    user.referrals,
+                    user.status
+                ].join(','))
+            ].join('\\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'users.csv';
+            a.click();
+        }
+
+        function exportToPDF() {
+            // Create a new jsPDF instance
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Add title
+            doc.setFontSize(18);
+            doc.text('AfricaBased User Management Report', 14, 22);
+            doc.setFontSize(11);
+            doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+
+            // Prepare the data for the table
+            const tableData = users.map(user => [
+                user.username,
+                user.id,
+                user.mpesa,
+                user.email,
+                `Ksh ${user.invested.toLocaleString()}`,
+                `Ksh ${user.wallet.toLocaleString()}`,
+                `Ksh ${user.balance.toLocaleString()}`,
+                user.referrals,
+                user.status,
+                user.membershipLevel || 'Basic'
+            ]);
+
+            // Define the table headers
+            const headers = [
+                ['Username', 'ID', 'Mpesa', 'Email', 'Invested', 'Wallet', 'Balance', 'Referrals', 'Status', 'Level']
+            ];
+
+            // Generate the table
+            doc.autoTable({
+                head: headers,
+                body: tableData,
+                startY: 40,
+                theme: 'grid',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 3
+                },
+                headStyles: {
+                    fillColor: [78, 205, 196],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold'
+                },
+                alternateRowStyles: {
+                    fillColor: [245, 245, 245]
+                }
+            });
+
+            // Save the PDF
+            doc.save('AfricaBased-Users-Report.pdf');
+        }
+
+        function startImpersonation(idx) {
+            const user = users[idx];
+            
+            // Store admin session info before impersonating
+            const adminSession = {
+                originalAdmin: true,
+                returnUrl: window.location.href
+            };
+            sessionStorage.setItem('adminSession', JSON.stringify(adminSession));
+            
+            // Store impersonation target info
+            const impersonationData = {
+                userId: user.id,
+                username: user.username,
+                email: user.email,
+                impersonatedAt: new Date().toISOString()
+            };
+            sessionStorage.setItem('impersonationData', JSON.stringify(impersonationData));
+            
+            // Log the impersonation action
+            addAction(idx, 'Account impersonated by admin');
+            
+            // Redirect to user's dashboard
+            closeModal();
+            window.location.href = '/home.html';
+        }
+    </script>
+</body>
+</html>
